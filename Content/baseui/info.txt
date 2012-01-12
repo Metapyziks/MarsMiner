@@ -1,0 +1,7 @@
+"name"				"Base UI"
+"author"			"Metapyziks"
+"author email"		"metapyziks@gmail.com"
+"author website"	"https://github.com/Metapyziks/MarsMiner"
+"version"			"0.0.0.1"
+"description"		"Base UI graphics for Mars Miner"
+"destination"		"client"

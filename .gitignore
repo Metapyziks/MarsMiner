@@ -1,0 +1,16 @@
+MarsMiner.suo
+Content/*.dll
+Content/*.pdb
+Content/*.exe
+Content/*.xml
+ResourceLib/bin
+ResourceLib/obj
+ResourceArchiveBuilder/obj
+MarsMiner/bin
+MarsMiner/obj
+MarsMiner.Shared/bin
+MarsMiner.Shared/obj
+MarsMiner.Client/bin
+MarsMiner.Client/obj
+MarsMiner.Server/bin
+MarsMiner.Server/obj
