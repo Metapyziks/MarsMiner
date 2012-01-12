@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
 namespace MarsMiner.Shared
 {
@@ -66,6 +64,11 @@ namespace MarsMiner.Shared
         public override bool Equals( object obj )
         {
             return obj is Octant && ( (Octant) obj ).Index == Index;
+        }
+
+        public override int GetHashCode()
+        {
+            return Index;
         }
     }
 
