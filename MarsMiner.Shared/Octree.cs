@@ -49,7 +49,7 @@ namespace MarsMiner.Shared
 
         public Octant Next
         {
-            get { return All[ Index % 8 ]; }
+            get { return All[ ( Index + 1 ) % 8 ]; }
         }
 
         private Octant( int x, int y, int z )
