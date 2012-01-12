@@ -72,7 +72,7 @@ namespace MarsMiner.Shared
         }
     }
 
-    public class Octree<T> : IEnumerable<T>
+    public class Octree<T> : IEnumerable<Octree<T>>
     {
         private T myValue;
         private Octree<T>[] myChildren;
@@ -220,7 +220,7 @@ namespace MarsMiner.Shared
             }
         }
 
-        public IEnumerator<T> GetEnumerator()
+        public IEnumerator<Octree<T>> GetEnumerator()
         {
             return new OctreeEnumerator<T>( this );
         }
@@ -231,7 +231,7 @@ namespace MarsMiner.Shared
         }
     }
 
-    public class OctreeEnumerator<T> : IEnumerator<T>
+    public class OctreeEnumerator<T> : IEnumerator<Octree<T>>
     {
         private OctreeEnumerator<T> myChild;
         private Octant myCurOctant;
@@ -248,14 +248,14 @@ namespace MarsMiner.Shared
             myFirst = true;
         }
 
-        public T Current
+        public Octree<T> Current
         {
             get
             {
                 if ( Octree.HasChildren )
                     return myChild.Current;
 
-                return Octree.Value;
+                return Octree;
             }
         }
 
