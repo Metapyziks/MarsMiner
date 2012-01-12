@@ -83,6 +83,14 @@ namespace MarsMiner.Shared
 
         public readonly int Size;
 
+        public Cuboid Cube
+        {
+            get
+            {
+                return new Cuboid( X, Y, Z, Size, Size, Size );
+            }
+        }
+
         public readonly Octree<T> Parent;
 
         public T Value
@@ -187,12 +195,29 @@ namespace MarsMiner.Shared
             return true;
         }
 
-        public virtual T FindMergeValue()
+        protected virtual T FindMergeValue()
         {
             if ( !HasChildren )
                 throw new InvalidOperationException();
 
             return myChildren[ 0 ].Value;
+        }
+
+        public void SetCuboid( Cuboid cuboid, T value )
+        {
+            Cuboid cube = Cube;
+            if ( cube.IsIntersecting( cuboid ) )
+            {
+                Cuboid intersection = cube.FindIntersection( cuboid );
+                if ( intersection.Equals( cuboid ) )
+                    Merge( value );
+                else if ( intersection.Volume != 0 )
+                {
+                    Partition();
+                    foreach ( Octree<T> child in myChildren )
+                        child.SetCuboid( intersection, value );
+                }
+            }
         }
 
         public IEnumerator<T> GetEnumerator()
