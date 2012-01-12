@@ -44,12 +44,14 @@
   <ItemGroup>
     <Compile Include="Graphics\AnimatedSprite.cs" />
     <Compile Include="Graphics\FrameSprite.cs" />
+    <Compile Include="Graphics\OctreeTestShader.cs" />
     <Compile Include="Graphics\ShaderBuilder.cs" />
     <Compile Include="Graphics\ShaderProgram.cs" />
     <Compile Include="Graphics\Sprite.cs" />
     <Compile Include="Graphics\SpriteShader.cs" />
     <Compile Include="Graphics\Text.cs" />
     <Compile Include="Graphics\Texture.cs" />
+    <Compile Include="Graphics\VertexBuffer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="UI\UIButton.cs" />
     <Compile Include="UI\UILabel.cs" />

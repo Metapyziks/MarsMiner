@@ -6,74 +6,74 @@ using System.Diagnostics;
 
 namespace MarsMiner.Client.Graphics
 {
-    public class ShaderProgram
+    public class AttributeInfo
     {
-        private class AttributeInfo
+        public ShaderProgram Shader { get; private set; }
+        public String Identifier { get; private set; }
+        public int Location { get; private set; }
+        public int Size { get; private set; }
+        public int Offset { get; private set; }
+        public int InputOffset { get; private set; }
+        public VertexAttribPointerType PointerType { get; private set; }
+        public bool Normalize { get; private set; }
+
+        public int Length
         {
-            public ShaderProgram Shader { get; private set; }
-            public String Identifier { get; private set; }
-            public int Location { get; private set; }
-            public int Size { get; private set; }
-            public int Offset { get; private set; }
-            public int InputOffset { get; private set; }
-            public VertexAttribPointerType PointerType { get; private set; }
-            public bool Normalize { get; private set; }
-
-            public int Length
+            get
             {
-                get
+                switch ( PointerType )
                 {
-                    switch ( PointerType )
-                    {
-                        case VertexAttribPointerType.Byte:
-                        case VertexAttribPointerType.UnsignedByte:
-                            return Size * sizeof( byte );
+                    case VertexAttribPointerType.Byte:
+                    case VertexAttribPointerType.UnsignedByte:
+                        return Size * sizeof( byte );
 
-                        case VertexAttribPointerType.Short:
-                        case VertexAttribPointerType.UnsignedShort:
-                            return Size * sizeof( short );
+                    case VertexAttribPointerType.Short:
+                    case VertexAttribPointerType.UnsignedShort:
+                        return Size * sizeof( short );
 
-                        case VertexAttribPointerType.Int:
-                        case VertexAttribPointerType.UnsignedInt:
-                            return Size * sizeof( int );
+                    case VertexAttribPointerType.Int:
+                    case VertexAttribPointerType.UnsignedInt:
+                        return Size * sizeof( int );
 
-                        case VertexAttribPointerType.HalfFloat:
-                            return Size * sizeof( float ) / 2;
+                    case VertexAttribPointerType.HalfFloat:
+                        return Size * sizeof( float ) / 2;
 
-                        case VertexAttribPointerType.Float:
-                            return Size * sizeof( float );
+                    case VertexAttribPointerType.Float:
+                        return Size * sizeof( float );
 
-                        case VertexAttribPointerType.Double:
-                            return Size * sizeof( double );
+                    case VertexAttribPointerType.Double:
+                        return Size * sizeof( double );
 
-                        default:
-                            return 0;
-                    }
+                    default:
+                        return 0;
                 }
-            }
-
-            public AttributeInfo( ShaderProgram shader, string identifier,
-                int size, int offset, int inputOffset,
-                VertexAttribPointerType pointerType =
-                    VertexAttribPointerType.Float,
-                bool normalize = false )
-            {
-                Shader = shader;
-                Identifier = identifier;
-                Location = GL.GetAttribLocation( shader.Program, Identifier );
-                Size = size;
-                Offset = offset;
-                InputOffset = inputOffset;
-                PointerType = pointerType;
-                Normalize = normalize;
-            }
-
-            public override string ToString()
-            {
-                return Identifier + " @" + Location + ", Size: " + Size + ", Offset: " + Offset;
             }
         }
 
+        public AttributeInfo( ShaderProgram shader, string identifier,
+            int size, int offset, int inputOffset,
+            VertexAttribPointerType pointerType =
+                VertexAttribPointerType.Float,
+            bool normalize = false )
+        {
+            Shader = shader;
+            Identifier = identifier;
+            Location = GL.GetAttribLocation( shader.Program, Identifier );
+            Size = size;
+            Offset = offset;
+            InputOffset = inputOffset;
+            PointerType = pointerType;
+            Normalize = normalize;
+        }
+
+        public override string ToString()
+        {
+            return Identifier + " @" + Location + ", Size: " + Size + ", Offset: " + Offset;
+        }
+    }
+
+    public class ShaderProgram
+    {
         private class TextureInfo
         {
             public ShaderProgram Shader { get; private set; }
@@ -147,12 +147,17 @@ namespace MarsMiner.Client.Graphics
             stVersionChecked = true;
         }
 
-        private int myStride;
-        private int mySize;
+        public int VertexDataStride;
+        public int VertexDataSize;
         private List<AttributeInfo> myAttributes;
         private Dictionary<String, TextureInfo> myTextures;
 
         public int Program { get; private set; }
+
+        public AttributeInfo[] Attributes
+        {
+            get { return myAttributes.ToArray(); }
+        }
 
         public BeginMode BeginMode;
         public string VertexSource;
@@ -170,8 +175,8 @@ namespace MarsMiner.Client.Graphics
             BeginMode = BeginMode.Triangles;
             myAttributes = new List<AttributeInfo>();
             myTextures = new Dictionary<string, TextureInfo>();
-            myStride = 0;
-            mySize = 0;
+            VertexDataStride = 0;
+            VertexDataSize = 0;
             Started = false;
         }
 
@@ -240,13 +245,13 @@ namespace MarsMiner.Client.Graphics
             bool normalize = false )
         {
             if ( inputOffset == -1 )
-                inputOffset = mySize;
+                inputOffset = VertexDataSize;
 
             AttributeInfo info = new AttributeInfo( this, identifier, size,
-                myStride, inputOffset - mySize, pointerType, normalize );
+                VertexDataStride, inputOffset - VertexDataSize, pointerType, normalize );
 
-            myStride += info.Length;
-            mySize += info.Size;
+            VertexDataStride += info.Length;
+            VertexDataSize += info.Size;
             myAttributes.Add( info );
 
             ErrorCheck( "addattrib:" + identifier );
@@ -268,11 +273,7 @@ namespace MarsMiner.Client.Graphics
                 ErrorCheck( "end" );
             }
 
-            if ( myTextures.ContainsKey( identifier ) )
-                myTextures[ identifier ].SetCurrentTexture( texture );
-            else
-                throw new Exception( "No texture known with the identifier \""
-                    + identifier + "\"" );
+            myTextures[ identifier ].SetCurrentTexture( texture );
 
             ErrorCheck( "settexture" );
 
@@ -291,7 +292,7 @@ namespace MarsMiner.Client.Graphics
 
             foreach( AttributeInfo info in myAttributes )
                 GL.VertexAttribPointer( info.Location, info.Size,
-                    info.PointerType, info.Normalize, myStride, info.Offset );
+                    info.PointerType, info.Normalize, VertexDataStride, info.Offset );
 
             ErrorCheck( "begin" );
             GL.Begin( BeginMode );

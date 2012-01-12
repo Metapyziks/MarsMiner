@@ -13,7 +13,8 @@ namespace MarsMiner.Client.Graphics
         Vec2,
         Vec3,
         Vec4,
-        Sampler2D
+        Sampler2D,
+        Mat4
     }
 
     public class ShaderBuilder
