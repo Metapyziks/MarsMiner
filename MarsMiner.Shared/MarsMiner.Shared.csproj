@@ -49,6 +49,8 @@
     <Compile Include="OctreeTest.cs" />
     <Compile Include="OctreeTestWorldGenerator.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="TestChunk.cs" />
+    <Compile Include="TestWorld.cs" />
     <Compile Include="Tools.cs" />
     <Compile Include="Cuboid.cs" />
   </ItemGroup>

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 using OpenTK;
 using OpenTK.Graphics;
@@ -8,6 +9,7 @@ using MarsMiner.Shared;
 using MarsMiner.Client.Graphics;
 using MarsMiner.Client.UI;
 using OpenTK.Graphics.OpenGL;
+using System.Threading;
 
 namespace MarsMiner
 {
@@ -21,9 +23,10 @@ namespace MarsMiner
         private double myTotalFrameTime;
         private int myFramesCompleted;
 
-        private OctreeTest myTestOctree;
+        private TestWorld myTestWorld;
+
         private OctreeTestShader myTestShader;
-        private OctreeTestRenderer myTestRenderer;
+        private List<OctreeTestRenderer> myTestRenderers;
 
         private bool myIgnoreMouse;
         private bool myCaptureMouse;
@@ -54,14 +57,30 @@ namespace MarsMiner
             Mouse.ButtonUp += OnMouseButtonEvent;
             Mouse.ButtonDown += OnMouseButtonEvent;
 
-            var generator = new OctreeTestWorldGenerator();
+            myTestWorld = new TestWorld();
 
-            myTestOctree = generator.Generate();
             myTestShader = new OctreeTestShader( Width, Height );
-            myTestRenderer = new OctreeTestRenderer( myTestOctree );
-            myTestRenderer.UpdateVertices();
+            myTestRenderers = new List<OctreeTestRenderer>();
 
-            myTestShader.CameraPosition = new Vector3( 0.0f, 8.0f, -64.0f );
+            myTestWorld.ChunkLoaded += delegate( object sender, TestChunkLoadEventArgs ea )
+            {
+                OctreeTestRenderer renderer = new OctreeTestRenderer( ea.Chunk );
+                renderer.UpdateVertices();
+
+                Monitor.Enter( myTestRenderers );
+                myTestRenderers.Add( renderer );
+                Monitor.Exit( myTestRenderers );
+            };
+            myTestWorld.ChunkUnloaded += delegate( object sender, TestChunkLoadEventArgs ea )
+            {
+                Monitor.Enter( myTestRenderers );
+                myTestRenderers.Remove( myTestRenderers.Find( x => x.Chunk == ea.Chunk ) );
+                Monitor.Exit( myTestRenderers );
+            };
+
+            myTestWorld.StartGenerator();
+
+            myTestShader.CameraPosition = new Vector3( 0.0f, 256.0f, 0.0f );
 
             GL.ClearColor( Color4.CornflowerBlue );
         }
@@ -74,7 +93,10 @@ namespace MarsMiner
             GL.Clear( ClearBufferMask.DepthBufferBit );
             
             myTestShader.StartBatch();
-            myTestRenderer.Render( myTestShader );
+            Monitor.Enter( myTestRenderers );
+            foreach( OctreeTestRenderer renderer in myTestRenderers )
+                renderer.Render( myTestShader );
+            Monitor.Exit( myTestRenderers );
             myTestShader.EndBatch();
 
             mySpriteShader.Begin();
@@ -185,6 +207,16 @@ namespace MarsMiner
         private void OnMouseButtonEvent( object sender, MouseButtonEventArgs e )
         {
             myUIRoot.SendMouseButtonEvent( new Vector2( Mouse.X, Mouse.Y ), e );
+        }
+
+        public override void Dispose()
+        {
+            myTestWorld.StopGenerator();
+
+            foreach ( OctreeTestRenderer renderer in myTestRenderers )
+                renderer.Dispose();
+
+            base.Dispose();
         }
     }
 }

@@ -52,45 +52,58 @@ namespace MarsMiner.Shared
             set { myNoise.NoiseQuality = value; }
         }
 
-        public int WorldSize = 64;
-        public int GroundLevel = 32;
-
-        public int X = 0;
-        public int Z = 0;
+        public int MinAltitude;
+        public int MaxAltitude;
 
         public OctreeTestWorldGenerator()
         {
             myNoise = new Perlin();
 
             OctaveCount = 6;
-            Frequency = 0.125;
+            Frequency = 0.25;
             Lacunarity = 2.0;
             Persistence = 0.5;
 
-            WorldSize = 64;
-            GroundLevel = 32;
-
-            X = 0;
-            Z = 0;
+            MinAltitude = 192;
+            MaxAltitude = 240;
         }
 
-        public OctreeTest Generate()
+        public OctreeTest Generate( int x, int y, int z, int size )
         {
-            OctreeTest octree = new OctreeTest( X, 0, Z, WorldSize );
+            OctreeTest octree = new OctreeTest( x, y, z, size );
 
-            Cuboid cuboid = new Cuboid( 0, 0, 0, 1, 1, 1 );
+            int altDiff = ( MaxAltitude - MinAltitude ) / 2;
+            int altMid = MinAltitude + altDiff;
 
-            for ( int x = 0; x < WorldSize; ++x )
+            octree.SetCuboid( x, 0, z, size, altMid, size, OctreeTestBlockType.White );
+
+            if ( y + size > MinAltitude )
             {
-                for ( int z = 0; z < WorldSize; ++z )
+                Cuboid cuboid = new Cuboid( 0, 0, 0, 1, 1, 1 );
+
+                for ( int nx = 0; nx < size; ++nx )
                 {
-                    double val = myNoise.GetValue( (double) x / WorldSize, (double) z / WorldSize, 0.5 );
+                    for ( int nz = 0; nz < size; ++nz )
+                    {
+                        double val = myNoise.GetValue( (double) ( x + nx ) / size, (double) ( z + nz ) / size, 0.5 );
+                        int height = (int) ( val * altDiff );
 
-                    cuboid.X = X + x;
-                    cuboid.Z = Z + z;
-                    cuboid.Height = GroundLevel + (int) ( val * WorldSize * 0.5 );
+                        cuboid.X = x + nx;
+                        cuboid.Z = z + nz;
 
-                    octree.SetCuboid( cuboid, OctreeTestBlockType.White );
+                        if ( height > 0 )
+                        {
+                            cuboid.Y = altMid;
+                            cuboid.Height = height;
+                            octree.SetCuboid( cuboid, OctreeTestBlockType.White );
+                        }
+                        else if( height < 0 )
+                        {
+                            cuboid.Y = altMid + height;
+                            cuboid.Height = -height;
+                            octree.SetCuboid( cuboid, OctreeTestBlockType.Empty );
+                        }
+                    }
                 }
             }
 
