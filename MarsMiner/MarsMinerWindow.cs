@@ -20,6 +20,8 @@ namespace MarsMiner
         private OctreeTestShader myTestShader;
         private OctreeTestRenderer myTestRenderer;
 
+        private bool myLineMode;
+
         private bool myIgnoreMouse;
         private bool myCaptureMouse;
 
@@ -29,7 +31,10 @@ namespace MarsMiner
             WindowBorder = WindowBorder.Fixed;
             VSync = VSyncMode.Off;
 
+            myLineMode = false;
+
             myCaptureMouse = true;
+            myIgnoreMouse = false;
         }
 
         protected override void OnLoad( System.EventArgs e )
@@ -47,9 +52,10 @@ namespace MarsMiner
 
             myTestOctree.SetCuboid( new Cuboid( -128, 0, -128, 256, 128, 256 ), OctreeTestBlockType.Red );
             myTestOctree.SetCuboid( new Cuboid( -8, -16, -8, 16, 32, 16 ), OctreeTestBlockType.Blue );
+            myTestOctree.SetCuboid( new Cuboid( -7, -16, -6, 6, 3, 9 ), OctreeTestBlockType.Empty );
             myTestRenderer.UpdateVertices();
 
-            myTestShader.CameraPosition = new Vector3( 0.0f, 0.0f, -64.0f );
+            myTestShader.CameraPosition = new Vector3( 0.0f, 8.0f, -64.0f );
             myTestShader.UpdateViewMatrix();
         }
 
@@ -61,7 +67,13 @@ namespace MarsMiner
             GL.Enable( EnableCap.DepthTest );
             GL.Enable( EnableCap.CullFace );
 
+            if( myLineMode )
+                GL.PolygonMode( MaterialFace.Front, PolygonMode.Line );
+
             myTestRenderer.Render();
+
+            if ( myLineMode )
+                GL.PolygonMode( MaterialFace.Front, PolygonMode.Fill );
 
             GL.Disable( EnableCap.DepthTest );
             GL.Enable( EnableCap.CullFace );
@@ -122,6 +134,9 @@ namespace MarsMiner
                 {
                     case (char) 0x1B:
                         myCaptureMouse = false;
+                        break;
+                    case 'l':
+                        myLineMode = !myLineMode;
                         break;
                 }
             }
