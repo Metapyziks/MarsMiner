@@ -26,7 +26,12 @@ namespace MarsMiner.Shared
         {
             int halfSize = WorldSize / 2;
             OctreeTest octree = new OctreeTest( -halfSize, -GroundLevel, -halfSize, WorldSize );
-            octree.SetCuboid( -halfSize, -GroundLevel, -halfSize, WorldSize, GroundLevel, WorldSize, OctreeTestBlockType.White );
+            Cuboid ground = new Cuboid
+            {
+                Left = -halfSize, Front = -halfSize, Bottom = -GroundLevel,
+                Right = halfSize, Back = halfSize, Top = 0
+            };
+            octree.SetCuboid( ground, OctreeTestBlockType.White );
 
             return octree;
         }

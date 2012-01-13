@@ -34,17 +34,17 @@ namespace MarsMiner.Shared
         public int Right
         {
             get { return X + Width; }
-            set { X = value; }
+            set { Width = value - X; }
         }
         public int Top
         {
             get { return Y + Height; }
-            set { Y = value; }
+            set { Height = value - Y; }
         }
         public int Back
         {
             get { return Z + Depth; }
-            set { Z = value; }
+            set { Depth = value - Z; }
         }
 
         public int Volume
