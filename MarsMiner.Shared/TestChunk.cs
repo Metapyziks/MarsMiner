@@ -7,7 +7,7 @@ namespace MarsMiner.Shared
 {
     public class TestChunk
     {
-        public const int ChunkSize = 32;
+        public const int ChunkSize = 64;
         public const int ChunkHeight = 256;
 
         public OctreeTest[] Octrees { get; private set; }

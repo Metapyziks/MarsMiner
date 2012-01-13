@@ -20,6 +20,7 @@ namespace MarsMiner
 
         private UILabel myFPSText;
 
+        private DateTime myLastRenderTime;
         private double myTotalFrameTime;
         private int myFramesCompleted;
 
@@ -87,8 +88,6 @@ namespace MarsMiner
 
         protected override void OnRenderFrame( FrameEventArgs e )
         {
-            DateTime start = DateTime.Now;
-
             GL.Clear( ClearBufferMask.ColorBufferBit );
             GL.Clear( ClearBufferMask.DepthBufferBit );
             
@@ -105,10 +104,11 @@ namespace MarsMiner
 
             SwapBuffers();
 
-            DateTime end = DateTime.Now;
+            DateTime time = DateTime.Now;
 
-            myTotalFrameTime += ( end - start ).TotalMilliseconds;
+            myTotalFrameTime += ( time - myLastRenderTime ).TotalMilliseconds;
             ++myFramesCompleted;
+            myLastRenderTime = time;
         }
 
         protected override void OnUpdateFrame( FrameEventArgs e )
