@@ -41,10 +41,10 @@ namespace MarsMiner.Shared
 
             myPlainsNoise = new Perlin
             {
-                OctaveCount = 4,
-                Frequency = 1.0 / 12.0,
+                OctaveCount = 6,
+                Frequency = 8.0,
                 Lacunarity = 2.0,
-                Persistence = 0.5
+                Persistence = 1.0
             };
 
             myTransNoise = new Perlin
@@ -59,7 +59,7 @@ namespace MarsMiner.Shared
             myMaxHilly = 240;
 
             myMinPlains = 64;
-            myMaxPlains = 68;
+            myMaxPlains = 72;
         }
 
         public OctreeTest Generate( int x, int y, int z, int size, int resolution = 1 )
@@ -88,10 +88,10 @@ namespace MarsMiner.Shared
 
                         double hillVal = myHillyNoise.GetValue( dx, dy, 0.5 ) * hillDiff + hillMid;
                         double plainVal = myHillyNoise.GetValue( dx, dy, 0.5 ) * plainDiff + plainMid;
-                        double trans = ( myTransNoise.GetValue( dx, dy, 0.5 ) + 1.0 ) / 2.0;
+                        double trans = Tools.Clamp( ( myTransNoise.GetValue( dx, dy, 0.5 ) + 1.0 ) / 2.0, 0.0, 1.0 );
                         trans *= trans;
 
-                        int height = (int) ( trans * hillVal + ( 1 - trans ) * plainVal ) / resolution * resolution;
+                        int height = (int) System.Math.Round( ( trans * hillVal + ( 1 - trans ) * plainVal ) / resolution ) * resolution;
 
                         cuboid.X = x + nx;
                         cuboid.Z = z + nz;
