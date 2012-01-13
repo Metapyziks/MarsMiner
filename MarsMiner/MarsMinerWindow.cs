@@ -54,13 +54,11 @@ namespace MarsMiner
             Mouse.ButtonUp += OnMouseButtonEvent;
             Mouse.ButtonDown += OnMouseButtonEvent;
 
-            myTestOctree = new Octree<OctreeTestBlockType>( -128, -128, -128, 256 );
+            var generator = new OctreeTestWorldGenerator();
+
+            myTestOctree = generator.Generate();
             myTestShader = new OctreeTestShader( Width, Height );
             myTestRenderer = new OctreeTestRenderer( myTestOctree );
-
-            myTestOctree.SetCuboid( new Cuboid( -128, 0, -128, 256, 128, 256 ), OctreeTestBlockType.Red );
-            myTestOctree.SetCuboid( new Cuboid( -8, -16, -8, 16, 32, 16 ), OctreeTestBlockType.Blue );
-            myTestOctree.SetCuboid( new Cuboid( -7, -16, -6, 6, 3, 9 ), OctreeTestBlockType.Empty );
             myTestRenderer.UpdateVertices();
 
             myTestShader.CameraPosition = new Vector3( 0.0f, 8.0f, -64.0f );

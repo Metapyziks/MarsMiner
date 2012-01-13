@@ -7,16 +7,6 @@ using MarsMiner.Shared;
 
 namespace MarsMiner.Client.Graphics
 {
-    public enum OctreeTestBlockType : byte
-    {
-        Empty = 0,
-        White = 1,
-        Black = 2,
-        Red = 3,
-        Green = 4,
-        Blue = 5,
-    }
-
     public class OctreeTestRenderer
     {
         private static readonly Color4[] stBlockColours = new Color4[]
@@ -56,7 +46,7 @@ namespace MarsMiner.Client.Graphics
                 Color4 colour = stBlockColours[ (int) octree.Value ];
 
                 float x0 = octree.X; float x1 = octree.X + octree.Size;
-                float y0 = -octree.Y; float y1 = -octree.Y - octree.Size;
+                float y0 = octree.Y; float y1 = octree.Y + octree.Size;
                 float z0 = octree.Z; float z1 = octree.Z + octree.Size;
 
                 float r = ( octree.X % ( octree.Size * 2 ) ) / 2.0f + 0.5f;
