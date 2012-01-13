@@ -69,18 +69,16 @@ namespace MarsMiner.Client.Graphics
             frag.Logic = @"
                 void main( void )
                 {
-                    vec3 clr = vec3( 0.682, 0.412, 0.259 );
+                    vec3 clr = vec3( 0.682, 0.412, 0.259 ); 
+                    float shade;
                     if( var_shade < 0.3 )
                     {
                         clr = vec3( 0.957, 0.757, 0.588 );
-                        var_shade += 0.2;
+                        shade = var_shade + 0.2;
                     }
                     else
-                    {
-                        var_shade *= 0.7;
-                        var_shade += 0.3;
-                    }
-                    out_frag_colour = vec4( var_shade * clr, 1.0 );
+                        shade = var_shade * 0.7 + 0.3;
+                    out_frag_colour = vec4( shade * clr, 1.0 );
                 }
             ";
 
