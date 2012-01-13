@@ -64,29 +64,29 @@ namespace MarsMiner.Shared
             Lacunarity = 2.0;
             Persistence = 0.5;
 
-            MinAltitude = 192;
-            MaxAltitude = 240;
+            MinAltitude = 64;
+            MaxAltitude = 192;
         }
 
-        public OctreeTest Generate( int x, int y, int z, int size )
+        public OctreeTest Generate( int x, int y, int z, int size, int resolution = 1 )
         {
             OctreeTest octree = new OctreeTest( x, y, z, size );
 
             int altDiff = ( MaxAltitude - MinAltitude ) / 2;
-            int altMid = MinAltitude + altDiff;
+            int altMid = ( MinAltitude + altDiff ) / resolution * resolution;
 
             octree.SetCuboid( x, 0, z, size, altMid, size, OctreeTestBlockType.White );
 
             if ( y + size > MinAltitude )
             {
-                Cuboid cuboid = new Cuboid( 0, 0, 0, 1, 1, 1 );
+                Cuboid cuboid = new Cuboid( 0, 0, 0, resolution, 1, resolution );
 
-                for ( int nx = 0; nx < size; ++nx )
+                for ( int nx = 0; nx < size; nx += resolution )
                 {
-                    for ( int nz = 0; nz < size; ++nz )
+                    for ( int nz = 0; nz < size; nz += resolution )
                     {
                         double val = myNoise.GetValue( (double) ( x + nx ) / size, (double) ( z + nz ) / size, 0.5 );
-                        int height = (int) ( val * altDiff );
+                        int height = (int) ( val * altDiff ) / resolution * resolution;
 
                         cuboid.X = x + nx;
                         cuboid.Z = z + nz;

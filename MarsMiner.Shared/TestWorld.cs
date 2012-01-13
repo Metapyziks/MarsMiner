@@ -34,7 +34,7 @@ namespace MarsMiner.Shared
             myChunksToLoad = new Queue<TestChunk>();
             Generator = new OctreeTestWorldGenerator();
 
-            int limit = 256 / TestChunk.ChunkSize;
+            int limit = 1024 / TestChunk.ChunkSize;
 
             for ( int x = -limit; x < limit; ++x )
                 for ( int z = -limit; z < limit; ++z )

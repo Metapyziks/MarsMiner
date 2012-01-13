@@ -92,7 +92,7 @@ namespace MarsMiner.Client.Graphics
         public void SetScreenSize( int width, int height )
         {
             PerspectiveMatrix = Matrix4.CreatePerspectiveFieldOfView(
-                (float) Math.PI * ( 60.0f / 180.0f ), (float) width / (float) height, 0.125f, 512.0f );
+                (float) Math.PI * ( 60.0f / 180.0f ), (float) width / (float) height, 0.125f, 1024.0f );
             UpdateViewMatrix();
         }
 

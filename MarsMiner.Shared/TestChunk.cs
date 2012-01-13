@@ -44,8 +44,15 @@ namespace MarsMiner.Shared
             int octrees = ChunkHeight / ChunkSize;
             Octrees = new OctreeTest[ octrees ];
 
+            int dist2 = CenterX * CenterX + CenterZ * CenterZ;
+
+            int res = (
+                dist2 < 128 * 128 ? 1 :
+                dist2 < 256 * 256 ? 2 :
+                dist2 < 512 * 512 ? 4 : 8 );
+
             for ( int i = 0; i < octrees; ++i )
-                Octrees[ i ] = World.Generator.Generate( X, i * ChunkSize, Z, ChunkSize );
+                Octrees[ i ] = World.Generator.Generate( X, i * ChunkSize, Z, ChunkSize, res );
 
             Loaded = true;
         }

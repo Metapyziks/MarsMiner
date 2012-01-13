@@ -32,6 +32,8 @@ namespace MarsMiner
         private bool myIgnoreMouse;
         private bool myCaptureMouse;
 
+        private bool myClosing;
+
         public MarsMinerWindow()
             : base( 800, 600, new GraphicsMode( new ColorFormat( 8, 8, 8, 0 ), 8, 0, 4 ), "MarsMiner" )
         {
@@ -40,6 +42,7 @@ namespace MarsMiner
 
             myCaptureMouse = true;
             myIgnoreMouse = false;
+            myClosing = false;
 
             myTotalFrameTime = 0.0;
             myFramesCompleted = 0;
@@ -65,6 +68,9 @@ namespace MarsMiner
 
             myTestWorld.ChunkLoaded += delegate( object sender, TestChunkLoadEventArgs ea )
             {
+                if ( myClosing )
+                    return;
+
                 OctreeTestRenderer renderer = new OctreeTestRenderer( ea.Chunk );
                 renderer.UpdateVertices();
 
@@ -74,9 +80,14 @@ namespace MarsMiner
             };
             myTestWorld.ChunkUnloaded += delegate( object sender, TestChunkLoadEventArgs ea )
             {
+                if ( myClosing )
+                    return;
+
+                OctreeTestRenderer renderer = myTestRenderers.Find( x => x.Chunk == ea.Chunk );
                 Monitor.Enter( myTestRenderers );
-                myTestRenderers.Remove( myTestRenderers.Find( x => x.Chunk == ea.Chunk ) );
+                myTestRenderers.Remove( renderer );
                 Monitor.Exit( myTestRenderers );
+                renderer.Dispose();
             };
 
             myTestWorld.StartGenerator();
@@ -211,6 +222,8 @@ namespace MarsMiner
 
         public override void Dispose()
         {
+            myClosing = true;
+
             myTestWorld.StopGenerator();
 
             foreach ( OctreeTestRenderer renderer in myTestRenderers )
