@@ -19,19 +19,80 @@ namespace MarsMiner.Shared
 
     public class OctreeTestWorldGenerator
     {
-        public int WorldSize = 256;
-        public int GroundLevel = 127;
+        private Perlin myNoise;
+
+        public int Seed
+        {
+            get { return myNoise.Seed; }
+            set { myNoise.Seed = value; }
+        }
+        public int OctaveCount
+        {
+            get { return myNoise.OctaveCount; }
+            set { myNoise.OctaveCount = value; }
+        }
+        public double Frequency
+        {
+            get { return myNoise.Frequency; }
+            set { myNoise.Frequency = value; }
+        }
+        public double Lacunarity
+        {
+            get { return myNoise.Lacunarity; }
+            set { myNoise.Lacunarity = value; }
+        }
+        public double Persistence
+        {
+            get { return myNoise.Persistence; }
+            set { myNoise.Persistence = value; }
+        }
+        public NoiseQuality NoiseQuality
+        {
+            get { return myNoise.NoiseQuality; }
+            set { myNoise.NoiseQuality = value; }
+        }
+
+        public int WorldSize = 64;
+        public int GroundLevel = 32;
+
+        public int X = 0;
+        public int Z = 0;
+
+        public OctreeTestWorldGenerator()
+        {
+            myNoise = new Perlin();
+
+            OctaveCount = 6;
+            Frequency = 0.125;
+            Lacunarity = 2.0;
+            Persistence = 0.5;
+
+            WorldSize = 64;
+            GroundLevel = 32;
+
+            X = 0;
+            Z = 0;
+        }
 
         public OctreeTest Generate()
         {
-            int halfSize = WorldSize / 2;
-            OctreeTest octree = new OctreeTest( -halfSize, -GroundLevel, -halfSize, WorldSize );
-            Cuboid ground = new Cuboid
+            OctreeTest octree = new OctreeTest( X, 0, Z, WorldSize );
+
+            Cuboid cuboid = new Cuboid( 0, 0, 0, 1, 1, 1 );
+
+            for ( int x = 0; x < WorldSize; ++x )
             {
-                Left = -halfSize, Front = -halfSize, Bottom = -GroundLevel,
-                Right = halfSize, Back = halfSize, Top = 0
-            };
-            octree.SetCuboid( ground, OctreeTestBlockType.White );
+                for ( int z = 0; z < WorldSize; ++z )
+                {
+                    double val = myNoise.GetValue( (double) x / WorldSize, (double) z / WorldSize, 0.5 );
+
+                    cuboid.X = X + x;
+                    cuboid.Z = Z + z;
+                    cuboid.Height = GroundLevel + (int) ( val * WorldSize * 0.5 );
+
+                    octree.SetCuboid( cuboid, OctreeTestBlockType.White );
+                }
+            }
 
             return octree;
         }
