@@ -118,7 +118,7 @@ namespace MarsMiner.Client.Graphics
 
             indent = new String( indent.Reverse().ToArray() );
 
-            String logic = Logic.Trim().Replace( indent, "" );
+            String logic = indent.Length == 0 ? Logic.Trim() : Logic.Trim().Replace( indent, "" );
 
             if ( Type == ShaderType.FragmentShader )
             {

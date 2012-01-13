@@ -102,5 +102,10 @@ namespace MarsMiner.Shared
         {
             return ( X << 16 | Y << 8 | Z ) ^ ( Height << 16 | Depth << 8 | Width );
         }
+
+        public override string ToString()
+        {
+            return "(" + X + "," + Y + "," + Z + "),(" + Width + "," + Height + "," + Depth + ")";
+        }
     }
 }

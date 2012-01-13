@@ -10,30 +10,12 @@ namespace MarsMiner.Client.Graphics
 {
     public class OctreeTestShader : ShaderProgram
     {
-        private bool myUpdateMatrix;
-        private Vector3 myCameraPos;
-        private Vector2 myCameraRot;
         private Matrix4 myViewMatrix;
         private int myViewMatrixLoc;
 
-        public Vector3 CameraPos
-        {
-            get { return myCameraPos; }
-            set
-            {
-                myCameraPos = value;
-                myUpdateMatrix = true;
-            }
-        }
-        public Vector2 CameraRotation
-        {
-            get { return myCameraRot; }
-            set
-            {
-                myCameraRot = value;
-                myUpdateMatrix = true;
-            }
-        }
+        public Vector3 CameraPosition;
+        public Vector2 CameraRotation;
+        public Matrix4 PerspectiveMatrix;
 
         public OctreeTestShader()
         {
@@ -43,20 +25,43 @@ namespace MarsMiner.Client.Graphics
             vert.AddAttribute( ShaderVarType.Vec4, "in_colour" );
             vert.AddVarying( ShaderVarType.Vec4, "var_colour" );
             vert.Logic = @"
-                var_colour = in_colour;
-                gl_Position = view_matrix * vec4( in_position, 1.0 );
+                void main( void )
+                {
+                    var_colour = in_colour;
+                    gl_Position = view_matrix * vec4( in_position, 1.0 );
+                }
             ";
 
             ShaderBuilder frag = new ShaderBuilder( ShaderType.FragmentShader, false );
-            frag.Logic = "out_frag_colour = var_colour;";
+            frag.AddVarying( ShaderVarType.Vec4, "var_colour" );
+            frag.Logic = @"
+                void main( void )
+                {
+                    out_frag_colour = var_colour;
+                }
+            ";
 
             VertexSource = vert.Generate( GL3 );
             FragmentSource = frag.Generate( GL3 );
 
             BeginMode = BeginMode.Quads;
 
-            CameraPos = new Vector3();
+            CameraPosition = new Vector3();
             CameraRotation = new Vector2();
+        }
+
+        public OctreeTestShader( int width, int height )
+            : this()
+        {
+            Create();
+            SetScreenSize( width, height );
+        }
+
+        public void SetScreenSize( int width, int height )
+        {
+            PerspectiveMatrix = Matrix4.CreatePerspectiveFieldOfView(
+                (float) Math.PI * ( 60.0f / 180.0f ), (float) width / (float) height, 0.125f, 512.0f );
+            UpdateViewMatrix();
         }
 
         protected override void OnCreate()
@@ -69,27 +74,15 @@ namespace MarsMiner.Client.Graphics
             myViewMatrixLoc = GL.GetUniformLocation( Program, "view_matrix" );
         }
 
-        private void UpdateViewMatrix()
+        public void UpdateViewMatrix()
         {
-            myViewMatrix = Matrix4.Identity * Matrix4.CreateTranslation( -CameraPos ) *
-                Matrix4.CreateRotationY( CameraRotation.Y ) * Matrix4.CreateRotationX( CameraRotation.X );
+            Matrix4 yRot = Matrix4.CreateRotationY( CameraRotation.Y );
+            Matrix4 xRot = Matrix4.CreateRotationX( CameraRotation.X );
+            Matrix4 trns = Matrix4.CreateTranslation( -CameraPosition );
+
+            myViewMatrix = Matrix4.Mult( Matrix4.Mult( Matrix4.Mult( trns, yRot), xRot ), PerspectiveMatrix );
 
             GL.UniformMatrix4( myViewMatrixLoc, false, ref myViewMatrix );
-
-            myUpdateMatrix = false;
-        }
-
-        protected override void OnBegin()
-        {
-            if ( myUpdateMatrix )
-                UpdateViewMatrix();
-
-            GL.Enable( EnableCap.DepthTest | EnableCap.CullFace );
-        }
-
-        protected override void OnEnd()
-        {
-            GL.Disable( EnableCap.DepthTest | EnableCap.CullFace );
         }
     }
 }

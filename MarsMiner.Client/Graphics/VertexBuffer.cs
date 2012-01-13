@@ -93,10 +93,14 @@ namespace MarsMiner.Client.Graphics
         {
             if ( myDataSet )
             {
+                if ( !myShader.Active )
+                    myShader.Use();
+
                 GL.BindVertexArray( VaoID );
                 GL.DrawArrays( BeginMode.Quads, 0, myLength );
-                CheckForError();
                 GL.BindVertexArray( 0 );
+
+                CheckForError();
             }
         }
 

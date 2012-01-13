@@ -13,7 +13,7 @@ namespace MarsMiner
             Res.MountArchive( Res.LoadArchive( "Data" + Path.DirectorySeparatorChar + "cl_baseui.rsa" ) );
 
             var window = new MarsMinerWindow();
-            window.Run();
+            window.Run( 60.0f );
             window.Dispose();
         }
     }

@@ -123,9 +123,12 @@ namespace MarsMiner.Shared
             Size = size;
         }
 
-        public Octree( int size, int x, int y, int z )
+        public Octree( int x, int y, int z, int size )
+            : this( size )
         {
-            Size = size;
+            X = x;
+            Y = y;
+            Z = z;
         }
 
         private Octree( Octree<T> parent, Octant octant )
@@ -133,9 +136,11 @@ namespace MarsMiner.Shared
         {
             Parent = parent;
 
-            X = Parent.X + octant.X * Parent.Size;
-            Y = Parent.Y + octant.Y * Parent.Size;
-            Z = Parent.Z + octant.Z * Parent.Size;
+            X = Parent.X + octant.X * Size;
+            Y = Parent.Y + octant.Y * Size;
+            Z = Parent.Z + octant.Z * Size;
+
+            myValue = parent.myValue;
         }
 
         public Octree<T> this[ Octant octant ]
@@ -203,21 +208,33 @@ namespace MarsMiner.Shared
             return myChildren[ 0 ].Value;
         }
 
+        protected virtual bool IsSolid()
+        {
+            return true;
+        }
+
         public void SetCuboid( Cuboid cuboid, T value )
         {
             Cuboid cube = Cube;
             if ( cube.IsIntersecting( cuboid ) )
             {
                 Cuboid intersection = cube.FindIntersection( cuboid );
-                if ( intersection.Equals( cuboid ) )
+                if ( intersection.Equals( cube ) )
                     Merge( value );
                 else if ( intersection.Volume != 0 )
                 {
-                    Partition();
+                    if( !HasChildren )
+                        Partition();
+
                     foreach ( Octree<T> child in myChildren )
                         child.SetCuboid( intersection, value );
                 }
             }
+        }
+
+        public void SetCuboid( int x, int y, int z, int width, int height, int depth, T value )
+        {
+            SetCuboid( new Cuboid( x, y, z, width, height, depth ), value );
         }
 
         public IEnumerator<Octree<T>> GetEnumerator()
@@ -228,6 +245,14 @@ namespace MarsMiner.Shared
         System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
         {
             return GetEnumerator();
+        }
+
+        public override string ToString()
+        {
+            if ( !HasChildren )
+                return Value.ToString();
+            else
+                return "Octree branch";
         }
     }
 
@@ -268,11 +293,15 @@ namespace MarsMiner.Shared
         {
             if ( Octree.HasChildren )
             {
-                if ( myChild != null && myCurOctant.Index == 0 )
-                    return false;
+                if ( myChild == null || !myChild.MoveNext() )
+                {
+                    if ( myChild != null && myCurOctant.Index == 0 )
+                        return false;
 
-                myChild = new OctreeEnumerator<T>( Octree[ myCurOctant ] );
-                myCurOctant = myCurOctant.Next;
+                    myChild = new OctreeEnumerator<T>( Octree[ myCurOctant ] );
+                    myChild.MoveNext();
+                    myCurOctant = myCurOctant.Next;
+                }
 
                 return true;
             }
