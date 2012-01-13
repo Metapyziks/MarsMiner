@@ -13,9 +13,41 @@ namespace MarsMiner.Client.Graphics
         private Matrix4 myViewMatrix;
         private int myViewMatrixLoc;
 
-        public Vector3 CameraPosition;
-        public Vector2 CameraRotation;
-        public Matrix4 PerspectiveMatrix;
+        private Vector3 myCameraPosition;
+        private Vector2 myCameraRotation;
+        private Matrix4 myPerspectiveMatrix;
+
+        private bool myViewChanged;
+
+        public Vector3 CameraPosition
+        {
+            get { return myCameraPosition; }
+            set
+            {
+                myCameraPosition = value;
+                myViewChanged = true;
+            }
+        }
+        public Vector2 CameraRotation
+        {
+            get { return myCameraRotation; }
+            set
+            {
+                myCameraRotation = value;
+                myViewChanged = true;
+            }
+        }
+        public Matrix4 PerspectiveMatrix
+        {
+            get { return myPerspectiveMatrix; }
+            set
+            {
+                myPerspectiveMatrix = value;
+                myViewChanged = true;
+            }
+        }
+
+        public bool LineMode { get; set; }
 
         public OctreeTestShader()
         {
@@ -74,7 +106,7 @@ namespace MarsMiner.Client.Graphics
             myViewMatrixLoc = GL.GetUniformLocation( Program, "view_matrix" );
         }
 
-        public void UpdateViewMatrix()
+        private void UpdateViewMatrix()
         {
             Matrix4 yRot = Matrix4.CreateRotationY( CameraRotation.Y );
             Matrix4 xRot = Matrix4.CreateRotationX( CameraRotation.X );
@@ -83,6 +115,30 @@ namespace MarsMiner.Client.Graphics
             myViewMatrix = Matrix4.Mult( Matrix4.Mult( Matrix4.Mult( trns, yRot), xRot ), PerspectiveMatrix );
 
             GL.UniformMatrix4( myViewMatrixLoc, false, ref myViewMatrix );
+        }
+
+        protected override void OnStartBatch()
+        {
+            if ( myViewChanged )
+                UpdateViewMatrix();
+
+            GL.Enable( EnableCap.DepthTest );
+            GL.Enable( EnableCap.CullFace );
+
+            if ( LineMode )
+                GL.PolygonMode( MaterialFace.Front, PolygonMode.Line );
+
+            foreach ( AttributeInfo info in Attributes )
+                GL.EnableVertexAttribArray( info.Location );
+        }
+
+        protected override void OnEndBatch()
+        {
+            if ( LineMode )
+                GL.PolygonMode( MaterialFace.Front, PolygonMode.Fill );
+
+            GL.Disable( EnableCap.DepthTest );
+            GL.Enable( EnableCap.CullFace );
         }
     }
 }

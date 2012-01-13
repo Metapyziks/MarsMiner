@@ -89,7 +89,7 @@ namespace MarsMiner.Client.Graphics
             AddTexture( "texture0", TextureUnit.Texture0 );
         }
 
-        protected override void OnBegin()
+        protected override void OnStartBatch()
         {
             GL.BlendFunc( BlendingFactorSrc.SrcAlpha, BlendingFactorDest.OneMinusSrcAlpha );
         }

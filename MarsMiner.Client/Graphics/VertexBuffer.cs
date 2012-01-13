@@ -6,9 +6,8 @@ namespace MarsMiner.Client.Graphics
 {
     sealed class VertexBuffer
     {
-        private ShaderProgram myShader;
+        private int myStride;
 
-        private bool mySetUp = false;
         private bool myDataSet = false;
 
         private int myVaoID;
@@ -37,48 +36,25 @@ namespace MarsMiner.Client.Graphics
             }
         }
 
-        public VertexBuffer( ShaderProgram shader )
+        public VertexBuffer( int stride )
         {
-            myShader = shader;
+            myStride = stride;
         }
 
         public void SetData( float[] vertices )
         {
-            if ( !mySetUp )
-                SetUp();
-
-            myLength = vertices.Length / myShader.VertexDataSize;
+            myLength = vertices.Length / myStride;
 
             GL.BindVertexArray( VaoID );
 
             GL.BindBuffer( BufferTarget.ArrayBuffer, VboID );
             GL.BufferData( BufferTarget.ArrayBuffer, new IntPtr( vertices.Length * sizeof( float ) ), vertices, BufferUsageHint.StaticDraw );
-
             GL.BindBuffer( BufferTarget.ArrayBuffer, 0 );
             GL.BindVertexArray( 0 );
+
+            CheckForError();
 
             myDataSet = true;
-        }
-
-        public void SetUp()
-        {
-            int stride = myShader.VertexDataStride;
-
-            GL.BindVertexArray( VaoID );
-
-            GL.BindBuffer( BufferTarget.ArrayBuffer, VboID );
-
-            foreach ( AttributeInfo info in myShader.Attributes )
-            {
-                GL.VertexAttribPointer( info.Location, info.Size, info.PointerType,
-                    info.Normalize, myShader.VertexDataStride, info.Offset );
-                GL.EnableVertexAttribArray( info.Location );
-            }
-
-            GL.BindBuffer( BufferTarget.ArrayBuffer, 0 );
-            GL.BindVertexArray( 0 );
-
-            mySetUp = true;
         }
 
         private void CheckForError()
@@ -89,14 +65,22 @@ namespace MarsMiner.Client.Graphics
                 throw new Exception( "OpenGL hates your guts: " + error.ToString() );
         }
 
-        public void Render()
+        public void Render( ShaderProgram shader )
         {
             if ( myDataSet )
             {
-                if ( !myShader.Active )
-                    myShader.Use();
-
                 GL.BindVertexArray( VaoID );
+                GL.BindBuffer( BufferTarget.ArrayBuffer, VboID );
+
+                foreach ( AttributeInfo info in shader.Attributes )
+                {
+                    GL.VertexAttribPointer( info.Location, info.Size, info.PointerType,
+                        info.Normalize, shader.VertexDataStride, info.Offset );
+                    GL.EnableVertexAttribArray( info.Location );
+                }
+
+                GL.BindBuffer( BufferTarget.ArrayBuffer, 0 );
+
                 GL.DrawArrays( BeginMode.Quads, 0, myLength );
                 GL.BindVertexArray( 0 );
 

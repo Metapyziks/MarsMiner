@@ -283,16 +283,7 @@ namespace MarsMiner.Client.Graphics
 
         public void Begin()
         {
-            if ( Started )
-                throw new Exception( "Must call End() first!" );
-
-            Use();
-
-            OnBegin();
-
-            foreach( AttributeInfo info in myAttributes )
-                GL.VertexAttribPointer( info.Location, info.Size,
-                    info.PointerType, info.Normalize, VertexDataStride, info.Offset );
+            StartBatch();
 
             ErrorCheck( "begin" );
             GL.Begin( BeginMode );
@@ -300,25 +291,38 @@ namespace MarsMiner.Client.Graphics
             Started = true;
         }
 
-        protected virtual void OnBegin()
+        public void StartBatch()
+        {
+            Use();
+
+            foreach ( AttributeInfo info in myAttributes )
+                GL.VertexAttribPointer( info.Location, info.Size,
+                    info.PointerType, info.Normalize, VertexDataStride, info.Offset );
+
+            OnStartBatch();
+        }
+
+        protected virtual void OnStartBatch()
         {
 
         }
 
         public void End()
         {
-            if ( !Started )
-                throw new Exception( "Must call Begin() first!" );
-
             Started = false;
             GL.End();
 
-            OnEnd();
+            EndBatch();
 
             ErrorCheck( "end" );
         }
 
-        protected virtual void OnEnd()
+        public void EndBatch()
+        {
+            OnEndBatch();
+        }
+
+        protected virtual void OnEndBatch()
         {
 
         }

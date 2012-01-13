@@ -40,7 +40,7 @@ namespace MarsMiner
         protected override void OnLoad( System.EventArgs e )
         {
             mySpriteShader = new SpriteShader( Width, Height );
-            myUIRoot = new UIPanel( new Vector2( Width, Height ) ) { Colour = Color4.CornflowerBlue };
+            myUIRoot = new UIObject( new Vector2( Width, Height ) );
 
             Mouse.Move += OnMouseMove;
             Mouse.ButtonUp += OnMouseButtonEvent;
@@ -48,7 +48,7 @@ namespace MarsMiner
 
             myTestOctree = new Octree<OctreeTestBlockType>( -128, -128, -128, 256 );
             myTestShader = new OctreeTestShader( Width, Height );
-            myTestRenderer = new OctreeTestRenderer( myTestOctree, myTestShader );
+            myTestRenderer = new OctreeTestRenderer( myTestOctree );
 
             myTestOctree.SetCuboid( new Cuboid( -128, 0, -128, 256, 128, 256 ), OctreeTestBlockType.Red );
             myTestOctree.SetCuboid( new Cuboid( -8, -16, -8, 16, 32, 16 ), OctreeTestBlockType.Blue );
@@ -56,7 +56,8 @@ namespace MarsMiner
             myTestRenderer.UpdateVertices();
 
             myTestShader.CameraPosition = new Vector3( 0.0f, 8.0f, -64.0f );
-            myTestShader.UpdateViewMatrix();
+
+            GL.ClearColor( Color4.CornflowerBlue );
         }
 
         protected override void OnRenderFrame( FrameEventArgs e )
@@ -64,25 +65,13 @@ namespace MarsMiner
             GL.Clear( ClearBufferMask.ColorBufferBit );
             GL.Clear( ClearBufferMask.DepthBufferBit );
 
-            GL.Enable( EnableCap.DepthTest );
-            GL.Enable( EnableCap.CullFace );
+            myTestShader.StartBatch();
+            myTestRenderer.Render( myTestShader );
+            myTestShader.EndBatch();
 
-            if( myLineMode )
-                GL.PolygonMode( MaterialFace.Front, PolygonMode.Line );
-
-            myTestRenderer.Render();
-
-            if ( myLineMode )
-                GL.PolygonMode( MaterialFace.Front, PolygonMode.Fill );
-
-            GL.Disable( EnableCap.DepthTest );
-            GL.Enable( EnableCap.CullFace );
-
-            /*
-            mySpriteShader.Begin();
-            myUIRoot.Render( mySpriteShader );
-            mySpriteShader.End();
-            */
+            //mySpriteShader.Begin();
+            //myUIRoot.Render( mySpriteShader );
+            //mySpriteShader.End();
 
             SwapBuffers();
         }
@@ -120,7 +109,6 @@ namespace MarsMiner
             {
                 movement.Normalize();
                 myTestShader.CameraPosition = myTestShader.CameraPosition + movement;
-                myTestShader.UpdateViewMatrix();
             }
         }
 
@@ -163,7 +151,6 @@ namespace MarsMiner
                 rot.X = Tools.Clamp( rot.X, (float) -Math.PI / 2.0f, (float) Math.PI / 2.0f );
 
                 myTestShader.CameraRotation = rot;
-                myTestShader.UpdateViewMatrix();
 
                 myIgnoreMouse = true;
                 System.Windows.Forms.Cursor.Position = new System.Drawing.Point( Bounds.Left + Width / 2, Bounds.Top + Height / 2 );

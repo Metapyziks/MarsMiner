@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 
 using OpenTK.Graphics;
+using OpenTK.Graphics.OpenGL;
 
 using MarsMiner.Shared;
 
@@ -32,10 +33,10 @@ namespace MarsMiner.Client.Graphics
 
         public readonly Octree<OctreeTestBlockType> Octree;
 
-        public OctreeTestRenderer( Octree<OctreeTestBlockType> octree, ShaderProgram shader )
+        public OctreeTestRenderer( Octree<OctreeTestBlockType> octree )
         {
             Octree = octree;
-            myVertexBuffer = new VertexBuffer( shader );
+            myVertexBuffer = new VertexBuffer( 7 );
         }
 
         public void UpdateVertices()
@@ -100,9 +101,9 @@ namespace MarsMiner.Client.Graphics
             return verts.ToArray();
         }
 
-        public void Render()
+        public void Render( ShaderProgram shader )
         {
-            myVertexBuffer.Render();
+            myVertexBuffer.Render( shader );
         }
     }
 }
