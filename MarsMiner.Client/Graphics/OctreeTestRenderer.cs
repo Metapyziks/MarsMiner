@@ -9,16 +9,6 @@ namespace MarsMiner.Client.Graphics
 {
     public class OctreeTestRenderer
     {
-        private static readonly Color4[] stBlockColours = new Color4[]
-        {
-            Color4.Black,
-            Color4.White,
-            Color4.Black,
-            Color4.Red,
-            Color4.Green,
-            Color4.Blue,
-        };
-
         private VertexBuffer myVertexBuffer;
         private bool myVertexDataChanged;
 
@@ -27,7 +17,7 @@ namespace MarsMiner.Client.Graphics
         public OctreeTestRenderer( TestChunk chunk )
         {
             Chunk = chunk;
-            myVertexBuffer = new VertexBuffer( 7 );
+            myVertexBuffer = new VertexBuffer( 4 );
 
             myVertexDataChanged = true;
         }
@@ -48,69 +38,65 @@ namespace MarsMiner.Client.Graphics
                     if ( octree.Value == OctreeTestBlockType.Empty )
                         continue;
 
-                    Color4 colour = stBlockColours[ (int) octree.Value ];
-
                     float x0 = octree.X; float x1 = octree.X + octree.Size;
                     float y0 = octree.Y; float y1 = octree.Y + octree.Size;
                     float z0 = octree.Z; float z1 = octree.Z + octree.Size;
 
-                    float r = ( octree.X % ( octree.Size * 2 ) ) / 2.0f + 0.5f;
-                    float g = ( octree.Y % ( octree.Size * 2 ) ) / 2.0f + 0.5f;
-                    float b = ( octree.Z % ( octree.Size * 2 ) ) / 2.0f + 0.5f;
-                    float a = colour.A;
+                    float r0 = octree.Bottom / 256.0f;
+                    float r1 = octree.Top / 256.0f;
 
                     if ( ( octree.Exposed & Face.Front ) != 0 )
                         verts.AddRange( new float[]
                         {
-                            x0, y0, z0, r, g, b, a,
-                            x1, y0, z0, r, g, b, a,
-                            x1, y1, z0, r, g, b, a,
-                            x0, y1, z0, r, g, b, a,
+                            x0, y0, z0, r0,
+                            x1, y0, z0, r0,
+                            x1, y1, z0, r1,
+                            x0, y1, z0, r1,
                         } );
 
                     if ( ( octree.Exposed & Face.Right ) != 0 )
                         verts.AddRange( new float[]
                         {
-                            x1, y0, z0, r, g, b, a,
-                            x1, y0, z1, r, g, b, a,
-                            x1, y1, z1, r, g, b, a,
-                            x1, y1, z0, r, g, b, a,
+                            x1, y0, z0, r0,
+                            x1, y0, z1, r0, 
+                            x1, y1, z1, r1,
+                            x1, y1, z0, r1,
                         } );
 
                     if ( ( octree.Exposed & Face.Back ) != 0 )
                         verts.AddRange( new float[]
                         {
-                            x1, y0, z1, r, g, b, a,
-                            x0, y0, z1, r, g, b, a,
-                            x0, y1, z1, r, g, b, a,
-                            x1, y1, z1, r, g, b, a,
+                            x1, y0, z1, r0,
+                            x0, y0, z1, r0,
+                            x0, y1, z1, r1,
+                            x1, y1, z1, r1,
                         } );
 
                     if ( ( octree.Exposed & Face.Left ) != 0 )
                         verts.AddRange( new float[]
                         {
-                            x0, y0, z1, r, g, b, a,
-                            x0, y0, z0, r, g, b, a,
-                            x0, y1, z0, r, g, b, a,
-                            x0, y1, z1, r, g, b, a,
+                            x0, y0, z1, r0,
+                            x0, y0, z0, r0,
+                            x0, y1, z0, r1,
+                            x0, y1, z1, r1,
                         } );
 
                     if ( ( octree.Exposed & Face.Bottom ) != 0 )
                         verts.AddRange( new float[]
                         {
-                            x0, y0, z0, r, g, b, a,
-                            x0, y0, z1, r, g, b, a,
-                            x1, y0, z1, r, g, b, a,
-                            x1, y0, z0, r, g, b, a,
+                            x0, y0, z0, r0,
+                            x0, y0, z1, r0,
+                            x1, y0, z1, r0,
+                            x1, y0, z0, r0,
                         } );
 
                     if ( ( octree.Exposed & Face.Top ) != 0 )
                         verts.AddRange( new float[]
                         {
-                            x0, y1, z0, r, g, b, a,
-                            x1, y1, z0, r, g, b, a,
-                            x1, y1, z1, r, g, b, a,
-                            x0, y1, z1, r, g, b, a,
+                            x0, y1, z0, r1,
+                            x1, y1, z0, r1,
+                            x1, y1, z1, r1,
+                            x0, y1, z1, r1,
                         } );
                 }
             }

@@ -54,12 +54,12 @@ namespace MarsMiner.Client.Graphics
             ShaderBuilder vert = new ShaderBuilder( ShaderType.VertexShader, false );
             vert.AddUniform( ShaderVarType.Mat4, "view_matrix" );
             vert.AddAttribute( ShaderVarType.Vec3, "in_position" );
-            vert.AddAttribute( ShaderVarType.Vec4, "in_colour" );
+            vert.AddAttribute( ShaderVarType.Float, "in_shade" );
             vert.AddVarying( ShaderVarType.Vec4, "var_colour" );
             vert.Logic = @"
                 void main( void )
                 {
-                    var_colour = in_colour;
+                    var_colour = vec4( in_shade * vec3( /* 1.0, 1.0, 1.0 */0.357, 0.247, 0.192 ), 1.0 );
                     gl_Position = view_matrix * vec4( in_position, 1.0 );
                 }
             ";
@@ -101,7 +101,7 @@ namespace MarsMiner.Client.Graphics
             base.OnCreate();
 
             AddAttribute( "in_position", 3 );
-            AddAttribute( "in_colour", 4 );
+            AddAttribute( "in_shade", 1 );
 
             myViewMatrixLoc = GL.GetUniformLocation( Program, "view_matrix" );
         }
