@@ -59,7 +59,8 @@ namespace MarsMiner.Client.Graphics
             vert.Logic = @"
                 void main( void )
                 {
-                    var_colour = vec4( in_shade * vec3( /* 1.0, 1.0, 1.0 */0.357, 0.247, 0.192 ), 1.0 );
+                    vec3 clr = vec3( 0.357, 0.247, 0.192 );
+                    var_colour = vec4( in_shade * clr, 1.0 );
                     gl_Position = view_matrix * vec4( in_position, 1.0 );
                 }
             ";
@@ -92,7 +93,7 @@ namespace MarsMiner.Client.Graphics
         public void SetScreenSize( int width, int height )
         {
             PerspectiveMatrix = Matrix4.CreatePerspectiveFieldOfView(
-                (float) Math.PI * ( 60.0f / 180.0f ), (float) width / (float) height, 0.125f, 1024.0f );
+                (float) Math.PI * ( 60.0f / 180.0f ), (float) width / (float) height, 0.125f, 2048.0f );
             UpdateViewMatrix();
         }
 

@@ -19,90 +19,85 @@ namespace MarsMiner.Shared
 
     public class OctreeTestWorldGenerator
     {
-        private Perlin myNoise;
+        private Perlin myHillyNoise;
+        private Perlin myPlainsNoise;
+        private Perlin myTransNoise;
 
-        public int Seed
-        {
-            get { return myNoise.Seed; }
-            set { myNoise.Seed = value; }
-        }
-        public int OctaveCount
-        {
-            get { return myNoise.OctaveCount; }
-            set { myNoise.OctaveCount = value; }
-        }
-        public double Frequency
-        {
-            get { return myNoise.Frequency; }
-            set { myNoise.Frequency = value; }
-        }
-        public double Lacunarity
-        {
-            get { return myNoise.Lacunarity; }
-            set { myNoise.Lacunarity = value; }
-        }
-        public double Persistence
-        {
-            get { return myNoise.Persistence; }
-            set { myNoise.Persistence = value; }
-        }
-        public NoiseQuality NoiseQuality
-        {
-            get { return myNoise.NoiseQuality; }
-            set { myNoise.NoiseQuality = value; }
-        }
+        private int myMinHilly;
+        private int myMaxHilly;
 
-        public int MinAltitude;
-        public int MaxAltitude;
+        private int myMinPlains;
+        private int myMaxPlains;
 
         public OctreeTestWorldGenerator()
         {
-            myNoise = new Perlin();
+            myHillyNoise = new Perlin
+            {
+                OctaveCount = 6,
+                Frequency = 1.0,
+                Lacunarity = 2.0,
+                Persistence = 0.5
+            };
 
-            OctaveCount = 6;
-            Frequency = 0.25;
-            Lacunarity = 2.0;
-            Persistence = 0.5;
+            myPlainsNoise = new Perlin
+            {
+                OctaveCount = 4,
+                Frequency = 1.0 / 12.0,
+                Lacunarity = 2.0,
+                Persistence = 0.5
+            };
 
-            MinAltitude = 64;
-            MaxAltitude = 192;
+            myTransNoise = new Perlin
+            {
+                OctaveCount = 6,
+                Frequency = 1.0 / 32.0,
+                Lacunarity = 2.0,
+                Persistence = 1.0
+            };
+
+            myMinHilly = 64;
+            myMaxHilly = 240;
+
+            myMinPlains = 64;
+            myMaxPlains = 68;
         }
 
         public OctreeTest Generate( int x, int y, int z, int size, int resolution = 1 )
         {
             OctreeTest octree = new OctreeTest( x, y, z, size );
 
-            int altDiff = ( MaxAltitude - MinAltitude ) / 2;
-            int altMid = ( MinAltitude + altDiff ) / resolution * resolution;
+            int min = System.Math.Min( myMinHilly, myMinPlains );
 
-            octree.SetCuboid( x, 0, z, size, altMid, size, OctreeTestBlockType.White );
+            octree.SetCuboid( x, 0, z, size, System.Math.Min( myMinHilly, myMinPlains ), size, OctreeTestBlockType.White );
 
-            if ( y + size > MinAltitude )
+            if ( y + size > min )
             {
+                int hillDiff = ( myMaxHilly - myMinHilly ) / 2;
+                int hillMid = myMinHilly + hillDiff;
+                int plainDiff = ( myMinPlains - myMaxPlains ) / 2;
+                int plainMid = myMaxPlains + plainDiff;
+
                 Cuboid cuboid = new Cuboid( 0, 0, 0, resolution, 1, resolution );
 
                 for ( int nx = 0; nx < size; nx += resolution )
                 {
                     for ( int nz = 0; nz < size; nz += resolution )
                     {
-                        double val = myNoise.GetValue( (double) ( x + nx ) / size, (double) ( z + nz ) / size, 0.5 );
-                        int height = (int) ( val * altDiff ) / resolution * resolution;
+                        double dx = ( x + nx ) / 256.0;
+                        double dy = ( z + nz ) / 256.0;
+
+                        double hillVal = myHillyNoise.GetValue( dx, dy, 0.5 ) * hillDiff + hillMid;
+                        double plainVal = myHillyNoise.GetValue( dx, dy, 0.5 ) * plainDiff + plainMid;
+                        double trans = ( myTransNoise.GetValue( dx, dy, 0.5 ) + 1.0 ) / 2.0;
+                        trans *= trans;
+
+                        int height = (int) ( trans * hillVal + ( 1 - trans ) * plainVal ) / resolution * resolution;
 
                         cuboid.X = x + nx;
                         cuboid.Z = z + nz;
 
-                        if ( height > 0 )
-                        {
-                            cuboid.Y = altMid;
-                            cuboid.Height = height;
-                            octree.SetCuboid( cuboid, OctreeTestBlockType.White );
-                        }
-                        else if( height < 0 )
-                        {
-                            cuboid.Y = altMid + height;
-                            cuboid.Height = -height;
-                            octree.SetCuboid( cuboid, OctreeTestBlockType.Empty );
-                        }
+                        cuboid.Height = height;
+                        octree.SetCuboid( cuboid, OctreeTestBlockType.White );
                     }
                 }
             }
