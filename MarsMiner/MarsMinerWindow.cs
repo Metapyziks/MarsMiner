@@ -16,11 +16,14 @@ namespace MarsMiner
         private SpriteShader mySpriteShader;
         private UIObject myUIRoot;
 
+        private UILabel myFPSText;
+
+        private double myTotalFrameTime;
+        private int myFramesCompleted;
+
         private Octree<OctreeTestBlockType> myTestOctree;
         private OctreeTestShader myTestShader;
         private OctreeTestRenderer myTestRenderer;
-
-        private bool myLineMode;
 
         private bool myIgnoreMouse;
         private bool myCaptureMouse;
@@ -31,16 +34,21 @@ namespace MarsMiner
             WindowBorder = WindowBorder.Fixed;
             VSync = VSyncMode.Off;
 
-            myLineMode = false;
-
             myCaptureMouse = true;
             myIgnoreMouse = false;
+
+            myTotalFrameTime = 0.0;
+            myFramesCompleted = 0;
         }
 
         protected override void OnLoad( System.EventArgs e )
         {
             mySpriteShader = new SpriteShader( Width, Height );
             myUIRoot = new UIObject( new Vector2( Width, Height ) );
+
+            myFPSText = new UILabel( Font.Large, new Vector2( 4.0f, 4.0f ) );
+            myFPSText.Text = "FT: ??ms FPS: ??ms";
+            myUIRoot.AddChild( myFPSText );
 
             Mouse.Move += OnMouseMove;
             Mouse.ButtonUp += OnMouseButtonEvent;
@@ -62,22 +70,40 @@ namespace MarsMiner
 
         protected override void OnRenderFrame( FrameEventArgs e )
         {
+            DateTime start = DateTime.Now;
+
             GL.Clear( ClearBufferMask.ColorBufferBit );
             GL.Clear( ClearBufferMask.DepthBufferBit );
-
+            
             myTestShader.StartBatch();
             myTestRenderer.Render( myTestShader );
             myTestShader.EndBatch();
 
-            //mySpriteShader.Begin();
-            //myUIRoot.Render( mySpriteShader );
-            //mySpriteShader.End();
+            mySpriteShader.Begin();
+            myUIRoot.Render( mySpriteShader );
+            mySpriteShader.End();
 
             SwapBuffers();
+
+            DateTime end = DateTime.Now;
+
+            myTotalFrameTime += ( end - start ).TotalMilliseconds;
+            ++myFramesCompleted;
         }
 
         protected override void OnUpdateFrame( FrameEventArgs e )
         {
+            if ( myTotalFrameTime >= 1000.0 )
+            {
+                double period = myTotalFrameTime / myFramesCompleted;
+                double freq = 1000.0 / period;
+
+                myTotalFrameTime = 0.0;
+                myFramesCompleted = 0;
+
+                myFPSText.Text = "FT: " + period.ToString( "F" ) + "ms FPS: " + freq.ToString( "F" ) + "ms";
+            }
+
             Vector3 movement = new Vector3( 0.0f, 0.0f, 0.0f );
             float angleY = myTestShader.CameraRotation.Y;
             float angleX = myTestShader.CameraRotation.X;
@@ -124,7 +150,7 @@ namespace MarsMiner
                         myCaptureMouse = false;
                         break;
                     case 'l':
-                        myLineMode = !myLineMode;
+                        myTestShader.LineMode = !myTestShader.LineMode;
                         break;
                 }
             }

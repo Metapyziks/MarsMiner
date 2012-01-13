@@ -127,9 +127,6 @@ namespace MarsMiner.Client.Graphics
 
             if ( LineMode )
                 GL.PolygonMode( MaterialFace.Front, PolygonMode.Line );
-
-            foreach ( AttributeInfo info in Attributes )
-                GL.EnableVertexAttribArray( info.Location );
         }
 
         protected override void OnEndBatch()
@@ -138,7 +135,7 @@ namespace MarsMiner.Client.Graphics
                 GL.PolygonMode( MaterialFace.Front, PolygonMode.Fill );
 
             GL.Disable( EnableCap.DepthTest );
-            GL.Enable( EnableCap.CullFace );
+            GL.Disable( EnableCap.CullFace );
         }
     }
 }

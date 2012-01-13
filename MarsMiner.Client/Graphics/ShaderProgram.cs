@@ -285,6 +285,10 @@ namespace MarsMiner.Client.Graphics
         {
             StartBatch();
 
+            foreach ( AttributeInfo info in myAttributes )
+                GL.VertexAttribPointer( info.Location, info.Size,
+                    info.PointerType, info.Normalize, VertexDataStride, info.Offset );
+
             ErrorCheck( "begin" );
             GL.Begin( BeginMode );
 
@@ -294,10 +298,6 @@ namespace MarsMiner.Client.Graphics
         public void StartBatch()
         {
             Use();
-
-            foreach ( AttributeInfo info in myAttributes )
-                GL.VertexAttribPointer( info.Location, info.Size,
-                    info.PointerType, info.Normalize, VertexDataStride, info.Offset );
 
             OnStartBatch();
         }
