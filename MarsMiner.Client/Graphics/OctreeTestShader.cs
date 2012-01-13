@@ -125,6 +125,8 @@ namespace MarsMiner.Client.Graphics
             GL.Enable( EnableCap.DepthTest );
             GL.Enable( EnableCap.CullFace );
 
+            GL.CullFace( CullFaceMode.Front );
+
             if ( LineMode )
                 GL.PolygonMode( MaterialFace.Front, PolygonMode.Line );
         }

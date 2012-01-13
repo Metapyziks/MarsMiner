@@ -20,13 +20,51 @@ namespace MarsMiner.Shared
     {
         private T myValue;
         private Octree<T>[] myChildren;
-        private Face mySolidity;
+        private Face myChangedFaces;
+        private Face myExposed;
 
         public readonly int X;
         public readonly int Y;
         public readonly int Z;
 
         public readonly int Size;
+
+        public int Left
+        {
+            get { return X; }
+        }
+        public int Bottom
+        {
+            get { return Y; }
+        }
+        public int Front
+        {
+            get { return Z; }
+        }
+        public int Right
+        {
+            get { return X + Size; }
+        }
+        public int Top
+        {
+            get { return Y + Size; }
+        }
+        public int Back
+        {
+            get { return Z + Size; }
+        }
+
+        public Face Solidity { get; private set; }
+        public Face Exposed
+        {
+            get
+            {
+                if ( myChangedFaces != Face.None )
+                    UpdateExposedness();
+
+                return myExposed;
+            }
+        }
 
         public Cuboid Cube
         {
@@ -63,6 +101,10 @@ namespace MarsMiner.Shared
         public Octree( int size )
         {
             Size = size;
+
+            UpdateSolidity();
+
+            myChangedFaces = Face.All;
         }
 
         public Octree( int x, int y, int z, int size )
@@ -83,7 +125,6 @@ namespace MarsMiner.Shared
             Z = Parent.Z + octant.Z * Size;
 
             myValue = parent.myValue;
-            mySolidity = Face.None;
         }
 
         public Octree<T> this[ Octant octant ]
@@ -129,8 +170,27 @@ namespace MarsMiner.Shared
             if ( HasChildren )
                 myChildren = null;
 
+            UpdateSolidity();
+
             if ( HasParent && Parent.ShouldMerge() )
                 Parent.Merge( Parent.FindMergeValue() );
+            else
+            {
+                Octree<T> n;
+                
+                n = FindNeighbour( Face.Left );
+                if ( n != null ) n.myChangedFaces |= Face.Right;
+                n = FindNeighbour( Face.Right );
+                if ( n != null ) n.myChangedFaces |= Face.Left;
+                n = FindNeighbour( Face.Bottom );
+                if ( n != null ) n.myChangedFaces |= Face.Top;
+                n = FindNeighbour( Face.Top );
+                if ( n != null ) n.myChangedFaces |= Face.Bottom;
+                n = FindNeighbour( Face.Front );
+                if ( n != null ) n.myChangedFaces |= Face.Back;
+                n = FindNeighbour( Face.Back );
+                if ( n != null ) n.myChangedFaces |= Face.Front;
+            }
         }
 
         protected virtual bool ShouldMerge()
@@ -156,7 +216,51 @@ namespace MarsMiner.Shared
             return myChildren[ 0 ].Value;
         }
 
-        protected virtual Face FindSolidFaces( T value )
+        private void UpdateSolidity()
+        {
+            if( !HasChildren )
+                Solidity = FindSolidFaces();
+            else
+            {
+                Face lbf = myChildren[ 0 ].Solidity;
+                Face lbb = myChildren[ 1 ].Solidity;
+                Face ltf = myChildren[ 2 ].Solidity;
+                Face ltb = myChildren[ 3 ].Solidity;
+                Face rbf = myChildren[ 4 ].Solidity;
+                Face rbb = myChildren[ 5 ].Solidity;
+                Face rtf = myChildren[ 6 ].Solidity;
+                Face rtb = myChildren[ 7 ].Solidity;
+
+                Solidity =
+                    ( Face.Left   & lbf & lbb & ltf & ltb ) |
+                    ( Face.Right  & rbf & rbb & rtf & rtb ) |
+                    ( Face.Bottom & lbf & lbb & rbf & rbb ) |
+                    ( Face.Top    & ltf & ltb & rtf & rtb ) |
+                    ( Face.Front  & lbf & ltf & rbf & rtf ) |
+                    ( Face.Back   & lbb & ltb & rbb & rtb );
+            }
+        }
+
+        private void UpdateExposedness()
+        {
+            for ( int i = 1; i < 64; i <<= 1 )
+            {
+                Face face = (Face) i;
+                if ( ( myChangedFaces & face ) != 0 )
+                {
+                    Octree<T> n = FindNeighbour( face );
+                    bool exposed = ( n == null )
+                        || ( n.Solidity & Tools.Opposite( face ) ) == 0;
+
+                    if ( ( myExposed & face ) != 0 != exposed )
+                        myExposed ^= face;
+                }
+            }
+
+            myChangedFaces = Face.None;
+        }
+
+        protected virtual Face FindSolidFaces()
         {
             return Face.All;
         }
@@ -179,6 +283,8 @@ namespace MarsMiner.Shared
 
                     foreach ( Octree<T> child in myChildren )
                         child.SetCuboid( intersection, value );
+
+                    UpdateSolidity();
                 }
             }
         }
@@ -186,6 +292,70 @@ namespace MarsMiner.Shared
         public void SetCuboid( int x, int y, int z, int width, int height, int depth, T value )
         {
             SetCuboid( new Cuboid( x, y, z, width, height, depth ), value );
+        }
+
+        public Octree<T> FindOctree( int x, int y, int z, int size )
+        {
+            if ( size == Size && x == X && y == Y && z == Z )
+                return this;
+
+            if ( !HasChildren )
+            {
+                if ( x >= X && y >= Y && z >= Z && x + size <= Right
+                    && y + size <= Top && z + size <= Back )
+                    return this;
+
+                throw new Exception( "No such octree exists" );
+            }
+
+            int hs = Size / 2;
+            int child = ( x >= X + hs ? 4 : 0 ) | ( y >= Y + hs ? 2 : 0 ) | ( z >= Z + hs ? 1 : 0 );
+
+            return myChildren[ child ].FindOctree( x, y, z, size );
+        }
+
+        public Octree<T> FindNeighbour( Face face )
+        {
+            if ( !HasParent )
+                return null;
+
+            return Parent.FindNeighbour( this, face );
+        }
+
+        private Octree<T> FindNeighbour( Octree<T> octree, Face face )
+        {
+            switch ( face )
+            {
+                case Face.Left:
+                    if ( Left < octree.Left )
+                        return FindOctree( octree.Left - octree.Size, octree.Bottom, octree.Front, octree.Size );
+                    break;
+                case Face.Right:
+                    if ( Right > octree.Right )
+                        return FindOctree( octree.Right, octree.Bottom, octree.Front, octree.Size );
+                    break;
+                case Face.Bottom:
+                    if ( Bottom < octree.Bottom )
+                        return FindOctree( octree.Left, octree.Bottom - octree.Size, octree.Front, octree.Size );
+                    break;
+                case Face.Top:
+                    if ( Top > octree.Top )
+                        return FindOctree( octree.Left, octree.Top, octree.Front, octree.Size );
+                    break;
+                case Face.Front:
+                    if ( Front < octree.Front )
+                        return FindOctree( octree.Left, octree.Bottom, octree.Front - octree.Size, octree.Size );
+                    break;
+                case Face.Back:
+                    if ( Back > octree.Back )
+                        return FindOctree( octree.Left, octree.Bottom, octree.Back, octree.Size );
+                    break;
+            }
+
+            if ( HasParent )
+                return Parent.FindNeighbour( octree, face );
+
+            return null;
         }
 
         public IEnumerator<Octree<T>> GetEnumerator()

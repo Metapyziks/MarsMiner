@@ -22,26 +22,23 @@ namespace MarsMiner.Shared
         public static readonly Octant[,,] XYZ = new Octant[ , , ]
         {
             {
-                {
-                    All[ 0 ],
-                    All[ 1 ],
-                },
-                {
-                    All[ 2 ],
-                    All[ 3 ],
-                }
+                { All[ 0 ], All[ 1 ] },
+                { All[ 2 ], All[ 3 ] }
             },
             {
-                {
-                    All[ 4 ],
-                    All[ 5 ],
-                },
-                {
-                    All[ 6 ],
-                    All[ 7 ],
-                }
+                { All[ 4 ], All[ 5 ] },
+                { All[ 6 ], All[ 7 ] }
             }
         };
+
+        public static Octant FromFaces( Face faces )
+        {
+            bool right = ( faces & Face.Right ) != 0;
+            bool top = ( faces & Face.Top ) != 0;
+            bool back = ( faces & Face.Back ) != 0;
+
+            return XYZ[ right ? 1 : 0, top ? 1 : 0, back ? 1 : 0 ];
+        }
 
         public readonly int X;
         public readonly int Y;

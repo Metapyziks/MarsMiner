@@ -138,21 +138,18 @@ namespace MarsMiner
 
         protected override void OnKeyPress( KeyPressEventArgs e )
         {
-            if ( myCaptureMouse )
+            switch( e.KeyChar )
             {
-                Vector3 movement = new Vector3( 0.0f, 0.0f, 0.0f );
-
-                switch( e.KeyChar )
-                {
-                    case (char) 0x1B:
-                        myCaptureMouse = false;
-                        break;
-                    case 'l':
-                        myTestShader.LineMode = !myTestShader.LineMode;
-                        break;
-                }
+                case (char) 0x1B:
+                    myCaptureMouse = !myCaptureMouse;
+                    break;
+                case 'l':
+                case 'L':
+                    myTestShader.LineMode = !myTestShader.LineMode;
+                    break;
             }
-            else
+
+            if( !myCaptureMouse )
             {
                 myUIRoot.SendKeyPressEvent( e );
             }

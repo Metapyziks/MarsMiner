@@ -30,9 +30,9 @@ namespace MarsMiner.Shared
             return new OctreeTest( this, octant );
         }
 
-        protected override Face FindSolidFaces( OctreeTestBlockType value )
+        protected override Face FindSolidFaces()
         {
-            if ( value == OctreeTestBlockType.Empty )
+            if ( Value == OctreeTestBlockType.Empty )
                 return Face.None;
 
             return Face.All;

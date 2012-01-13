@@ -194,5 +194,26 @@ namespace MarsMiner.Shared
 
             return newText;
         }
+
+        public static Face Opposite( Face face )
+        {
+            switch ( face )
+            {
+                case Face.Left:
+                    return Face.Right;
+                case Face.Right:
+                    return Face.Left;
+                case Face.Bottom:
+                    return Face.Top;
+                case Face.Top:
+                    return Face.Bottom;
+                case Face.Front:
+                    return Face.Back;
+                case Face.Back:
+                    return Face.Front;
+            }
+
+            return Face.None;
+        }
     }
 }
