@@ -22,10 +22,10 @@ namespace MarsMiner.Shared
         public int WorldSize = 256;
         public int GroundLevel = 127;
 
-        public Octree<OctreeTestBlockType> Generate()
+        public OctreeTest Generate()
         {
             int halfSize = WorldSize / 2;
-            Octree<OctreeTestBlockType> octree = new Octree<OctreeTestBlockType>( -halfSize, -GroundLevel, -halfSize, WorldSize );
+            OctreeTest octree = new OctreeTest( -halfSize, -GroundLevel, -halfSize, WorldSize );
             octree.SetCuboid( -halfSize, -GroundLevel, -halfSize, WorldSize, GroundLevel, WorldSize, OctreeTestBlockType.White );
 
             return octree;

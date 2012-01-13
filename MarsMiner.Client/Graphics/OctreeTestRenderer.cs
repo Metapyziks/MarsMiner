@@ -21,9 +21,9 @@ namespace MarsMiner.Client.Graphics
 
         private VertexBuffer myVertexBuffer;
 
-        public readonly Octree<OctreeTestBlockType> Octree;
+        public readonly OctreeTest Octree;
 
-        public OctreeTestRenderer( Octree<OctreeTestBlockType> octree )
+        public OctreeTestRenderer( OctreeTest octree )
         {
             Octree = octree;
             myVertexBuffer = new VertexBuffer( 7 );
@@ -38,7 +38,7 @@ namespace MarsMiner.Client.Graphics
         {
             List<float> verts = new List<float>();
 
-            foreach ( Octree<OctreeTestBlockType> octree in Octree )
+            foreach ( OctreeTest octree in Octree )
             {
                 if ( octree.Value == OctreeTestBlockType.Empty )
                     continue;

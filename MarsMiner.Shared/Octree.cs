@@ -3,10 +3,24 @@ using System.Collections.Generic;
 
 namespace MarsMiner.Shared
 {
+    public enum Face : byte
+    {
+        None    = 0,
+        All     = 63,
+
+        Front   = 1,
+        Right   = 2,
+        Back    = 4,
+        Left    = 8,
+        Top     = 16,
+        Bottom  = 32
+    }
+
     public class Octree<T> : IEnumerable<Octree<T>>
     {
         private T myValue;
         private Octree<T>[] myChildren;
+        private Face mySolidity;
 
         public readonly int X;
         public readonly int Y;
@@ -16,10 +30,7 @@ namespace MarsMiner.Shared
 
         public Cuboid Cube
         {
-            get
-            {
-                return new Cuboid( X, Y, Z, Size, Size, Size );
-            }
+            get { return new Cuboid( X, Y, Z, Size, Size, Size ); }
         }
 
         public readonly Octree<T> Parent;
@@ -62,7 +73,7 @@ namespace MarsMiner.Shared
             Z = z;
         }
 
-        private Octree( Octree<T> parent, Octant octant )
+        protected Octree( Octree<T> parent, Octant octant )
             : this( parent.Size / 2 )
         {
             Parent = parent;
@@ -72,6 +83,7 @@ namespace MarsMiner.Shared
             Z = Parent.Z + octant.Z * Size;
 
             myValue = parent.myValue;
+            mySolidity = Face.None;
         }
 
         public Octree<T> this[ Octant octant ]
@@ -91,18 +103,23 @@ namespace MarsMiner.Shared
             {
                 myChildren = new Octree<T>[]
                 {
-                    new Octree<T>( this, Octant.All[ 0 ] ),
-                    new Octree<T>( this, Octant.All[ 1 ] ),
-                    new Octree<T>( this, Octant.All[ 2 ] ),
-                    new Octree<T>( this, Octant.All[ 3 ] ),
-                    new Octree<T>( this, Octant.All[ 4 ] ),
-                    new Octree<T>( this, Octant.All[ 5 ] ),
-                    new Octree<T>( this, Octant.All[ 6 ] ),
-                    new Octree<T>( this, Octant.All[ 7 ] )
+                    CreateChild( Octant.All[ 0 ] ),
+                    CreateChild( Octant.All[ 1 ] ),
+                    CreateChild( Octant.All[ 2 ] ),
+                    CreateChild( Octant.All[ 3 ] ),
+                    CreateChild( Octant.All[ 4 ] ),
+                    CreateChild( Octant.All[ 5 ] ),
+                    CreateChild( Octant.All[ 6 ] ),
+                    CreateChild( Octant.All[ 7 ] )
                 };
 
                 myValue = default( T );
             }
+        }
+
+        protected virtual Octree<T> CreateChild( Octant octant )
+        {
+            return new Octree<T>( this, octant );
         }
 
         public void Merge( T value )
@@ -139,13 +156,16 @@ namespace MarsMiner.Shared
             return myChildren[ 0 ].Value;
         }
 
-        protected virtual bool IsSolid()
+        protected virtual Face FindSolidFaces( T value )
         {
-            return true;
+            return Face.All;
         }
 
         public void SetCuboid( Cuboid cuboid, T value )
         {
+            if ( !HasChildren && Value.Equals( value ) )
+                return;
+
             Cuboid cube = Cube;
             if ( cube.IsIntersecting( cuboid ) )
             {

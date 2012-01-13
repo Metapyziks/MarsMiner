@@ -21,7 +21,7 @@ namespace MarsMiner
         private double myTotalFrameTime;
         private int myFramesCompleted;
 
-        private Octree<OctreeTestBlockType> myTestOctree;
+        private OctreeTest myTestOctree;
         private OctreeTestShader myTestShader;
         private OctreeTestRenderer myTestRenderer;
 
