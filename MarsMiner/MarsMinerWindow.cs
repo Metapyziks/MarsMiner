@@ -1,16 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading;
+using System.Diagnostics;
 
 using OpenTK;
 using OpenTK.Graphics;
+using OpenTK.Graphics.OpenGL;
 using OpenTK.Input;
 
 using MarsMiner.Shared;
 using MarsMiner.Client.Graphics;
 using MarsMiner.Client.UI;
-using OpenTK.Graphics.OpenGL;
-using System.Threading;
-using System.Diagnostics;
 
 namespace MarsMiner
 {
@@ -135,7 +135,7 @@ namespace MarsMiner
                 myTotalFrameTime = 0;
                 myFramesCompleted = 0;
 
-                myFPSText.Text = string.Format("FT {0:F}ms FPS: {1:F} MEM: {2:F}MB", period, freq, Process.GetCurrentProcess().PrivateMemorySize64 / 1000000f);
+                myFPSText.Text = string.Format("FT: {0:F}ms FPS: {1:F} MEM: {2:F}MB", period, freq, Process.GetCurrentProcess().PrivateMemorySize64 / ( 1024d * 1024d ) );
             }
 
             Vector3 movement = new Vector3( 0.0f, 0.0f, 0.0f );
