@@ -7,6 +7,8 @@ namespace MarsMiner.Shared
 {
     public class OctreeTest : Octree<OctreeTestBlockType>
     {
+        public TestChunk Chunk;
+
         public OctreeTest( int size )
             : base( size )
         {
@@ -36,6 +38,14 @@ namespace MarsMiner.Shared
                 return Face.None;
 
             return Face.All;
+        }
+
+        protected override Octree<OctreeTestBlockType> FindExternalOctree( int x, int y, int z, int size )
+        {
+            if( Chunk != null )
+                return Chunk.FindOctree( x, y, z, size );
+
+            return null;
         }
     }
 }

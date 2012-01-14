@@ -52,9 +52,24 @@ namespace MarsMiner.Shared
                 dist2 < 512 * 512 ? 4 : 8 ;*/
 
             for ( int i = 0; i < octrees; ++i )
-                Octrees[ i ] = World.Generator.Generate( X, i * ChunkSize, Z, ChunkSize, res );
+            {
+                OctreeTest newTree = World.Generator.Generate( X, i * ChunkSize, Z, ChunkSize, res );
+                newTree.Chunk = this;
+                Octrees[ i ] = newTree;
+            }
 
             Loaded = true;
+        }
+
+        public OctreeTest FindOctree( int x, int y, int z, int size )
+        {
+            if ( x < X || x >= X + ChunkSize || z < Z || z >= Z + ChunkSize )
+                return World.FindOctree( x, y, z, size );
+
+            if ( y < 0 || y >= ChunkHeight )
+                return null;
+
+            return (OctreeTest) Octrees[ y / ChunkSize ].FindOctree( x, y, z, size );
         }
     }
 }

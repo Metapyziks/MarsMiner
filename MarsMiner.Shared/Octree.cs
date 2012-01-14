@@ -294,7 +294,7 @@ namespace MarsMiner.Shared
             if ( size == Size && x == X && y == Y && z == Z )
                 return this;
 
-            if ( x < X || y < Y || z < Z || x + size > Right || y + size > Top || z + Size > Back )
+            if ( x < Left || y < Bottom || z < Front || x >= Right || y >= Top || z >= Back )
             {
                 if ( HasParent )
                     return Parent.FindOctree( x, y, z, size );
@@ -304,7 +304,7 @@ namespace MarsMiner.Shared
 
             if ( HasChildren )
             {
-                int hs = Size / 2;
+                int hs = Size >> 1;
                 int child = ( x >= X + hs ? 4 : 0 ) | ( y >= Y + hs ? 2 : 0 ) | ( z >= Z + hs ? 1 : 0 );
 
                 return myChildren[ child ].FindOctree( x, y, z, size );

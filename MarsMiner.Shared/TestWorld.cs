@@ -19,7 +19,7 @@ namespace MarsMiner.Shared
     public class TestWorld
     {
         private Thread myGeneratorThread;
-        private List<TestChunk> myLoadedChunks;
+        private Dictionary<UInt16,TestChunk> myLoadedChunks;
         private Queue<TestChunk> myChunksToLoad;
 
         public OctreeTestWorldGenerator Generator { get; private set; }
@@ -30,7 +30,7 @@ namespace MarsMiner.Shared
 
         public TestWorld( int seed = 0 )
         {
-            myLoadedChunks = new List<TestChunk>();
+            myLoadedChunks = new Dictionary<UInt16, TestChunk>();
             myChunksToLoad = new Queue<TestChunk>();
             Generator = new OctreeTestWorldGenerator( seed );
 
@@ -48,6 +48,37 @@ namespace MarsMiner.Shared
         public void LoadChunk( int x, int z )
         {
             myChunksToLoad.Enqueue( new TestChunk( this, x * TestChunk.ChunkSize, z * TestChunk.ChunkSize ) );
+        }
+
+        private UInt16 FindChunkID( int x, int z )
+        {
+            byte cx = (byte) ( x / TestChunk.ChunkSize - ( x < 0 && ( x % TestChunk.ChunkSize ) != 0 ? 1 : 0 ) );
+            byte cz = (byte) ( z / TestChunk.ChunkSize - ( z < 0 && ( z % TestChunk.ChunkSize ) != 0 ? 1 : 0 ) );
+
+            return (UInt16) ( cx << 8 | cz );
+        }
+
+        public TestChunk FindChunk( int x, int z )
+        {
+            UInt16 id = FindChunkID( x, z );
+
+            if ( myLoadedChunks.ContainsKey( id ) )
+                return myLoadedChunks[ id ];
+
+            return null;
+        }
+
+        public OctreeTest FindOctree( int x, int y, int z, int size )
+        {
+            if ( size > TestChunk.ChunkSize )
+                return null;
+
+            TestChunk chunk = FindChunk( x, z );
+
+            if ( chunk != null )
+                return chunk.FindOctree( x, y, z, size );
+
+            return null;
         }
 
         public void StartGenerator()
@@ -75,7 +106,7 @@ namespace MarsMiner.Shared
                 Monitor.Exit( myChunksToLoad );
                 chunk.Generate();
                 Monitor.Enter( myLoadedChunks );
-                myLoadedChunks.Add( chunk );
+                myLoadedChunks.Add( FindChunkID( chunk.X, chunk.Z ), chunk );
                 Monitor.Exit( myLoadedChunks );
 
                 if ( ChunkLoaded != null )
