@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Runtime.InteropServices;
 
 using OpenTK.Graphics.OpenGL;
 
@@ -41,14 +42,14 @@ namespace MarsMiner.Client.Graphics
             myStride = stride;
         }
 
-        public void SetData( float[] vertices )
+        public void SetData<T>( T[] vertices ) where T : struct
         {
             myLength = vertices.Length / myStride;
 
             GL.BindVertexArray( VaoID );
 
             GL.BindBuffer( BufferTarget.ArrayBuffer, VboID );
-            GL.BufferData( BufferTarget.ArrayBuffer, new IntPtr( vertices.Length * sizeof( float ) ), vertices, BufferUsageHint.StaticDraw );
+            GL.BufferData( BufferTarget.ArrayBuffer, new IntPtr( vertices.Length * Marshal.SizeOf( typeof( T ) ) ), vertices, BufferUsageHint.StaticDraw );
             GL.BindBuffer( BufferTarget.ArrayBuffer, 0 );
             GL.BindVertexArray( 0 );
 
