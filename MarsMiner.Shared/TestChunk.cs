@@ -7,7 +7,7 @@ namespace MarsMiner.Shared
 {
     public class TestChunk
     {
-        public const int ChunkSize = 64;
+        public const int ChunkSize = 256;
         public const int ChunkHeight = 256;
 
         public OctreeTest[] Octrees { get; private set; }
@@ -46,10 +46,10 @@ namespace MarsMiner.Shared
 
             int dist2 = CenterX * CenterX + CenterZ * CenterZ;
 
-            int res = (
-                dist2 < 128 * 128 ? 1 :
+            int res = 1;
+            /*  dist2 < 128 * 128 ? 1 :
                 dist2 < 256 * 256 ? 2 :
-                dist2 < 512 * 512 ? 4 : 8 );
+                dist2 < 512 * 512 ? 4 : 8 ;*/
 
             for ( int i = 0; i < octrees; ++i )
                 Octrees[ i ] = World.Generator.Generate( X, i * ChunkSize, Z, ChunkSize, res );

@@ -97,7 +97,7 @@ namespace MarsMiner
 
             myTestShader.CameraPosition = new Vector3( 0.0f, 256.0f, 0.0f );
 
-            GL.ClearColor( new Color4( 0xFF, 0xD2, 0x97, 0xFF ) );
+            GL.ClearColor( Color4.CornflowerBlue );
 
             myFrameTimer.Start();
         }

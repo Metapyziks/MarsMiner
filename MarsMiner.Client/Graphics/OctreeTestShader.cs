@@ -55,30 +55,21 @@ namespace MarsMiner.Client.Graphics
             vert.AddUniform( ShaderVarType.Mat4, "view_matrix" );
             vert.AddAttribute( ShaderVarType.Vec3, "in_position" );
             vert.AddAttribute( ShaderVarType.Float, "in_shade" );
-            vert.AddVarying( ShaderVarType.Float, "var_shade" );
+            vert.AddVarying( ShaderVarType.Vec4, "var_colour" );
             vert.Logic = @"
                 void main( void )
                 {
-                    var_shade = in_shade;
+                    var_colour = vec4( in_shade * vec3( 1.0, 1.0, 1.0 ), 1.0 );
                     gl_Position = view_matrix * vec4( in_position, 1.0 );
                 }
             ";
 
             ShaderBuilder frag = new ShaderBuilder( ShaderType.FragmentShader, false );
-            frag.AddVarying( ShaderVarType.Float, "var_shade" );
+            frag.AddVarying( ShaderVarType.Vec4, "var_colour" );
             frag.Logic = @"
                 void main( void )
                 {
-                    vec3 clr = vec3( 0.682, 0.412, 0.259 ); 
-                    float shade;
-                    if( var_shade < 0.3 )
-                    {
-                        clr = vec3( 0.957, 0.757, 0.588 );
-                        shade = var_shade + 0.2;
-                    }
-                    else
-                        shade = var_shade * 0.7 + 0.3;
-                    out_frag_colour = vec4( shade * clr, 1.0 );
+                    out_frag_colour = var_colour;
                 }
             ";
 

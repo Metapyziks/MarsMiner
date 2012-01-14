@@ -19,6 +19,8 @@ namespace MarsMiner.Shared
 
     public class OctreeTestWorldGenerator
     {
+        private int mySeed;
+
         private Perlin myHillyNoise;
         private Perlin myPlainsNoise;
         private Perlin myTransNoise;
@@ -29,10 +31,19 @@ namespace MarsMiner.Shared
         private int myMinPlains;
         private int myMaxPlains;
 
-        public OctreeTestWorldGenerator()
+        public OctreeTestWorldGenerator( int seed = 0 )
         {
+            if ( seed == 0 )
+            {
+                Random rand = new Random();
+                seed = rand.Next( int.MaxValue );
+            }
+
+            mySeed = seed;
+
             myHillyNoise = new Perlin
             {
+                Seed = seed,
                 OctaveCount = 6,
                 Frequency = 1.0,
                 Lacunarity = 2.0,
@@ -41,6 +52,7 @@ namespace MarsMiner.Shared
 
             myPlainsNoise = new Perlin
             {
+                Seed = seed,
                 OctaveCount = 6,
                 Frequency = 8.0,
                 Lacunarity = 2.0,
@@ -49,6 +61,7 @@ namespace MarsMiner.Shared
 
             myTransNoise = new Perlin
             {
+                Seed = seed,
                 OctaveCount = 6,
                 Frequency = 1.0 / 32.0,
                 Lacunarity = 2.0,
@@ -79,26 +92,52 @@ namespace MarsMiner.Shared
 
                 Cuboid cuboid = new Cuboid( 0, 0, 0, resolution, 1, resolution );
 
-                for ( int nx = 0; nx < size; nx += resolution )
+                int maxCount = size / resolution;
+
+                int[,] prev = null;
+
+                for ( int count = 1; count <= maxCount; count <<= 1 )
                 {
-                    for ( int nz = 0; nz < size; nz += resolution )
+                    int res = size / count;
+                    double hres = res / 2.0;
+                    int[,] hm = new int[ count, count ];
+
+                    cuboid.Width = res;
+                    cuboid.Depth = res;
+
+                    for ( int nx = 0; nx < count; ++nx )
                     {
-                        double dx = ( x + nx ) / 256.0;
-                        double dy = ( z + nz ) / 256.0;
+                        int rx = x + nx * res;
+                        int px = nx >> 1;
+                        double dx = ( rx + hres ) / 256.0;
 
-                        double hillVal = myHillyNoise.GetValue( dx, dy, 0.5 ) * hillDiff + hillMid;
-                        double plainVal = myHillyNoise.GetValue( dx, dy, 0.5 ) * plainDiff + plainMid;
-                        double trans = Tools.Clamp( ( myTransNoise.GetValue( dx, dy, 0.5 ) + 1.0 ) / 2.0, 0.0, 1.0 );
-                        trans *= trans;
+                        for ( int nz = 0; nz < count; ++nz )
+                        {
+                            int rz = z + nz * res;
+                            int pz = nz >> 1;
+                            double dy = ( rz + hres ) / 256.0;
 
-                        int height = (int) System.Math.Round( ( trans * hillVal + ( 1 - trans ) * plainVal ) / resolution ) * resolution;
+                            double hillVal = Tools.Clamp( myHillyNoise.GetValue( dx, dy, 0.5 ) * hillDiff + hillMid, myMinHilly, myMaxHilly );
+                            double plainVal = Tools.Clamp( myHillyNoise.GetValue( dx, dy, 0.5 ) * plainDiff + plainMid, myMinPlains, myMaxPlains );
+                            double trans = Tools.Clamp( ( myTransNoise.GetValue( dx, dy, 0.5 ) + 1.0 ) / 2.0, 0.0, 1.0 );
+                            trans *= trans;
 
-                        cuboid.X = x + nx;
-                        cuboid.Z = z + nz;
+                            int height = (int) System.Math.Round( ( trans * hillVal + ( 1 - trans ) * plainVal ) / res ) * res;
+                            hm[ nx, nz ] = height;
 
-                        cuboid.Height = height;
-                        octree.SetCuboid( cuboid, OctreeTestBlockType.White );
+                            int prevHeight = ( count == 1 ? 0 : prev[ px, pz ] );
+
+                            cuboid.X = rx;
+                            cuboid.Z = rz;
+
+                            cuboid.Bottom = System.Math.Min( height, prevHeight );
+                            cuboid.Top    = System.Math.Max( height, prevHeight );
+
+                            octree.SetCuboid( cuboid, height > prevHeight ? OctreeTestBlockType.White : OctreeTestBlockType.Empty );
+                        }
                     }
+
+                    prev = hm;
                 }
             }
 

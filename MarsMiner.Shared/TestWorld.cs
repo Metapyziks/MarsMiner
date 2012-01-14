@@ -28,13 +28,13 @@ namespace MarsMiner.Shared
         public event EventHandler<TestChunkLoadEventArgs> ChunkLoaded;
         public event EventHandler<TestChunkLoadEventArgs> ChunkUnloaded;
 
-        public TestWorld()
+        public TestWorld( int seed = 0 )
         {
             myLoadedChunks = new List<TestChunk>();
             myChunksToLoad = new Queue<TestChunk>();
-            Generator = new OctreeTestWorldGenerator();
+            Generator = new OctreeTestWorldGenerator( seed );
 
-            int limit = 1024 / TestChunk.ChunkSize;
+            int limit = 256 / TestChunk.ChunkSize;
 
             for ( int x = -limit; x < limit; ++x )
                 for ( int z = -limit; z < limit; ++z )
