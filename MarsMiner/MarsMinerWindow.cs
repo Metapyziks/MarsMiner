@@ -57,7 +57,7 @@ namespace MarsMiner
             myUIRoot = new UIObject( new Vector2( Width, Height ) );
 
             myFPSText = new UILabel( Font.Large, new Vector2( 4.0f, 4.0f ) );
-            myFPSText.Text = "FT: ??ms FPS: ??";
+            myFPSText.Text = "FT: ??ms FPS: ?? MEM: ??";
             myUIRoot.AddChild( myFPSText );
 
             Mouse.Move += OnMouseMove;
@@ -135,7 +135,7 @@ namespace MarsMiner
                 myTotalFrameTime = 0;
                 myFramesCompleted = 0;
 
-                myFPSText.Text = string.Format("FT {0:F}ms FPS: {1:F}", period, freq);
+                myFPSText.Text = string.Format("FT {0:F}ms FPS: {1:F} MEM: {2:F}MB", period, freq, Process.GetCurrentProcess().PrivateMemorySize64 / 1000000f);
             }
 
             Vector3 movement = new Vector3( 0.0f, 0.0f, 0.0f );
