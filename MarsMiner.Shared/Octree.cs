@@ -22,6 +22,7 @@ namespace MarsMiner.Shared
         private Octree<T>[] myChildren;
         private Face myChangedFaces;
         private Face myExposed;
+        private bool myModified;
 
         public readonly int X;
         public readonly int Y;
@@ -98,6 +99,26 @@ namespace MarsMiner.Shared
             get { return myChildren != null; }
         }
 
+        public bool Modified
+        {
+            get { return myModified; }
+            set
+            {
+                if ( myModified == value )
+                    return;
+
+                myModified = value;
+
+                if ( HasParent && value )
+                    Parent.Modified = true;
+                else if ( HasChildren && !value )
+                {
+                    for ( int i = 0; i < 8; ++i )
+                        myChildren[ i ].Modified = false;
+                }
+            }
+        }
+
         public Octree( int size )
         {
             Size = size;
@@ -105,6 +126,7 @@ namespace MarsMiner.Shared
             Solidity = FindSolidFaces();
 
             myChangedFaces = Face.All;
+            Modified = true;
         }
 
         public Octree( int x, int y, int z, int size )
@@ -165,10 +187,13 @@ namespace MarsMiner.Shared
 
         public void Merge( T value )
         {
-            myValue = value;
-
             if ( HasChildren )
                 myChildren = null;
+            else if ( myValue.Equals( value ) )
+                return;
+
+            myValue = value;
+            Modified = true;
 
             if ( HasParent && Parent.ShouldMerge() )
                 Parent.Merge( Parent.FindMergeValue() );
@@ -234,6 +259,12 @@ namespace MarsMiner.Shared
                 ( Face.Top    & ltf & ltb & rtf & rtb ) |
                 ( Face.Front  & lbf & ltf & rbf & rtf ) |
                 ( Face.Back   & lbb & ltb & rbb & rtb );
+        }
+
+        public void UpdateFace( Face face )
+        {
+            myChangedFaces |= face;
+            Modified = true;
         }
 
         private void UpdateExposedness()
@@ -348,6 +379,11 @@ namespace MarsMiner.Shared
         public IEnumerator<Octree<T>> GetEnumerator()
         {
             return new OctreeEnumerator<T>( this );
+        }
+
+        public IEnumerator<Octree<T>> GetEnumerator( Face face )
+        {
+            return new OctreeEnumerator<T>( this, face );
         }
 
         System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()

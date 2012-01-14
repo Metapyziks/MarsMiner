@@ -25,9 +25,7 @@ namespace MarsMiner.Shared
             Octree = octree;
             Face = face;
 
-            myChild = null;
-            myCurOctant = Octant.All[ 0 ];
-            myPassed = 0;
+            Reset();
         }
 
         public Octree<T> Current
@@ -52,7 +50,7 @@ namespace MarsMiner.Shared
             {
                 if ( myChild == null || !myChild.MoveNext() )
                 {
-                    if ( myPassed == ( Face == Face.None ? 8 : 4 ) )
+                    if ( myPassed++ == ( Face == Face.None ? 8 : 4 ) )
                         return false;
 
                     myChild = new OctreeEnumerator<T>( Octree[ myCurOctant ], Face );
@@ -61,8 +59,6 @@ namespace MarsMiner.Shared
                     do
                         myCurOctant = myCurOctant.Next;
                     while ( ( myCurOctant.Faces & Face ) != Face );
-
-                    ++myPassed;
                 }
 
                 return true;
@@ -76,6 +72,9 @@ namespace MarsMiner.Shared
             myChild = null;
             myCurOctant = Octant.All[ 0 ];
             myPassed = 0;
+
+            while ( ( myCurOctant.Faces & Face ) != Face )
+                myCurOctant = myCurOctant.Next;
         }
 
         public void Dispose()

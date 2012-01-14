@@ -27,6 +27,36 @@ namespace MarsMiner.Shared
 
         public bool Loaded { get; private set; }
 
+        public bool Modified
+        {
+            get
+            {
+                if ( !Loaded )
+                    return false;
+
+                for ( int i = 0; i < Octrees.Length; ++i )
+                    if ( Octrees[ i ].Modified )
+                        return true;
+
+                return false;
+            }
+            set
+            {
+                if ( !Loaded )
+                    return;
+
+                if ( value )
+                {
+                    Octrees[ 0 ].Modified = true;
+                }
+                else
+                {
+                    for ( int i = 0; i < Octrees.Length; ++i )
+                        Octrees[ i ].Modified = false;
+                }
+            }
+        }
+
         public TestChunk( TestWorld world, int x, int z )
         {
             World = world;
@@ -59,6 +89,9 @@ namespace MarsMiner.Shared
             }
 
             Loaded = true;
+
+            for ( int i = 0; i < octrees; ++i )
+                Octrees[ i ].UpdateNeighbours();
         }
 
         public OctreeTest FindOctree( int x, int y, int z, int size )
@@ -66,7 +99,7 @@ namespace MarsMiner.Shared
             if ( x < X || x >= X + ChunkSize || z < Z || z >= Z + ChunkSize )
                 return World.FindOctree( x, y, z, size );
 
-            if ( y < 0 || y >= ChunkHeight )
+            if ( y < 0 || y >= ChunkHeight || !Loaded )
                 return null;
 
             return (OctreeTest) Octrees[ y / ChunkSize ].FindOctree( x, y, z, size );

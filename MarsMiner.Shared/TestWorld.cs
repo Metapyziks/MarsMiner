@@ -38,7 +38,7 @@ namespace MarsMiner.Shared
 
             for ( int x = -limit; x < limit; ++x )
                 for ( int z = -limit; z < limit; ++z )
-                    LoadChunk( x, z );
+                    LoadChunk( x * TestChunk.ChunkSize, z * TestChunk.ChunkSize );
 
             myChunksToLoad = new Queue<TestChunk>( myChunksToLoad.OrderBy( x => x.CenterX * x.CenterX + x.CenterZ * x.CenterZ ) );
 
@@ -47,13 +47,16 @@ namespace MarsMiner.Shared
 
         public void LoadChunk( int x, int z )
         {
-            myChunksToLoad.Enqueue( new TestChunk( this, x * TestChunk.ChunkSize, z * TestChunk.ChunkSize ) );
+            x = Tools.FloorDiv( x, TestChunk.ChunkSize ) * TestChunk.ChunkSize;
+            z = Tools.FloorDiv( z, TestChunk.ChunkSize ) * TestChunk.ChunkSize;
+
+            myChunksToLoad.Enqueue( new TestChunk( this, x, z ) );
         }
 
         private UInt16 FindChunkID( int x, int z )
         {
-            byte cx = (byte) ( x / TestChunk.ChunkSize - ( x < 0 && ( x % TestChunk.ChunkSize ) != 0 ? 1 : 0 ) );
-            byte cz = (byte) ( z / TestChunk.ChunkSize - ( z < 0 && ( z % TestChunk.ChunkSize ) != 0 ? 1 : 0 ) );
+            byte cx = (byte) Tools.FloorDiv( x, TestChunk.ChunkSize );
+            byte cz = (byte) Tools.FloorDiv( z, TestChunk.ChunkSize );
 
             return (UInt16) ( cx << 8 | cz );
         }
@@ -104,9 +107,9 @@ namespace MarsMiner.Shared
                 Monitor.Enter( myChunksToLoad );
                 TestChunk chunk = myChunksToLoad.Dequeue();
                 Monitor.Exit( myChunksToLoad );
-                chunk.Generate();
                 Monitor.Enter( myLoadedChunks );
                 myLoadedChunks.Add( FindChunkID( chunk.X, chunk.Z ), chunk );
+                chunk.Generate();
                 Monitor.Exit( myLoadedChunks );
 
                 if ( ChunkLoaded != null )

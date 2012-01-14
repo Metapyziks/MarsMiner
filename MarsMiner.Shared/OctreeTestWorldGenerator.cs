@@ -79,6 +79,19 @@ namespace MarsMiner.Shared
         {
             OctreeTest octree = new OctreeTest( x, y, z, size );
 
+            /*if( y < 128 )
+                octree.SetCuboid( octree.Cube, OctreeTestBlockType.White );
+            else if ( y == 128 )
+            {
+                int blk = 16;
+                octree.SetCuboid( new Cuboid( x, y, z, blk, blk, blk ), OctreeTestBlockType.White );
+                octree.SetCuboid( new Cuboid( x + size - blk, y, z, blk, blk, blk ), OctreeTestBlockType.White );
+                octree.SetCuboid( new Cuboid( x, y, z + size - blk, blk, blk, blk ), OctreeTestBlockType.White );
+                octree.SetCuboid( new Cuboid( x + size - blk, y, z + size - blk, blk, blk, blk ), OctreeTestBlockType.White );
+            }
+
+            return octree;*/
+
             int min = System.Math.Min( myMinHilly, myMinPlains );
 
             octree.SetCuboid( x, 0, z, size, System.Math.Min( myMinHilly, myMinPlains ), size, OctreeTestBlockType.White );

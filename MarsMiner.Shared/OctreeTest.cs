@@ -9,14 +9,7 @@ namespace MarsMiner.Shared
     {
         private TestChunk myChunk;
 
-        public TestChunk Chunk
-        {
-            get { return myChunk; }
-            set
-            {
-                myChunk = value;
-            }
-        }
+        public TestChunk Chunk;
 
         public OctreeTest( int size )
             : base( size )
@@ -34,6 +27,22 @@ namespace MarsMiner.Shared
             : base( parent, octant )
         {
 
+        }
+
+        public void UpdateNeighbours()
+        {
+            for ( int i = 1; i < 16; i <<= 1 )
+            {
+                Face face = (Face) i;
+                OctreeTest n = (OctreeTest) FindNeighbour( face );
+                if ( n != null )
+                {
+                    Face opp = Tools.Opposite( face );
+                    var enumerator = n.GetEnumerator( Tools.Opposite( opp ) );
+                    while ( enumerator.MoveNext() )
+                        enumerator.Current.UpdateFace( opp );
+                }
+            }
         }
 
         protected override Octree<OctreeTestBlockType> CreateChild( Octant octant )

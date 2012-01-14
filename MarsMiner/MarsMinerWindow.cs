@@ -75,7 +75,6 @@ namespace MarsMiner
                     return;
 
                 OctreeTestRenderer renderer = new OctreeTestRenderer( ea.Chunk );
-                renderer.UpdateVertices();
 
                 Monitor.Enter( myTestRenderers );
                 myTestRenderers.Add( renderer );

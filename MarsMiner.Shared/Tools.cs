@@ -149,6 +149,11 @@ namespace MarsMiner.Shared
         }
         #endregion MinMax
 
+        public static int FloorDiv( int numer, int denom )
+        {
+            return ( numer / denom ) - ( numer < 0 && ( numer % denom ) != 0 ? 1 : 0 );
+        }
+
         public static String ApplyWordWrap( this String text, float charWidth, float wrapWidth )
         {
             if ( wrapWidth <= 0.0f )

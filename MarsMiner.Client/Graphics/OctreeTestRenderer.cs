@@ -10,7 +10,6 @@ namespace MarsMiner.Client.Graphics
     public class OctreeTestRenderer
     {
         private VertexBuffer myVertexBuffer;
-        private bool myVertexDataChanged;
 
         public readonly TestChunk Chunk;
 
@@ -18,13 +17,6 @@ namespace MarsMiner.Client.Graphics
         {
             Chunk = chunk;
             myVertexBuffer = new VertexBuffer( 4 );
-
-            myVertexDataChanged = true;
-        }
-
-        public void UpdateVertices()
-        {
-            myVertexDataChanged = true;
         }
 
         public float[] FindVertices()
@@ -106,10 +98,10 @@ namespace MarsMiner.Client.Graphics
 
         public void Render( ShaderProgram shader )
         {
-            if ( myVertexDataChanged )
+            if ( Chunk.Modified )
             {
                 myVertexBuffer.SetData( FindVertices() );
-                myVertexDataChanged = false;
+                Chunk.Modified = false;
             }
 
             myVertexBuffer.Render( shader );
