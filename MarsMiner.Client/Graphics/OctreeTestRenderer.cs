@@ -4,12 +4,14 @@ using OpenTK.Graphics;
 using OpenTK.Graphics.OpenGL;
 
 using MarsMiner.Shared;
+using System.Threading;
 
 namespace MarsMiner.Client.Graphics
 {
     public class OctreeTestRenderer
     {
         private VertexBuffer myVertexBuffer;
+        private bool myChunkChanged;
 
         public readonly TestChunk Chunk;
 
@@ -17,6 +19,12 @@ namespace MarsMiner.Client.Graphics
         {
             Chunk = chunk;
             myVertexBuffer = new VertexBuffer( 4 );
+            myChunkChanged = true;
+        }
+
+        public void UpdateVertices()
+        {
+            myChunkChanged = true;
         }
 
         public float[] FindVertices()
@@ -98,10 +106,10 @@ namespace MarsMiner.Client.Graphics
 
         public void Render( ShaderProgram shader )
         {
-            if ( Chunk.Modified )
+            if ( myChunkChanged )
             {
+                myChunkChanged = false;
                 myVertexBuffer.SetData( FindVertices() );
-                Chunk.Modified = false;
             }
 
             myVertexBuffer.Render( shader );

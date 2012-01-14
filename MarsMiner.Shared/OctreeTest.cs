@@ -7,8 +7,6 @@ namespace MarsMiner.Shared
 {
     public class OctreeTest : Octree<OctreeTestBlockType>
     {
-        private TestChunk myChunk;
-
         public TestChunk Chunk;
 
         public OctreeTest( int size )

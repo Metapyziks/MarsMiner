@@ -85,11 +85,21 @@ namespace MarsMiner
                 if ( myClosing )
                     return;
 
-                OctreeTestRenderer renderer = myTestRenderers.Find( x => x.Chunk == ea.Chunk );
                 Monitor.Enter( myTestRenderers );
+                OctreeTestRenderer renderer = myTestRenderers.Find( x => x.Chunk == ea.Chunk );
                 myTestRenderers.Remove( renderer );
                 Monitor.Exit( myTestRenderers );
                 renderer.Dispose();
+            };
+            myTestWorld.ChunkChanged += delegate( object sender, TestChunkLoadEventArgs ea )
+            {
+                if ( myClosing )
+                    return;
+
+                Monitor.Enter( myTestRenderers );
+                OctreeTestRenderer renderer = myTestRenderers.Find( x => x.Chunk == ea.Chunk );
+                Monitor.Exit( myTestRenderers );
+                renderer.UpdateVertices();
             };
 
             myTestWorld.StartGenerator();

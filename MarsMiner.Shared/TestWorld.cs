@@ -27,6 +27,7 @@ namespace MarsMiner.Shared
 
         public event EventHandler<TestChunkLoadEventArgs> ChunkLoaded;
         public event EventHandler<TestChunkLoadEventArgs> ChunkUnloaded;
+        public event EventHandler<TestChunkLoadEventArgs> ChunkChanged;
 
         public TestWorld( int seed = 0 )
         {
@@ -38,9 +39,15 @@ namespace MarsMiner.Shared
 
             for ( int x = -limit; x < limit; ++x )
                 for ( int z = -limit; z < limit; ++z )
-                    LoadChunk( x * TestChunk.ChunkSize, z * TestChunk.ChunkSize );
+                    LoadChunk( x * TestChunk.ChunkSize, z * TestChunk.ChunkSize );/*/
 
-            myChunksToLoad = new Queue<TestChunk>( myChunksToLoad.OrderBy( x => x.CenterX * x.CenterX + x.CenterZ * x.CenterZ ) );
+            LoadChunk( 0, 0 );
+            LoadChunk( TestChunk.ChunkSize, 0 );
+            LoadChunk( -TestChunk.ChunkSize, 0 );
+            LoadChunk( 0, TestChunk.ChunkSize );
+            LoadChunk( 0, -TestChunk.ChunkSize );*/
+
+            myChunksToLoad = new Queue<TestChunk>( myChunksToLoad.OrderBy( x => Math.Max( Math.Abs( x.CenterX ), Math.Abs( x.CenterZ ) ) ) );
 
             GeneratorRunning = false;
         }
@@ -108,12 +115,26 @@ namespace MarsMiner.Shared
                 TestChunk chunk = myChunksToLoad.Dequeue();
                 Monitor.Exit( myChunksToLoad );
                 Monitor.Enter( myLoadedChunks );
-                myLoadedChunks.Add( FindChunkID( chunk.X, chunk.Z ), chunk );
                 chunk.Generate();
+                myLoadedChunks.Add( FindChunkID( chunk.X, chunk.Z ), chunk );
+                chunk.UpdateNeighbours();
                 Monitor.Exit( myLoadedChunks );
 
                 if ( ChunkLoaded != null )
                     ChunkLoaded( this, new TestChunkLoadEventArgs( chunk ) );
+
+                if ( ChunkChanged != null )
+                {
+                    TestChunk n;
+                    n = FindChunk( chunk.X - TestChunk.ChunkSize, chunk.Z );
+                    if ( n != null ) ChunkChanged( this, new TestChunkLoadEventArgs( n ) );
+                    n = FindChunk( chunk.X + TestChunk.ChunkSize, chunk.Z );
+                    if ( n != null ) ChunkChanged( this, new TestChunkLoadEventArgs( n ) );
+                    n = FindChunk( chunk.X, chunk.Z - TestChunk.ChunkSize );
+                    if ( n != null ) ChunkChanged( this, new TestChunkLoadEventArgs( n ) );
+                    n = FindChunk( chunk.X, chunk.Z + TestChunk.ChunkSize );
+                    if ( n != null ) ChunkChanged( this, new TestChunkLoadEventArgs( n ) );
+                }
             }
 
             GeneratorRunning = false;

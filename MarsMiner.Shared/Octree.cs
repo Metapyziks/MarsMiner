@@ -22,7 +22,6 @@ namespace MarsMiner.Shared
         private Octree<T>[] myChildren;
         private Face myChangedFaces;
         private Face myExposed;
-        private bool myModified;
 
         public readonly int X;
         public readonly int Y;
@@ -99,26 +98,6 @@ namespace MarsMiner.Shared
             get { return myChildren != null; }
         }
 
-        public bool Modified
-        {
-            get { return myModified; }
-            set
-            {
-                if ( myModified == value )
-                    return;
-
-                myModified = value;
-
-                if ( HasParent && value )
-                    Parent.Modified = true;
-                else if ( HasChildren && !value )
-                {
-                    for ( int i = 0; i < 8; ++i )
-                        myChildren[ i ].Modified = false;
-                }
-            }
-        }
-
         public Octree( int size )
         {
             Size = size;
@@ -126,7 +105,6 @@ namespace MarsMiner.Shared
             Solidity = FindSolidFaces();
 
             myChangedFaces = Face.All;
-            Modified = true;
         }
 
         public Octree( int x, int y, int z, int size )
@@ -193,7 +171,6 @@ namespace MarsMiner.Shared
                 return;
 
             myValue = value;
-            Modified = true;
 
             if ( HasParent && Parent.ShouldMerge() )
                 Parent.Merge( Parent.FindMergeValue() );
@@ -263,8 +240,7 @@ namespace MarsMiner.Shared
 
         public void UpdateFace( Face face )
         {
-            myChangedFaces |= face;
-            Modified = true;
+            myChangedFaces |= face & Solidity;
         }
 
         private void UpdateExposedness()

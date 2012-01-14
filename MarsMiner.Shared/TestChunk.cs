@@ -27,36 +27,6 @@ namespace MarsMiner.Shared
 
         public bool Loaded { get; private set; }
 
-        public bool Modified
-        {
-            get
-            {
-                if ( !Loaded )
-                    return false;
-
-                for ( int i = 0; i < Octrees.Length; ++i )
-                    if ( Octrees[ i ].Modified )
-                        return true;
-
-                return false;
-            }
-            set
-            {
-                if ( !Loaded )
-                    return;
-
-                if ( value )
-                {
-                    Octrees[ 0 ].Modified = true;
-                }
-                else
-                {
-                    for ( int i = 0; i < Octrees.Length; ++i )
-                        Octrees[ i ].Modified = false;
-                }
-            }
-        }
-
         public TestChunk( TestWorld world, int x, int z )
         {
             World = world;
@@ -74,12 +44,12 @@ namespace MarsMiner.Shared
             int octrees = ChunkHeight / ChunkSize;
             Octrees = new OctreeTest[ octrees ];
 
-            int dist2 = CenterX * CenterX + CenterZ * CenterZ;
+            int dist = Math.Max( Math.Abs( CenterX ), Math.Abs( CenterZ ) );
 
             int res = 
-                dist2 < 128 * 128 ? 1 :
-                dist2 < 256 * 256 ? 2 :
-                dist2 < 512 * 512 ? 4 : 8 ;
+                dist < 128 ? 1 :
+                dist < 256 ? 2 :
+                dist < 512 ? 4 : 8 ;
 
             for ( int i = 0; i < octrees; ++i )
             {
@@ -89,8 +59,11 @@ namespace MarsMiner.Shared
             }
 
             Loaded = true;
+        }
 
-            for ( int i = 0; i < octrees; ++i )
+        public void UpdateNeighbours()
+        {
+            for ( int i = 0; i < Octrees.Length; ++i )
                 Octrees[ i ].UpdateNeighbours();
         }
 
