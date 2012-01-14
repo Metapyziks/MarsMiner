@@ -128,13 +128,13 @@ namespace MarsMiner.Client.Graphics
             GL.CullFace( CullFaceMode.Front );
 
             if ( LineMode )
-                GL.PolygonMode( MaterialFace.Front, PolygonMode.Line );
+                GL.PolygonMode( MaterialFace.Back, PolygonMode.Line );
         }
 
         protected override void OnEndBatch()
         {
             if ( LineMode )
-                GL.PolygonMode( MaterialFace.Front, PolygonMode.Fill );
+                GL.PolygonMode( MaterialFace.Back, PolygonMode.Fill );
 
             GL.Disable( EnableCap.DepthTest );
             GL.Disable( EnableCap.CullFace );
