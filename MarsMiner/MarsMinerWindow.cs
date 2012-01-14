@@ -10,6 +10,7 @@ using MarsMiner.Client.Graphics;
 using MarsMiner.Client.UI;
 using OpenTK.Graphics.OpenGL;
 using System.Threading;
+using System.Diagnostics;
 
 namespace MarsMiner
 {
@@ -20,9 +21,10 @@ namespace MarsMiner
 
         private UILabel myFPSText;
 
-        private DateTime myLastRenderTime;
-        private double myTotalFrameTime;
+        private long myTotalFrameTime;
         private int myFramesCompleted;
+
+        private Stopwatch myFrameTimer;
 
         private TestWorld myTestWorld;
 
@@ -44,8 +46,9 @@ namespace MarsMiner
             myIgnoreMouse = false;
             myClosing = false;
 
-            myTotalFrameTime = 0.0;
+            myTotalFrameTime = 0;
             myFramesCompleted = 0;
+            myFrameTimer = new Stopwatch();
         }
 
         protected override void OnLoad( System.EventArgs e )
@@ -54,7 +57,7 @@ namespace MarsMiner
             myUIRoot = new UIObject( new Vector2( Width, Height ) );
 
             myFPSText = new UILabel( Font.Large, new Vector2( 4.0f, 4.0f ) );
-            myFPSText.Text = "FT: ??ms FPS: ??";
+            myFPSText.Text = "FT: ??ms FPS: ?? MEM: ??";
             myUIRoot.AddChild( myFPSText );
 
             Mouse.Move += OnMouseMove;
@@ -95,6 +98,8 @@ namespace MarsMiner
             myTestShader.CameraPosition = new Vector3( 0.0f, 256.0f, 0.0f );
 
             GL.ClearColor( new Color4( 0xFF, 0xD2, 0x97, 0xFF ) );
+
+            myFrameTimer.Start();
         }
 
         protected override void OnRenderFrame( FrameEventArgs e )
@@ -115,24 +120,22 @@ namespace MarsMiner
 
             SwapBuffers();
 
-            DateTime time = DateTime.Now;
-
-            myTotalFrameTime += ( time - myLastRenderTime ).TotalMilliseconds;
+            myTotalFrameTime += myFrameTimer.ElapsedTicks;
             ++myFramesCompleted;
-            myLastRenderTime = time;
+            myFrameTimer.Restart();
         }
 
         protected override void OnUpdateFrame( FrameEventArgs e )
         {
-            if ( myTotalFrameTime >= 1000.0 )
+            if ( myTotalFrameTime >= Stopwatch.Frequency )
             {
-                double period = myTotalFrameTime / myFramesCompleted;
-                double freq = 1000.0 / period;
+                double period = myTotalFrameTime / (Stopwatch.Frequency / 1000d) / myFramesCompleted;
+                double freq = 1000 / period;
 
-                myTotalFrameTime = 0.0;
+                myTotalFrameTime = 0;
                 myFramesCompleted = 0;
 
-                myFPSText.Text = "FT: " + period.ToString( "F" ) + "ms FPS: " + freq.ToString( "F" );
+                myFPSText.Text = string.Format("FT {0:F}ms FPS: {1:F} MEM: {2:F}MB", period, freq, Process.GetCurrentProcess().PrivateMemorySize64 / 1000000f);
             }
 
             Vector3 movement = new Vector3( 0.0f, 0.0f, 0.0f );
