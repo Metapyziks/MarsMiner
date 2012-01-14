@@ -45,6 +45,8 @@ namespace MarsMiner.Client.Graphics
                     float r0 = octree.Bottom / 256.0f;
                     float r1 = octree.Top / 256.0f;
 
+                    octree.UpdateFace( Face.All );
+
                     if ( ( octree.Exposed & Face.Front ) != 0 )
                         verts.AddRange( new float[]
                         {
