@@ -7,6 +7,18 @@ namespace MarsMiner.Shared
 {
     public struct Octant
     {
+        private static readonly Face[] stFaces = new Face[]
+        {
+            Face.Left | Face.Bottom | Face.Front,
+            Face.Left | Face.Bottom | Face.Back,
+            Face.Left | Face.Top | Face.Front,
+            Face.Left | Face.Top | Face.Back,
+            Face.Right | Face.Bottom | Face.Front,
+            Face.Right | Face.Bottom | Face.Back,
+            Face.Right | Face.Top | Face.Front,
+            Face.Right | Face.Top | Face.Back,
+        };
+
         public static readonly Octant[] All = new Octant[]
         {
             new Octant( 0, 0, 0 ),
@@ -49,6 +61,11 @@ namespace MarsMiner.Shared
         public Octant Next
         {
             get { return All[ ( Index + 1 ) % 8 ]; }
+        }
+
+        public Face Faces
+        {
+            get { return stFaces[ Index ]; }
         }
 
         private Octant( int x, int y, int z )
