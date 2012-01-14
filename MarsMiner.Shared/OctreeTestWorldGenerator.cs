@@ -89,18 +89,38 @@ namespace MarsMiner.Shared
                 int hillMid = myMinHilly + hillDiff;
                 int plainDiff = ( myMinPlains - myMaxPlains ) / 2;
                 int plainMid = myMaxPlains + plainDiff;
+                
+                int maxCount = size / resolution;
+                double hres = resolution / 2.0;
+
+                int[,] map = new int[ maxCount, maxCount ];
+
+                for( int i = 0; i < maxCount; ++ i )
+                {
+                    double dx = ( x + i * resolution + hres ) / 256.0;
+                    for( int j = 0; j < maxCount; ++ j )
+                    {
+                        double dy = ( z + j * resolution + hres ) / 256.0;
+                        double hillVal = Tools.Clamp( myHillyNoise.GetValue( dx, dy, 0.5 ) * hillDiff + hillMid, myMinHilly, myMaxHilly );
+                        double plainVal = Tools.Clamp( myHillyNoise.GetValue( dx, dy, 0.5 ) * plainDiff + plainMid, myMinPlains, myMaxPlains );
+                        double trans = Tools.Clamp( ( myTransNoise.GetValue( dx, dy, 0.5 ) + 1.0 ) / 2.0, 0.0, 1.0 );
+                        trans *= trans;
+
+                        map[ i, j ] = (int) System.Math.Round( ( trans * hillVal + ( 1 - trans ) * plainVal ) / resolution ) * resolution;
+                    }
+                }
 
                 Cuboid cuboid = new Cuboid( 0, 0, 0, resolution, 1, resolution );
-
-                int maxCount = size / resolution;
 
                 int[,] prev = null;
 
                 for ( int count = 1; count <= maxCount; count <<= 1 )
                 {
                     int res = size / count;
-                    double hres = res / 2.0;
-                    int[,] hm = new int[ count, count ];
+                    hres = res / 2.0;
+                    int[,] cur = new int[ count, count ];
+
+                    int sca = res / resolution;
 
                     cuboid.Width = res;
                     cuboid.Depth = res;
@@ -109,21 +129,22 @@ namespace MarsMiner.Shared
                     {
                         int rx = x + nx * res;
                         int px = nx >> 1;
-                        double dx = ( rx + hres ) / 256.0;
 
                         for ( int nz = 0; nz < count; ++nz )
                         {
                             int rz = z + nz * res;
                             int pz = nz >> 1;
-                            double dy = ( rz + hres ) / 256.0;
 
-                            double hillVal = Tools.Clamp( myHillyNoise.GetValue( dx, dy, 0.5 ) * hillDiff + hillMid, myMinHilly, myMaxHilly );
-                            double plainVal = Tools.Clamp( myHillyNoise.GetValue( dx, dy, 0.5 ) * plainDiff + plainMid, myMinPlains, myMaxPlains );
-                            double trans = Tools.Clamp( ( myTransNoise.GetValue( dx, dy, 0.5 ) + 1.0 ) / 2.0, 0.0, 1.0 );
-                            trans *= trans;
+                            int height = 256;
 
-                            int height = (int) System.Math.Round( ( trans * hillVal + ( 1 - trans ) * plainVal ) / res ) * res;
-                            hm[ nx, nz ] = height;
+                            for ( int ix = nx * sca; ix < ( nx + 1 ) * sca; ++ix )
+                                for ( int iz = nz * sca; iz < ( nz + 1 ) * sca; ++iz )
+                                    if ( map[ ix, iz ] < height )
+                                        height = map[ ix, iz ];
+
+                            height = height / res * res;
+
+                            cur[ nx, nz ] = height;
 
                             int prevHeight = ( count == 1 ? 0 : prev[ px, pz ] );
 
@@ -133,11 +154,15 @@ namespace MarsMiner.Shared
                             cuboid.Bottom = System.Math.Min( height, prevHeight );
                             cuboid.Top    = System.Math.Max( height, prevHeight );
 
-                            octree.SetCuboid( cuboid, height > prevHeight ? OctreeTestBlockType.White : OctreeTestBlockType.Empty );
+                            if( height > prevHeight )
+                                octree.SetCuboid( cuboid, OctreeTestBlockType.White );
+                            //else
+                            //    octree.SetCuboid( cuboid, OctreeTestBlockType.Empty );
+
                         }
                     }
 
-                    prev = hm;
+                    prev = cur;
                 }
             }
 

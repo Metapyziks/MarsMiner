@@ -279,7 +279,8 @@ namespace MarsMiner.Shared
                     foreach ( Octree<T> child in myChildren )
                         child.SetCuboid( intersection, value );
 
-                    UpdateSolidity();
+                    if( HasChildren )
+                        UpdateSolidity();
                 }
             }
         }
