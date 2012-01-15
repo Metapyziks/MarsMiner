@@ -42,6 +42,10 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Structures\V0\BlockTypeTable.cs" />
+    <Compile Include="Structures\V0\Header.cs" />
+    <Compile Include="Structures\V0\SavedStateIndex.cs" />
+    <Compile Include="Structures\V0\Pointer.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Save Format V0 Draft.txt" />

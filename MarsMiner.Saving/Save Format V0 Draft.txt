@@ -26,23 +26,22 @@ Header (always at 0) (only in main blob) (block structure, fixed length)
 // Saving updates the header after a write barrier, wich makes saves transactional:
 // If the save completes, the load method uses the new main index, if it crashes the old main index still points to the old valid saved state.
 // The saves should be impossible to corrupt this way, unless the file itself is corrupted.
-int						Version
-Pointer<MainIndex>		Pointer to main save index
+int								Version
+Pointer<SavedStateIndex>		Pointer to saved state index
 
-MainIndex (block structure, fixed length)
------------------------------------------
-DateTime				Timestamp
-Pointer<String>			Save name
-Pointer<String>			Relative path to pointer file, is null if unused
-int						pointer file index address
-Pointer<ChunkTable>		Pointer to chunk table
+SavedStateIndex (block structure, fixed length)
+-----------------------------------------------
+long						Timestamp in 100ns ticks since 12:00 midnight, January 1, 0001 in the GregorianCalendar calendar (excluding ticks that would be added by leap seconds) in UTC
+Pointer<String>				Save name
+Pointer<String>				Relative path to pointer file, is null if unused
+Pointer<PointerFileIndex>	pointer to pointer file index local to pointer file
+Pointer<ChunkTable>			Pointer to chunk table
 
-BlockTable (block structure, length prefixed)
----------------------------------------------
-short					block count
-for (block count):
-	byte				block id
-	Pointer<String>		block name
+BlockTypeTable (block structure, length prefixed)
+-------------------------------------------------
+ushort					block type count
+for (block type count):
+	Pointer<String>		block type name
 
 ChunkTable (block structure, length prefixed)
 ---------------------------------------------
@@ -54,7 +53,7 @@ for (chunk count):
 
 Chunk (block structure, length prefixed)
 ----------------------------------------
-Pointer<BlockTable>		Pointer to block table			// This is here so chunks can have different block tables.
+Pointer<BlockTypeTable>	Pointer to block table			// This is here so chunks can have different block tables.
 														// It doesn't make much difference with less than 256 ids, but with more its possible to compress block id lists to roughly half the size if the id distribution is uneven.
 														// It also would allow id mapping changes in copy-on-write mode.
 byte					octree count
