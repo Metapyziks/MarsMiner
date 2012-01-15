@@ -75,7 +75,18 @@ namespace MarsMiner.Shared
             if ( x < X || y < Y || z < Z || x >= X + Size || y >= Y + Size || z >= Z + Size )
                 return FindExternalNode( x, y, z, size );
 
-            return FindNode( X, Y, Z, Size, x, y, z, size );
+            return FindNode( Size, x - X, y - Y, z - Z, size );
+        }
+
+        protected override OctreeNode<T> FindNode( int mSize, int oX, int oY, int oZ, int oSize )
+        {
+            if ( oX < 0 || oY < 0 || oZ < 0 || oX >= mSize || oY >= mSize || oZ >= mSize )
+            {
+                int scale = Size / mSize;
+                return FindExternalNode( X + oX * scale, Y + oY * scale, Z + oZ * scale, oSize * scale );
+            }
+
+            return base.FindNode( mSize, oX, oY, oZ, oSize );
         }
 
         protected virtual OctreeNode<T> FindExternalNode( int x, int y, int z, int size )
@@ -340,37 +351,33 @@ namespace MarsMiner.Shared
             return Parent.FindNode( x, y, z, size );
         }
 
-        protected OctreeNode<T> FindNode( int mX, int mY, int mZ, int mSize, int oX, int oY, int oZ, int oSize )
+        protected virtual OctreeNode<T> FindNode( int mSize, int oX, int oY, int oZ, int oSize )
         {
-            if ( mSize == oSize && mX == oX && mY == oY && mZ == oZ )
+            if ( mSize == oSize && oX == 0 && oY == 0 && oZ == 0 )
                 return this;
 
-            if ( oX < mX || oY < mY || oZ < mZ || oX >= mX + mSize
-                || oY >= mY + mSize || oZ >= mZ + mSize )
-            {
-                mX ^= ( mX & mSize );
-                mY ^= ( mY & mSize );
-                mZ ^= ( mZ & mSize );
-                mSize <<= 1;
-                return Parent.FindNode( mX, mY, mZ, mSize, oX, oY, oZ, oSize );
-            }
+            if ( oX < 0 || oY < 0 || oZ < 0 || oX >= mSize
+                || oY >= mSize || oZ >= mSize )
+                return Parent.FindNode( this, mSize, oX, oY, oZ, oSize );
 
             if ( HasChildren )
             {
                 int hs = mSize >> 1;
-                int cX = ( oX >= mX + hs ? 1 : 0 );
-                int cY = ( oY >= mY + hs ? 1 : 0 );
-                int cZ = ( oZ >= mZ + hs ? 1 : 0 );
+                int cX = ( oX >= hs ? 1 : 0 );
+                int cY = ( oY >= hs ? 1 : 0 );
+                int cZ = ( oZ >= hs ? 1 : 0 );
                 int child = cX << 2 | cY << 1 | cZ;
 
-                cX = mX + cX * hs;
-                cY = mY + cY * hs;
-                cZ = mZ + cZ * hs;
-
-                return myChildren[ child ].FindNode( cX, cY, cZ, hs, oX, oY, oZ, oSize );
+                return myChildren[ child ].FindNode( hs, oX - cX * hs, oY - cY * hs, oZ - cZ * hs, oSize );
             }
 
             return this;
+        }
+
+        protected OctreeNode<T> FindNode( OctreeNode<T> child, int mSize, int oX, int oY, int oZ, int oSize )
+        {
+            Octant oct = FindOctantOfChild( child );
+            return FindNode( mSize << 1, oX + oct.X * mSize, oY + oct.Y * mSize, oZ + oct.Z * mSize, oSize );
         }
 
         protected virtual OctreeNode<T> FindNeighbour( Face face )
