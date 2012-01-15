@@ -148,15 +148,15 @@ namespace MarsMiner.Shared
                             int rz = z + nz * res;
                             int pz = nz >> 1;
                             
-                            int height = 256;
+                            /*int height = 256;
                             
                             for ( int ix = nx * sca; ix < ( nx + 1 ) * sca; ++ix )
                                 for ( int iz = nz * sca; iz < ( nz + 1 ) * sca; ++iz )
                                     if ( map[ ix, iz ] < height )
-                                        height = map[ ix, iz ];
+                                        height = map[ ix, iz ];*/
 
 
-                            //int height = map[ nx * sca, nz * sca ] / res * res;
+                            int height = map[ nx * sca, nz * sca ] / res * res;
 
                             cur[ nx, nz ] = height;
 
@@ -170,8 +170,8 @@ namespace MarsMiner.Shared
 
                             if( height > prevHeight )
                                 octree.SetCuboid( cuboid, OctreeTestBlockType.White );
-                            //else
-                            //    octree.SetCuboid( cuboid, OctreeTestBlockType.Empty );
+                            else
+                                octree.SetCuboid( cuboid, OctreeTestBlockType.Empty );
 
                         }
                     }
