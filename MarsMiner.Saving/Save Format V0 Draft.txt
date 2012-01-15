@@ -1,0 +1,95 @@
+MarsMiner Save Format v0 (draft)
+
+Most block structures can appear anywhere in the file and are either prefixed with their length in bytes as uint32 (excluding the length prefix) or have a fixed size.
+
+Embedded structures are always part of block structures and don't have any prefix.
+
+Common
+======
+
+Pointer (embedded structure, fixed length)
+----------------------------
+1 bit					Pointer flag:
+							0 means absolute pointer in this file
+							1 means reference to pointer in pointer table file
+7 bit					Destination address or pointer index
+
+String (block structure, length prefixed)
+----------------------------------------------------------------------
+Utf-8 string
+
+Save Blob
+=========
+
+Header (always at 0) (only in main blob) (block structure, fixed length)
+------------------------------------------------------------------------
+// Saving updates the header after a write barrier, wich makes saves transactional:
+// If the save completes, the load method uses the new main index, if it crashes the old main index still points to the old valid saved state.
+// The saves should be impossible to corrupt this way, unless the file itself is corrupted.
+int						Version
+Pointer<MainIndex>		Pointer to main save index
+
+MainIndex (block structure, fixed length)
+-----------------------------------------
+DateTime				Timestamp
+Pointer<String>			Save name
+Pointer<String>			Relative path to pointer file, is null if unused
+int						pointer file index address
+Pointer<ChunkTable>		Pointer to chunk table
+
+BlockTable (block structure, length prefixed)
+---------------------------------------------
+short					block count
+for (block count):
+	byte				block id
+	Pointer<String>		block name
+
+ChunkTable (block structure, length prefixed)
+---------------------------------------------
+uint32				chunk count
+for (chunk count):
+	int				X location
+	int				Z location
+	Pointer<Chunk>	pointer to chunk
+
+Chunk (block structure, length prefixed)
+----------------------------------------
+Pointer<BlockTable>		Pointer to block table			// This is here so chunks can have different block tables.
+														// It doesn't make much difference with less than 256 ids, but with more its possible to compress block id lists to roughly half the size if the id distribution is uneven.
+														// It also would allow id mapping changes in copy-on-write mode.
+byte					octree count
+for (octree count):
+	Pointer<Octree>
+
+Octree (block structure, length prefixed)
+-----------------------------------------
+uint32					OctreeFlags length in bytes
+OctreeFlags
+OctreeValueList
+
+OctreeFlags (embedded structure, variable length)
+-------------------------------------------------
+// A bitmap that stores the node status.
+// The order is breadth-first with {lbf, lbb, ltf, ltb, rbf, rbb, rtf, rtb} for child order and padded to the next byte
+while (!finished):
+	bool (1 bit)		HasChildren
+	bool (1 bit)		HasLargeValue
+padding to next full byte
+
+OctreeValueList (embedded structure, variable length)
+-----------------------------------------------------
+for (number of ones in octree bitmap):
+	if (HasLargeValue):
+		ushort			block id
+	else:
+		byte			block id
+
+Pointer table file
+==================
+
+PointerFileIndex (block structure, length prefixed)
+---------------------------------------------------
+int						pointer count
+for (pointer count):
+	Pointer<String>		filename (relative path)
+	int					address in destination file
