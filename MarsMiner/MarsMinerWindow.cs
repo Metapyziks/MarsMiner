@@ -1,5 +1,6 @@
 /**
  * Copyright (c) 2012 James King
+ * Copyright (c) 2012 Tamme Schichler
  *
  * This software is provided 'as-is', without any express or implied
  * warranty. In no event will the authors be held liable for any damages
@@ -21,6 +22,7 @@
  *    distribution.
  * 
  * James King [metapyziks@gmail.com]
+ * Tamme Schichler [tammeschichler@googlemail.com]
  */
 
 using System;
