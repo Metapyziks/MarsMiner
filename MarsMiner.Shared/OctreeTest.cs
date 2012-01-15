@@ -41,8 +41,8 @@ namespace MarsMiner.Shared
 
         protected override OctreeNode<OctreeTestBlockType> FindExternalNode( int x, int y, int z, int size )
         {
-            //if( Chunk != null )
-            //    return Chunk.FindOctree( x, y, z, size );
+            if( Chunk != null )
+                return Chunk.FindOctree( x, y, z, size );
 
             return null;
         }

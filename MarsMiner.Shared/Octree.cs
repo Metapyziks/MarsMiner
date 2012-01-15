@@ -42,6 +42,11 @@ namespace MarsMiner.Shared
 	        get { return mySize; }
         }
 
+        public override Cuboid Cube
+        {
+            get { return new Cuboid( X, Y, Z, Size ); }
+        }
+
         public Octree( int x, int y, int z, int size )
         {
             myX = x;
@@ -82,11 +87,6 @@ namespace MarsMiner.Shared
 
             return new Cuboid( X + oct.X * size, Y + oct.Y * size, Z + oct.Z * size, size );
         }
-
-        protected override OctreeNode<T> FindNeighbour( Face face )
-        {
-            return null;
-        }
     }
 
     public class OctreeNode<T> : IEnumerable<OctreeNode<T>>
@@ -117,6 +117,11 @@ namespace MarsMiner.Shared
         public virtual int Size
         {
             get { return Parent.Size >> 1; }
+        }
+
+        public virtual Cuboid Cube
+        {
+            get { return Parent.FindDimensionsOfChild( this ); }
         }
 
         public Face Solidity { get; private set; }
@@ -393,7 +398,7 @@ namespace MarsMiner.Shared
 
         protected virtual OctreeNode<T> FindNeighbour( Face face )
         {
-            Cuboid dims = Parent.FindDimensionsOfChild( this );
+            Cuboid dims = Cube;
 
             int size = dims.Width;
 
@@ -413,7 +418,7 @@ namespace MarsMiner.Shared
                     dims.Z += size; break;
             }
 
-            return Parent.FindNode( dims.X, dims.Y, dims.Z, size );
+            return FindNode( dims.X, dims.Y, dims.Z, size );
         }
 
         public IEnumerator<OctreeNode<T>> GetEnumerator()
