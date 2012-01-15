@@ -382,27 +382,23 @@ namespace MarsMiner.Shared
 
         protected virtual OctreeNode<T> FindNeighbour( Face face )
         {
-            Cuboid dims = Cube;
-
-            int size = dims.Width;
-
             switch ( face )
             {
                 case Face.Left:
-                    dims.X -= size; break;
+                    return FindNode( 1, -1, 0, 0, 1 );
                 case Face.Right:
-                    dims.X += size; break;
+                    return FindNode( 1, 1, 0, 0, 1 );
                 case Face.Bottom:
-                    dims.Y -= size; break;
+                    return FindNode( 1, 0, -1, 0, 1 );
                 case Face.Top:
-                    dims.Y += size; break;
+                    return FindNode( 1, 0, 1, 0, 1 );
                 case Face.Front:
-                    dims.Z -= size; break;
+                    return FindNode( 1, 0, 0, -1, 1 );
                 case Face.Back:
-                    dims.Z += size; break;
+                    return FindNode( 1, 0, 0, 1, 1 );
             }
 
-            return FindNode( dims.X, dims.Y, dims.Z, size );
+            return null;
         }
 
         public IEnumerator<OctreeNode<T>> GetEnumerator()
