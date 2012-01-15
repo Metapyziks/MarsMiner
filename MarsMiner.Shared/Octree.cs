@@ -58,12 +58,16 @@ namespace MarsMiner.Shared
 
         public void SetCuboid( Cuboid cuboid, T value )
         {
-            SetCuboid( X, Y, Z, Size, cuboid, value );
+            cuboid.X -= X;
+            cuboid.Y -= Y;
+            cuboid.Z -= Z;
+
+            SetCuboid( Size, cuboid, value );
         }
 
         public void SetCuboid( int x, int y, int z, int width, int height, int depth, T value )
         {
-            SetCuboid( X, Y, Z, Size, new Cuboid( x, y, z, width, height, depth ), value );
+            SetCuboid( Size, new Cuboid( x - X, y - Y, z - Z, width, height, depth ), value );
         }
 
         public override OctreeNode<T> FindNode( int x, int y, int z, int size )
@@ -303,15 +307,15 @@ namespace MarsMiner.Shared
             return false;
         }
 
-        protected void SetCuboid( int x, int y, int z, int size, Cuboid cuboid, T value )
+        protected void SetCuboid( int size, Cuboid cuboid, T value )
         {
             if ( !HasChildren && Value.Equals( value ) )
                 return;
 
-            if ( cuboid.IsIntersecting( x, y, z, size ) )
+            if ( cuboid.IsIntersecting( size ) )
             {
-                Cuboid i = cuboid.FindIntersection( x, y, z, size );
-                if ( i.X == x && i.Y == y && i.Z == z
+                Cuboid i = cuboid.FindIntersection( size );
+                if ( i.X == 0 && i.Y == 0 && i.Z == 0
                     && i.Width == i.Height && i.Height == i.Depth && i.Depth == size )
                     Merge( value );
                 else if ( i.Volume != 0 )
@@ -322,7 +326,11 @@ namespace MarsMiner.Shared
                     int h = size >> 1;
 
                     foreach ( Octant oct in Octant.All )
-                        this[ oct ].SetCuboid( x + oct.X * h, y + oct.Y * h, z + oct.Z * h, h, i, value );
+                    {
+                        Cuboid sub = new Cuboid( i.X - oct.X * h, i.Y - oct.Y * h, i.Z - oct.Z * h,
+                            i.Width, i.Height, i.Depth );
+                        this[ oct ].SetCuboid( h, sub, value );
+                    }
                 }
             }
         }
