@@ -1,10 +1,11 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Threading;
+using System.Collections.Generic;
 
 using OpenTK.Graphics;
 using OpenTK.Graphics.OpenGL;
 
 using MarsMiner.Shared;
-using System.Threading;
 
 namespace MarsMiner.Client.Graphics
 {
@@ -30,24 +31,24 @@ namespace MarsMiner.Client.Graphics
         public float[] FindVertices()
         {
             List<float> verts = new List<float>();
+            FindSolidFacesDelegate<OctreeTestBlockType> solidCheck =
+                ( x => ( x == OctreeTestBlockType.Empty ? Face.None : Face.All ) );
 
             foreach ( OctreeTest chunkOctree in Chunk.Octrees )
             {
-                foreach ( OctreeTest octree in chunkOctree )
+                foreach ( OctreeNode<OctreeTestBlockType> octree in chunkOctree )
                 {
                     if ( octree.Value == OctreeTestBlockType.Empty )
                         continue;
 
-                    float x0 = octree.X; float x1 = octree.X + octree.Size;
-                    float y0 = octree.Y; float y1 = octree.Y + octree.Size;
-                    float z0 = octree.Z; float z1 = octree.Z + octree.Size;
+                    float x0 = octree.X; float x1 = x0 + octree.Size;
+                    float y0 = octree.Y; float y1 = y0 + octree.Size;
+                    float z0 = octree.Z; float z1 = z0 + octree.Size;
 
-                    float r0 = octree.Bottom / 256.0f;
-                    float r1 = octree.Top / 256.0f;
+                    float r0 = y0 / 256.0f;
+                    float r1 = y1 / 256.0f;
 
-                    octree.UpdateFace( Face.All );
-
-                    if ( ( octree.Exposed & Face.Front ) != 0 )
+                    if ( octree.IsFaceExposed( Face.Front, solidCheck ) )
                         verts.AddRange( new float[]
                         {
                             x0, y0, z0, r0,
@@ -56,7 +57,7 @@ namespace MarsMiner.Client.Graphics
                             x0, y1, z0, r1,
                         } );
 
-                    if ( ( octree.Exposed & Face.Right ) != 0 )
+                    if ( octree.IsFaceExposed( Face.Right, solidCheck ) )
                         verts.AddRange( new float[]
                         {
                             x1, y0, z0, r0,
@@ -65,7 +66,7 @@ namespace MarsMiner.Client.Graphics
                             x1, y1, z0, r1,
                         } );
 
-                    if ( ( octree.Exposed & Face.Back ) != 0 )
+                    if ( octree.IsFaceExposed( Face.Back, solidCheck ) )
                         verts.AddRange( new float[]
                         {
                             x1, y0, z1, r0,
@@ -74,7 +75,7 @@ namespace MarsMiner.Client.Graphics
                             x1, y1, z1, r1,
                         } );
 
-                    if ( ( octree.Exposed & Face.Left ) != 0 )
+                    if ( octree.IsFaceExposed( Face.Left, solidCheck ) )
                         verts.AddRange( new float[]
                         {
                             x0, y0, z1, r0,
@@ -83,7 +84,7 @@ namespace MarsMiner.Client.Graphics
                             x0, y1, z1, r1,
                         } );
 
-                    if ( ( octree.Exposed & Face.Bottom ) != 0 )
+                    if ( octree.IsFaceExposed( Face.Bottom, solidCheck ) )
                         verts.AddRange( new float[]
                         {
                             x0, y0, z0, r0,
@@ -92,7 +93,7 @@ namespace MarsMiner.Client.Graphics
                             x1, y0, z0, r0,
                         } );
 
-                    if ( ( octree.Exposed & Face.Top ) != 0 )
+                    if ( octree.IsFaceExposed( Face.Top, solidCheck ) )
                         verts.AddRange( new float[]
                         {
                             x0, y1, z0, r1,

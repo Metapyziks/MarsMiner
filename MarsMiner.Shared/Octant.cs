@@ -52,9 +52,18 @@ namespace MarsMiner.Shared
             return XYZ[ right ? 1 : 0, top ? 1 : 0, back ? 1 : 0 ];
         }
 
-        public readonly int X;
-        public readonly int Y;
-        public readonly int Z;
+        public int X
+        {
+            get { return Index >> 2; }
+        }
+        public int Y
+        {
+            get { return ( Index >> 1 ) % 2; }
+        }
+        public int Z
+        {
+            get { return Index % 2; }
+        }
 
         public readonly int Index;
 
@@ -70,10 +79,6 @@ namespace MarsMiner.Shared
 
         private Octant( int x, int y, int z )
         {
-            X = x;
-            Y = y;
-            Z = z;
-
             Index = x << 2 | y << 1 | z;
         }
 

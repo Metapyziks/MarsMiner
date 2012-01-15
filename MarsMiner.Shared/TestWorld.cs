@@ -39,8 +39,9 @@ namespace MarsMiner.Shared
 
             for ( int x = -limit; x < limit; ++x )
                 for ( int z = -limit; z < limit; ++z )
-                    LoadChunk( x * TestChunk.ChunkSize, z * TestChunk.ChunkSize );/*/
+                    LoadChunk( x * TestChunk.ChunkSize, z * TestChunk.ChunkSize );
 
+            /*
             LoadChunk( 0, 0 );
             LoadChunk( TestChunk.ChunkSize, 0 );
             LoadChunk( -TestChunk.ChunkSize, 0 );
@@ -78,7 +79,7 @@ namespace MarsMiner.Shared
             return null;
         }
 
-        public OctreeTest FindOctree( int x, int y, int z, int size )
+        public OctreeNode<OctreeTestBlockType> FindOctree( int x, int y, int z, int size )
         {
             if ( size > TestChunk.ChunkSize )
                 return null;
@@ -117,7 +118,6 @@ namespace MarsMiner.Shared
                 Monitor.Enter( myLoadedChunks );
                 chunk.Generate();
                 myLoadedChunks.Add( FindChunkID( chunk.X, chunk.Z ), chunk );
-                chunk.UpdateNeighbours();
                 Monitor.Exit( myLoadedChunks );
 
                 if ( ChunkLoaded != null )

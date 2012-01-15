@@ -5,22 +5,22 @@ using System.Text;
 
 namespace MarsMiner.Shared
 {
-    public class OctreeEnumerator<T> : IEnumerator<Octree<T>>
+    public class OctreeEnumerator<T> : IEnumerator<OctreeNode<T>>
     {
         private OctreeEnumerator<T> myChild;
         private Octant myCurOctant;
         private byte myPassed;
 
-        public readonly Octree<T> Octree;
+        public readonly OctreeNode<T> Octree;
         public readonly Face Face;
 
-        public OctreeEnumerator( Octree<T> octree )
+        public OctreeEnumerator( OctreeNode<T> octree )
             : this( octree, Face.None )
         {
 
         }
 
-        public OctreeEnumerator( Octree<T> octree, Face face )
+        public OctreeEnumerator( OctreeNode<T> octree, Face face )
         {
             Octree = octree;
             Face = face;
@@ -28,7 +28,7 @@ namespace MarsMiner.Shared
             Reset();
         }
 
-        public Octree<T> Current
+        public OctreeNode<T> Current
         {
             get
             {
