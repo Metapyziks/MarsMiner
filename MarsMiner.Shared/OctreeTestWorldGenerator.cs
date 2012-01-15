@@ -1,4 +1,29 @@
-﻿using System;
+/**
+ * Copyright (c) 2012 James King
+ *
+ * This software is provided 'as-is', without any express or implied
+ * warranty. In no event will the authors be held liable for any damages
+ * arising from the use of this software.
+ * 
+ * Permission is granted to anyone to use this software for any purpose,
+ * including commercial applications, and to alter it and redistribute it
+ * freely, subject to the following restrictions:
+ * 
+ *    1. The origin of this software must not be misrepresented; you must not
+ *    claim that you wrote the original software. If you use this software
+ *    in a product, an acknowledgment in the product documentation would be
+ *    appreciated but is not required.
+ * 
+ *    2. Altered source versions must be plainly marked as such, and must not be
+ *    misrepresented as being the original software.
+ * 
+ *    3. This notice may not be removed or altered from any source
+ *    distribution.
+ * 
+ * James King [metapyziks@gmail.com]
+ */
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -148,15 +173,15 @@ namespace MarsMiner.Shared
                             int rz = z + nz * res;
                             int pz = nz >> 1;
                             
-                            int height = 256;
+                            /*int height = 256;
                             
                             for ( int ix = nx * sca; ix < ( nx + 1 ) * sca; ++ix )
                                 for ( int iz = nz * sca; iz < ( nz + 1 ) * sca; ++iz )
                                     if ( map[ ix, iz ] < height )
-                                        height = map[ ix, iz ];
+                                        height = map[ ix, iz ];*/
 
 
-                            //int height = map[ nx * sca, nz * sca ] / res * res;
+                            int height = map[ nx * sca, nz * sca ] / res * res;
 
                             cur[ nx, nz ] = height;
 
@@ -170,8 +195,8 @@ namespace MarsMiner.Shared
 
                             if( height > prevHeight )
                                 octree.SetCuboid( cuboid, OctreeTestBlockType.White );
-                            //else
-                            //    octree.SetCuboid( cuboid, OctreeTestBlockType.Empty );
+                            else
+                                octree.SetCuboid( cuboid, OctreeTestBlockType.Empty );
 
                         }
                     }

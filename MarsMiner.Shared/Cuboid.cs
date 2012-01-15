@@ -1,4 +1,29 @@
-﻿using System;
+/**
+ * Copyright (c) 2012 James King
+ *
+ * This software is provided 'as-is', without any express or implied
+ * warranty. In no event will the authors be held liable for any damages
+ * arising from the use of this software.
+ * 
+ * Permission is granted to anyone to use this software for any purpose,
+ * including commercial applications, and to alter it and redistribute it
+ * freely, subject to the following restrictions:
+ * 
+ *    1. The origin of this software must not be misrepresented; you must not
+ *    claim that you wrote the original software. If you use this software
+ *    in a product, an acknowledgment in the product documentation would be
+ *    appreciated but is not required.
+ * 
+ *    2. Altered source versions must be plainly marked as such, and must not be
+ *    misrepresented as being the original software.
+ * 
+ *    3. This notice may not be removed or altered from any source
+ *    distribution.
+ * 
+ * James King [metapyziks@gmail.com]
+ */
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -79,6 +104,13 @@ namespace MarsMiner.Shared
                 && cuboid.Front <= Back && cuboid.Back >= Front;
         }
 
+        public bool IsIntersecting( int size )
+        {
+            return 0 <= Right && size >= Left
+                && 0 <= Top && size >= Bottom
+                && 0 <= Back && size >= Front;
+        }
+
         public bool IsIntersecting( int x, int y, int z, int size )
         {
             return x <= Right && x + size >= Left
@@ -103,6 +135,22 @@ namespace MarsMiner.Shared
             int right = Math.Min( Right, cuboid.Right );
             int top = Math.Min( Top, cuboid.Top );
             int back = Math.Min( Back, cuboid.Back );
+
+            return new Cuboid( left, bottom, front, right - left, top - bottom, back - front );
+        }
+
+        public Cuboid FindIntersection( int size )
+        {
+            if ( !IsIntersecting( size ) )
+                throw new InvalidOperationException();
+
+            int left = Math.Max( Left, 0 );
+            int bottom = Math.Max( Bottom, 0 );
+            int front = Math.Max( Front, 0 );
+
+            int right = Math.Min( Right, size );
+            int top = Math.Min( Top, size );
+            int back = Math.Min( Back, size );
 
             return new Cuboid( left, bottom, front, right - left, top - bottom, back - front );
         }

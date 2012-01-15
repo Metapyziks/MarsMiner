@@ -1,4 +1,29 @@
-﻿using System;
+/**
+ * Copyright (c) 2012 James King
+ *
+ * This software is provided 'as-is', without any express or implied
+ * warranty. In no event will the authors be held liable for any damages
+ * arising from the use of this software.
+ * 
+ * Permission is granted to anyone to use this software for any purpose,
+ * including commercial applications, and to alter it and redistribute it
+ * freely, subject to the following restrictions:
+ * 
+ *    1. The origin of this software must not be misrepresented; you must not
+ *    claim that you wrote the original software. If you use this software
+ *    in a product, an acknowledgment in the product documentation would be
+ *    appreciated but is not required.
+ * 
+ *    2. Altered source versions must be plainly marked as such, and must not be
+ *    misrepresented as being the original software.
+ * 
+ *    3. This notice may not be removed or altered from any source
+ *    distribution.
+ * 
+ * James King [metapyziks@gmail.com]
+ */
+
+using System;
 using System.Collections.Generic;
 
 namespace MarsMiner.Shared
@@ -58,12 +83,16 @@ namespace MarsMiner.Shared
 
         public void SetCuboid( Cuboid cuboid, T value )
         {
-            SetCuboid( X, Y, Z, Size, cuboid, value );
+            cuboid.X -= X;
+            cuboid.Y -= Y;
+            cuboid.Z -= Z;
+
+            SetCuboid( Size, cuboid, value );
         }
 
         public void SetCuboid( int x, int y, int z, int width, int height, int depth, T value )
         {
-            SetCuboid( X, Y, Z, Size, new Cuboid( x, y, z, width, height, depth ), value );
+            SetCuboid( Size, new Cuboid( x - X, y - Y, z - Z, width, height, depth ), value );
         }
 
         public override OctreeNode<T> FindNode( int x, int y, int z, int size )
@@ -71,7 +100,18 @@ namespace MarsMiner.Shared
             if ( x < X || y < Y || z < Z || x >= X + Size || y >= Y + Size || z >= Z + Size )
                 return FindExternalNode( x, y, z, size );
 
-            return FindNode( X, Y, Z, Size, x, y, z, size );
+            return FindNode( Size, x - X, y - Y, z - Z, size );
+        }
+
+        protected override OctreeNode<T> FindNode( int mSize, int oX, int oY, int oZ, int oSize )
+        {
+            if ( oX < 0 || oY < 0 || oZ < 0 || oX >= mSize || oY >= mSize || oZ >= mSize )
+            {
+                int scale = Size / mSize;
+                return FindExternalNode( X + oX * scale, Y + oY * scale, Z + oZ * scale, oSize * scale );
+            }
+
+            return base.FindNode( mSize, oX, oY, oZ, oSize );
         }
 
         protected virtual OctreeNode<T> FindExternalNode( int x, int y, int z, int size )
@@ -303,15 +343,15 @@ namespace MarsMiner.Shared
             return false;
         }
 
-        protected void SetCuboid( int x, int y, int z, int size, Cuboid cuboid, T value )
+        protected void SetCuboid( int size, Cuboid cuboid, T value )
         {
             if ( !HasChildren && Value.Equals( value ) )
                 return;
 
-            if ( cuboid.IsIntersecting( x, y, z, size ) )
+            if ( cuboid.IsIntersecting( size ) )
             {
-                Cuboid i = cuboid.FindIntersection( x, y, z, size );
-                if ( i.X == x && i.Y == y && i.Z == z
+                Cuboid i = cuboid.FindIntersection( size );
+                if ( i.X == 0 && i.Y == 0 && i.Z == 0
                     && i.Width == i.Height && i.Height == i.Depth && i.Depth == size )
                     Merge( value );
                 else if ( i.Volume != 0 )
@@ -322,7 +362,11 @@ namespace MarsMiner.Shared
                     int h = size >> 1;
 
                     foreach ( Octant oct in Octant.All )
-                        this[ oct ].SetCuboid( x + oct.X * h, y + oct.Y * h, z + oct.Z * h, h, i, value );
+                    {
+                        Cuboid sub = new Cuboid( i.X - oct.X * h, i.Y - oct.Y * h, i.Z - oct.Z * h,
+                            i.Width, i.Height, i.Depth );
+                        this[ oct ].SetCuboid( h, sub, value );
+                    }
                 }
             }
         }
@@ -332,62 +376,54 @@ namespace MarsMiner.Shared
             return Parent.FindNode( x, y, z, size );
         }
 
-        protected OctreeNode<T> FindNode( int mX, int mY, int mZ, int mSize, int oX, int oY, int oZ, int oSize )
+        protected virtual OctreeNode<T> FindNode( int mSize, int oX, int oY, int oZ, int oSize )
         {
-            if ( mSize == oSize && mX == oX && mY == oY && mZ == oZ )
+            if ( mSize == oSize && oX == 0 && oY == 0 && oZ == 0 )
                 return this;
 
-            if ( oX < mX || oY < mY || oZ < mZ || oX >= mX + mSize
-                || oY >= mY + mSize || oZ >= mZ + mSize )
-            {
-                mX ^= ( mX & mSize );
-                mY ^= ( mY & mSize );
-                mZ ^= ( mZ & mSize );
-                mSize <<= 1;
-                return Parent.FindNode( mX, mY, mZ, mSize, oX, oY, oZ, oSize );
-            }
+            if ( oX < 0 || oY < 0 || oZ < 0 || oX >= mSize
+                || oY >= mSize || oZ >= mSize )
+                return Parent.FindNode( this, mSize, oX, oY, oZ, oSize );
 
             if ( HasChildren )
             {
                 int hs = mSize >> 1;
-                int cX = ( oX >= mX + hs ? 1 : 0 );
-                int cY = ( oY >= mY + hs ? 1 : 0 );
-                int cZ = ( oZ >= mZ + hs ? 1 : 0 );
+                int cX = ( oX >= hs ? 1 : 0 );
+                int cY = ( oY >= hs ? 1 : 0 );
+                int cZ = ( oZ >= hs ? 1 : 0 );
                 int child = cX << 2 | cY << 1 | cZ;
 
-                cX = mX + cX * hs;
-                cY = mY + cY * hs;
-                cZ = mZ + cZ * hs;
-
-                return myChildren[ child ].FindNode( cX, cY, cZ, hs, oX, oY, oZ, oSize );
+                return myChildren[ child ].FindNode( hs, oX - cX * hs, oY - cY * hs, oZ - cZ * hs, oSize );
             }
 
             return this;
         }
 
+        protected OctreeNode<T> FindNode( OctreeNode<T> child, int mSize, int oX, int oY, int oZ, int oSize )
+        {
+            Octant oct = FindOctantOfChild( child );
+            return FindNode( mSize << 1, oX + oct.X * mSize, oY + oct.Y * mSize, oZ + oct.Z * mSize, oSize );
+        }
+
         protected virtual OctreeNode<T> FindNeighbour( Face face )
         {
-            Cuboid dims = Cube;
-
-            int size = dims.Width;
-
             switch ( face )
             {
                 case Face.Left:
-                    dims.X -= size; break;
+                    return FindNode( 1, -1, 0, 0, 1 );
                 case Face.Right:
-                    dims.X += size; break;
+                    return FindNode( 1, 1, 0, 0, 1 );
                 case Face.Bottom:
-                    dims.Y -= size; break;
+                    return FindNode( 1, 0, -1, 0, 1 );
                 case Face.Top:
-                    dims.Y += size; break;
+                    return FindNode( 1, 0, 1, 0, 1 );
                 case Face.Front:
-                    dims.Z -= size; break;
+                    return FindNode( 1, 0, 0, -1, 1 );
                 case Face.Back:
-                    dims.Z += size; break;
+                    return FindNode( 1, 0, 0, 1, 1 );
             }
 
-            return FindNode( dims.X, dims.Y, dims.Z, size );
+            return null;
         }
 
         public IEnumerator<OctreeNode<T>> GetEnumerator()
