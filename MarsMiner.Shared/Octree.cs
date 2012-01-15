@@ -169,6 +169,7 @@ namespace MarsMiner.Shared
         {
             Parent = parent;
             myValue = parent.myValue;
+            Solidity = parent.Solidity;
         }
 
         public OctreeNode<T> this[ Octant octant ]
@@ -394,23 +395,25 @@ namespace MarsMiner.Shared
         {
             Cuboid dims = Parent.FindDimensionsOfChild( this );
 
+            int size = dims.Width;
+
             switch ( face )
             {
                 case Face.Left:
-                    dims.X -= dims.Width; break;
+                    dims.X -= size; break;
                 case Face.Right:
-                    dims.X += dims.Width; break;
+                    dims.X += size; break;
                 case Face.Bottom:
-                    dims.Y -= dims.Width; break;
+                    dims.Y -= size; break;
                 case Face.Top:
-                    dims.Y += dims.Width; break;
+                    dims.Y += size; break;
                 case Face.Front:
-                    dims.Z -= dims.Width; break;
+                    dims.Z -= size; break;
                 case Face.Back:
-                    dims.Z += dims.Width; break;
+                    dims.Z += size; break;
             }
 
-            return Parent.FindNode( dims.X, dims.Y, dims.Z, dims.Width );
+            return Parent.FindNode( dims.X, dims.Y, dims.Z, size );
         }
 
         public IEnumerator<OctreeNode<T>> GetEnumerator()
