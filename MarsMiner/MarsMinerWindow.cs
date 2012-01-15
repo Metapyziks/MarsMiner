@@ -1,5 +1,6 @@
 /**
  * Copyright (c) 2012 James King [metapyziks@gmail.com]
+ * Copyright (c) 2012 Tamme Schichler [tammeschichler@googlemail.com]
  *
  * This file is part of MarsMiner.
  * 
