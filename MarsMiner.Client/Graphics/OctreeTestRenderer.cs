@@ -23,12 +23,7 @@
  * James King [metapyziks@gmail.com]
  */
 
-using System;
-using System.Threading;
 using System.Collections.Generic;
-
-using OpenTK.Graphics;
-using OpenTK.Graphics.OpenGL;
 
 using MarsMiner.Shared;
 
