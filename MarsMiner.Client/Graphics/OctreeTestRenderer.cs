@@ -33,17 +33,17 @@ namespace MarsMiner.Client.Graphics
 
             foreach ( OctreeTest chunkOctree in Chunk.Octrees )
             {
-                foreach ( OctreeTest octree in chunkOctree )
+                foreach ( OctreeNode<OctreeTestBlockType> octree in chunkOctree )
                 {
                     if ( octree.Value == OctreeTestBlockType.Empty )
                         continue;
 
-                    float x0 = octree.X; float x1 = octree.X + octree.Size;
-                    float y0 = octree.Y; float y1 = octree.Y + octree.Size;
-                    float z0 = octree.Z; float z1 = octree.Z + octree.Size;
+                    float x0 = octree.X; float x1 = x0 + octree.Size;
+                    float y0 = octree.Y; float y1 = y0 + octree.Size;
+                    float z0 = octree.Z; float z1 = z0 + octree.Size;
 
-                    float r0 = octree.Bottom / 256.0f;
-                    float r1 = octree.Top / 256.0f;
+                    float r0 = y0 / 256.0f;
+                    float r1 = y1 / 256.0f;
 
                     octree.UpdateFace( Face.All );
 

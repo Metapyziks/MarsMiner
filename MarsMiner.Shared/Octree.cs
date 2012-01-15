@@ -16,42 +16,107 @@ namespace MarsMiner.Shared
         Bottom  = 32
     }
 
-    public class Octree<T> : IEnumerable<Octree<T>>
+    public class Octree<T> : OctreeNode<T>
+    {
+        private readonly int myX;
+        private readonly int myY;
+        private readonly int myZ;
+
+        private readonly int mySize;
+
+        public override int X
+        {
+	        get { return myX; }
+        }
+        public override int Y
+        {
+	        get { return myY; }
+        }
+        public override int Z
+        {
+	        get { return myZ; }
+        }
+        
+        public override int Size
+        {
+	        get { return mySize; }
+        }
+
+        public Octree( int x, int y, int z, int size )
+        {
+            myX = x;
+            myY = y;
+            myZ = z;
+
+            mySize = size;
+        }
+
+        public void SetCuboid( Cuboid cuboid, T value )
+        {
+            SetCuboid( X, Y, Z, Size, cuboid, value );
+        }
+
+        public void SetCuboid( int x, int y, int z, int width, int height, int depth, T value )
+        {
+            SetCuboid( X, Y, Z, Size, new Cuboid( x, y, z, width, height, depth ), value );
+        }
+
+        public override OctreeNode<T> FindNode( int x, int y, int z, int size )
+        {
+            if ( x < X || y < Y || z < Z || x >= X + Size || y >= Y + Size || z >= Z + Size )
+                return FindExternalNode( x, y, z, size );
+
+            return FindNode( X, Y, Z, Size, x, y, z, size );
+        }
+
+        protected virtual OctreeNode<T> FindExternalNode( int x, int y, int z, int size )
+        {
+            return null;
+        }
+
+        protected override Cuboid FindDimensionsOfChild( OctreeNode<T> child )
+        {
+            Octant oct = FindOctantOfChild( child );
+
+            int size = Size >> 1;
+
+            return new Cuboid( X + oct.X * size, Y + oct.Y * size, Z + oct.Z * size, size );
+        }
+
+        protected override OctreeNode<T> FindNeighbour( Face face )
+        {
+            return null;
+        }
+    }
+
+    public class OctreeNode<T> : IEnumerable<OctreeNode<T>>
     {
         private T myValue;
-        private Octree<T>[] myChildren;
+        private OctreeNode<T>[] myChildren;
         private Face myChangedFaces;
         private Face myExposed;
 
-        public readonly int X;
-        public readonly int Y;
-        public readonly int Z;
+        public Octant Octant
+        {
+            get { return Parent.FindOctantOfChild( this ); }
+        }
 
-        public readonly int Size;
+        public virtual int X
+        {
+            get { return Parent.X + Octant.X * Size; }
+        }
+        public virtual int Y
+        {
+            get { return Parent.Y + Octant.Y * Size; }
+        }
+        public virtual int Z
+        {
+            get { return Parent.Z + Octant.Z * Size; }
+        }
 
-        public int Left
+        public virtual int Size
         {
-            get { return X; }
-        }
-        public int Bottom
-        {
-            get { return Y; }
-        }
-        public int Front
-        {
-            get { return Z; }
-        }
-        public int Right
-        {
-            get { return X + Size; }
-        }
-        public int Top
-        {
-            get { return Y + Size; }
-        }
-        public int Back
-        {
-            get { return Z + Size; }
+            get { return Parent.Size >> 1; }
         }
 
         public Face Solidity { get; private set; }
@@ -66,12 +131,7 @@ namespace MarsMiner.Shared
             }
         }
 
-        public Cuboid Cube
-        {
-            get { return new Cuboid( X, Y, Z, Size, Size, Size ); }
-        }
-
-        public readonly Octree<T> Parent;
+        public readonly OctreeNode<T> Parent;
 
         public T Value
         {
@@ -98,36 +158,20 @@ namespace MarsMiner.Shared
             get { return myChildren != null; }
         }
 
-        public Octree( int size )
+        public OctreeNode()
         {
-            Size = size;
-
             Solidity = FindSolidFaces();
-
             myChangedFaces = Face.All;
         }
 
-        public Octree( int x, int y, int z, int size )
-            : this( size )
-        {
-            X = x;
-            Y = y;
-            Z = z;
-        }
-
-        protected Octree( Octree<T> parent, Octant octant )
-            : this( parent.Size / 2 )
+        protected OctreeNode( OctreeNode<T> parent, Octant octant )
+            : this()
         {
             Parent = parent;
-
-            X = Parent.X + octant.X * Size;
-            Y = Parent.Y + octant.Y * Size;
-            Z = Parent.Z + octant.Z * Size;
-
             myValue = parent.myValue;
         }
 
-        public Octree<T> this[ Octant octant ]
+        public OctreeNode<T> this[ Octant octant ]
         {
             get
             {
@@ -138,29 +182,43 @@ namespace MarsMiner.Shared
             }
         }
 
+        protected Octant FindOctantOfChild( OctreeNode<T> child )
+        {
+            for( int i = 0; i < 8; ++ i )
+                if( child == myChildren[ i ] )
+                    return Octant.All[ i ];
+
+            throw new IndexOutOfRangeException();
+        }
+
+        protected virtual Cuboid FindDimensionsOfChild( OctreeNode<T> child )
+        {
+            Octant oct = FindOctantOfChild( child );
+            Cuboid dims = Parent.FindDimensionsOfChild( this );
+
+            int size = dims.Width >> 1;
+
+            return new Cuboid( dims.X + oct.X * size, dims.Y + oct.Y * size, dims.Z + oct.Z * size, size );
+        }
+
         public void Partition()
         {
             if ( !HasChildren )
             {
-                myChildren = new Octree<T>[]
+                myChildren = new OctreeNode<T>[]
                 {
-                    CreateChild( Octant.All[ 0 ] ),
-                    CreateChild( Octant.All[ 1 ] ),
-                    CreateChild( Octant.All[ 2 ] ),
-                    CreateChild( Octant.All[ 3 ] ),
-                    CreateChild( Octant.All[ 4 ] ),
-                    CreateChild( Octant.All[ 5 ] ),
-                    CreateChild( Octant.All[ 6 ] ),
-                    CreateChild( Octant.All[ 7 ] )
+                    new OctreeNode<T>( this, Octant.All[ 0 ] ),
+                    new OctreeNode<T>( this, Octant.All[ 1 ] ),
+                    new OctreeNode<T>( this, Octant.All[ 2 ] ),
+                    new OctreeNode<T>( this, Octant.All[ 3 ] ),
+                    new OctreeNode<T>( this, Octant.All[ 4 ] ),
+                    new OctreeNode<T>( this, Octant.All[ 5 ] ),
+                    new OctreeNode<T>( this, Octant.All[ 6 ] ),
+                    new OctreeNode<T>( this, Octant.All[ 7 ] )
                 };
 
                 myValue = default( T );
             }
-        }
-
-        protected virtual Octree<T> CreateChild( Octant octant )
-        {
-            return new Octree<T>( this, octant );
         }
 
         public void Merge( T value )
@@ -180,7 +238,7 @@ namespace MarsMiner.Shared
                 Solidity = FindSolidFaces();
                 diff ^= Solidity;
 
-                Octree<T> n;
+                OctreeNode<T> n;
 
                 for ( int i = 1; i < 64; i <<= 1 )
                 {
@@ -250,7 +308,7 @@ namespace MarsMiner.Shared
                 Face face = (Face) i;
                 if ( ( myChangedFaces & face ) != 0 )
                 {
-                    Octree<T> n = FindNeighbour( face );
+                    OctreeNode<T> n = FindNeighbour( face );
                     bool exposed = ( n == null )
                         || ( n.Solidity & Tools.Opposite( face ) ) == 0;
 
@@ -267,97 +325,100 @@ namespace MarsMiner.Shared
             return Face.All;
         }
 
-        public void SetCuboid( Cuboid cuboid, T value )
+        protected void SetCuboid( int x, int y, int z, int size, Cuboid cuboid, T value )
         {
             if ( !HasChildren && Value.Equals( value ) )
                 return;
 
-            Cuboid cube = Cube;
-            if ( cube.IsIntersecting( cuboid ) )
+            if ( cuboid.IsIntersecting( x, y, z, size ) )
             {
-                Cuboid intersection = cube.FindIntersection( cuboid );
-                if ( intersection.Equals( cube ) )
+                Cuboid i = cuboid.FindIntersection( x, y, z, size );
+                if ( i.X == x && i.Y == y && i.Z == z
+                    && i.Width == i.Height && i.Height == i.Depth && i.Depth == size )
                     Merge( value );
-                else if ( intersection.Volume != 0 )
+                else if ( i.Volume != 0 )
                 {
-                    if( !HasChildren )
+                    if ( !HasChildren )
                         Partition();
 
-                    foreach ( Octree<T> child in myChildren )
-                        child.SetCuboid( intersection, value );
+                    int h = size >> 1;
 
-                    if( HasChildren )
+                    foreach ( Octant oct in Octant.All )
+                        this[ oct ].SetCuboid( x + oct.X * h, y + oct.Y * h, z + oct.Z * h, h, i, value );
+
+                    if ( HasChildren )
                         UpdateSolidity();
                 }
             }
         }
 
-        public void SetCuboid( int x, int y, int z, int width, int height, int depth, T value )
+        public virtual OctreeNode<T> FindNode( int x, int y, int z, int size )
         {
-            SetCuboid( new Cuboid( x, y, z, width, height, depth ), value );
+            return Parent.FindNode( x, y, z, size );
         }
 
-        public Octree<T> FindOctree( int x, int y, int z, int size )
+        protected OctreeNode<T> FindNode( int mX, int mY, int mZ, int mSize, int oX, int oY, int oZ, int oSize )
         {
-            if ( size == Size && x == X && y == Y && z == Z )
+            if ( mSize == oSize && mX == oX && mY == oY && mZ == oZ )
                 return this;
 
-            if ( x < Left || y < Bottom || z < Front || x >= Right || y >= Top || z >= Back )
+            if ( oX < mX || oY < mY || oZ < mZ || oX >= mX + mSize
+                || oY >= mY + mSize || oZ >= mZ + mSize )
             {
-                if ( HasParent )
-                    return Parent.FindOctree( x, y, z, size );
-
-                return FindExternalOctree( x, y, z, size );
+                mX ^= ( mX & mSize );
+                mY ^= ( mY & mSize );
+                mZ ^= ( mZ & mSize );
+                mSize <<= 1;
+                return Parent.FindNode( mX, mY, mZ, mSize, oX, oY, oZ, oSize );
             }
 
             if ( HasChildren )
             {
-                int hs = Size >> 1;
-                int child = ( x >= X + hs ? 4 : 0 ) | ( y >= Y + hs ? 2 : 0 ) | ( z >= Z + hs ? 1 : 0 );
+                int hs = mSize >> 1;
+                int cX = ( oX >= mX + hs ? 1 : 0 );
+                int cY = ( oY >= mY + hs ? 1 : 0 );
+                int cZ = ( oZ >= mZ + hs ? 1 : 0 );
+                int child = cX << 2 | cY << 1 | cZ;
 
-                return myChildren[ child ].FindOctree( x, y, z, size );
+                cX = mX + cX * hs;
+                cY = mY + cY * hs;
+                cZ = mZ + cZ * hs;
+
+                return myChildren[ child ].FindNode( cX, cY, cZ, hs, oX, oY, oZ, oSize );
             }
 
             return this;
         }
 
-        public Octree<T> FindNeighbour( Face face )
+        protected virtual OctreeNode<T> FindNeighbour( Face face )
         {
-            int x = X, y = Y, z = Z, size = Size;
+            Cuboid dims = Parent.FindDimensionsOfChild( this );
 
             switch ( face )
             {
                 case Face.Left:
-                    x -= Size; break;
+                    dims.X -= dims.Width; break;
                 case Face.Right:
-                    x += Size; break;
+                    dims.X += dims.Width; break;
                 case Face.Bottom:
-                    y -= Size; break;
+                    dims.Y -= dims.Width; break;
                 case Face.Top:
-                    y += Size; break;
+                    dims.Y += dims.Width; break;
                 case Face.Front:
-                    z -= Size; break;
+                    dims.Z -= dims.Width; break;
                 case Face.Back:
-                    z += Size; break;
+                    dims.Z += dims.Width; break;
             }
 
-            if ( HasParent )
-                return Parent.FindOctree( x, y, z, size );
-
-            return FindExternalOctree( x, y, z, size );
+            return Parent.FindNode( dims.X, dims.Y, dims.Z, dims.Width );
         }
 
-        protected virtual Octree<T> FindExternalOctree( int x, int y, int z, int size )
-        {
-            return null;
-        }
-
-        public IEnumerator<Octree<T>> GetEnumerator()
+        public IEnumerator<OctreeNode<T>> GetEnumerator()
         {
             return new OctreeEnumerator<T>( this );
         }
 
-        public IEnumerator<Octree<T>> GetEnumerator( Face face )
+        public IEnumerator<OctreeNode<T>> GetEnumerator( Face face )
         {
             return new OctreeEnumerator<T>( this, face );
         }

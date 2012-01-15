@@ -35,14 +35,14 @@ namespace MarsMiner.Shared
             myChunksToLoad = new Queue<TestChunk>();
             Generator = new OctreeTestWorldGenerator( seed );
 
-            int limit = 1024 / TestChunk.ChunkSize;
+            /*int limit = 1024 / TestChunk.ChunkSize;
 
             for ( int x = -limit; x < limit; ++x )
                 for ( int z = -limit; z < limit; ++z )
-                    LoadChunk( x * TestChunk.ChunkSize, z * TestChunk.ChunkSize );/*/
+                    LoadChunk( x * TestChunk.ChunkSize, z * TestChunk.ChunkSize );*/
 
             LoadChunk( 0, 0 );
-            LoadChunk( TestChunk.ChunkSize, 0 );
+            /*LoadChunk( TestChunk.ChunkSize, 0 );
             LoadChunk( -TestChunk.ChunkSize, 0 );
             LoadChunk( 0, TestChunk.ChunkSize );
             LoadChunk( 0, -TestChunk.ChunkSize );*/
@@ -78,7 +78,7 @@ namespace MarsMiner.Shared
             return null;
         }
 
-        public OctreeTest FindOctree( int x, int y, int z, int size )
+        public OctreeNode<OctreeTestBlockType> FindOctree( int x, int y, int z, int size )
         {
             if ( size > TestChunk.ChunkSize )
                 return null;

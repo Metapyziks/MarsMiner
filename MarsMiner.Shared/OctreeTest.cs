@@ -9,20 +9,8 @@ namespace MarsMiner.Shared
     {
         public TestChunk Chunk;
 
-        public OctreeTest( int size )
-            : base( size )
-        {
-
-        }
-
         public OctreeTest( int x, int y, int z, int size )
             : base( x, y, z, size )
-        {
-
-        }
-
-        protected OctreeTest( OctreeTest parent, Octant octant )
-            : base( parent, octant )
         {
 
         }
@@ -43,11 +31,6 @@ namespace MarsMiner.Shared
             }
         }
 
-        protected override Octree<OctreeTestBlockType> CreateChild( Octant octant )
-        {
-            return new OctreeTest( this, octant );
-        }
-
         protected override Face FindSolidFaces()
         {
             if ( Value == OctreeTestBlockType.Empty )
@@ -56,10 +39,10 @@ namespace MarsMiner.Shared
             return Face.All;
         }
 
-        protected override Octree<OctreeTestBlockType> FindExternalOctree( int x, int y, int z, int size )
+        protected override OctreeNode<OctreeTestBlockType> FindExternalNode( int x, int y, int z, int size )
         {
-            if( Chunk != null )
-                return Chunk.FindOctree( x, y, z, size );
+            //if( Chunk != null )
+            //    return Chunk.FindOctree( x, y, z, size );
 
             return null;
         }
