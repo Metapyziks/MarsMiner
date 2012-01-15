@@ -61,12 +61,6 @@ namespace MarsMiner.Shared
             Loaded = true;
         }
 
-        public void UpdateNeighbours()
-        {
-            for ( int i = 0; i < Octrees.Length; ++i )
-                Octrees[ i ].UpdateNeighbours();
-        }
-
         public OctreeNode<OctreeTestBlockType> FindOctree( int x, int y, int z, int size )
         {
             if ( x < X || x >= X + ChunkSize || z < Z || z >= Z + ChunkSize )

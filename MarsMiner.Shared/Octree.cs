@@ -89,12 +89,12 @@ namespace MarsMiner.Shared
         }
     }
 
+    public delegate Face FindSolidFacesDelegate<T>( T value );
+
     public class OctreeNode<T> : IEnumerable<OctreeNode<T>>
     {
         private T myValue;
         private OctreeNode<T>[] myChildren;
-        private Face myChangedFaces;
-        private Face myExposed;
 
         public Octant Octant
         {
@@ -122,18 +122,6 @@ namespace MarsMiner.Shared
         public virtual Cuboid Cube
         {
             get { return Parent.FindDimensionsOfChild( this ); }
-        }
-
-        public Face Solidity { get; private set; }
-        public Face Exposed
-        {
-            get
-            {
-                if ( myChangedFaces != Face.None )
-                    UpdateExposedness();
-
-                return myExposed;
-            }
         }
 
         public readonly OctreeNode<T> Parent;
@@ -165,16 +153,13 @@ namespace MarsMiner.Shared
 
         public OctreeNode()
         {
-            Solidity = FindSolidFaces();
-            myChangedFaces = Face.All;
+
         }
 
         protected OctreeNode( OctreeNode<T> parent, Octant octant )
-            : this()
         {
             Parent = parent;
             myValue = parent.myValue;
-            Solidity = parent.Solidity;
         }
 
         public OctreeNode<T> this[ Octant octant ]
@@ -238,25 +223,6 @@ namespace MarsMiner.Shared
 
             if ( HasParent && Parent.ShouldMerge() )
                 Parent.Merge( Parent.FindMergeValue() );
-            else
-            {
-                Face diff = Solidity;
-                Solidity = FindSolidFaces();
-                diff ^= Solidity;
-
-                OctreeNode<T> n;
-
-                for ( int i = 1; i < 64; i <<= 1 )
-                {
-                    Face face = (Face) i;
-                    if ( ( diff & face ) != 0 )
-                    {
-                        n = FindNeighbour( face );
-                        if ( n != null )
-                            n.myChangedFaces |= Tools.Opposite( face );
-                    }
-                }
-            }
         }
 
         protected virtual bool ShouldMerge()
@@ -282,53 +248,59 @@ namespace MarsMiner.Shared
             return myChildren[ 0 ].Value;
         }
 
-        private void UpdateSolidity()
+        public bool IsFaceExposed( Face face, FindSolidFacesDelegate<T> solidCheck )
         {
-            Face lbf = myChildren[ 0 ].Solidity;
-            Face lbb = myChildren[ 1 ].Solidity;
-            Face ltf = myChildren[ 2 ].Solidity;
-            Face ltb = myChildren[ 3 ].Solidity;
-            Face rbf = myChildren[ 4 ].Solidity;
-            Face rbb = myChildren[ 5 ].Solidity;
-            Face rtf = myChildren[ 6 ].Solidity;
-            Face rtb = myChildren[ 7 ].Solidity;
+            OctreeNode<T> n = FindNeighbour( face );
 
-            Solidity =
-                ( Face.Left   & lbf & lbb & ltf & ltb ) |
-                ( Face.Right  & rbf & rbb & rtf & rtb ) |
-                ( Face.Bottom & lbf & lbb & rbf & rbb ) |
-                ( Face.Top    & ltf & ltb & rtf & rtb ) |
-                ( Face.Front  & lbf & ltf & rbf & rtf ) |
-                ( Face.Back   & lbb & ltb & rbb & rtb );
+            return n == null || !n.IsFaceSolid( Tools.Opposite( face ), solidCheck );
         }
 
-        public void UpdateFace( Face face )
+        public bool IsFaceSolid( Face face, FindSolidFacesDelegate<T> solidCheck )
         {
-            myChangedFaces |= face & Solidity;
-        }
+            if ( !HasChildren )
+                return ( solidCheck( Value ) & face ) != 0;
 
-        private void UpdateExposedness()
-        {
-            for ( int i = 1; i < 64; i <<= 1 )
+            switch ( face )
             {
-                Face face = (Face) i;
-                if ( ( myChangedFaces & face ) != 0 )
-                {
-                    OctreeNode<T> n = FindNeighbour( face );
-                    bool exposed = ( n == null )
-                        || ( n.Solidity & Tools.Opposite( face ) ) == 0;
-
-                    if ( ( ( myExposed & face ) != 0 ) != exposed )
-                        myExposed ^= face;
-                }
+                case Face.Left:
+                    return
+                        myChildren[ 0 ].IsFaceSolid( face, solidCheck ) &&
+                        myChildren[ 1 ].IsFaceSolid( face, solidCheck ) &&
+                        myChildren[ 2 ].IsFaceSolid( face, solidCheck ) &&
+                        myChildren[ 3 ].IsFaceSolid( face, solidCheck );
+                case Face.Right:
+                    return
+                        myChildren[ 4 ].IsFaceSolid( face, solidCheck ) &&
+                        myChildren[ 5 ].IsFaceSolid( face, solidCheck ) &&
+                        myChildren[ 6 ].IsFaceSolid( face, solidCheck ) &&
+                        myChildren[ 7 ].IsFaceSolid( face, solidCheck );
+                case Face.Bottom:
+                    return
+                        myChildren[ 0 ].IsFaceSolid( face, solidCheck ) &&
+                        myChildren[ 1 ].IsFaceSolid( face, solidCheck ) &&
+                        myChildren[ 4 ].IsFaceSolid( face, solidCheck ) &&
+                        myChildren[ 5 ].IsFaceSolid( face, solidCheck );
+                case Face.Top:
+                    return
+                        myChildren[ 2 ].IsFaceSolid( face, solidCheck ) &&
+                        myChildren[ 3 ].IsFaceSolid( face, solidCheck ) &&
+                        myChildren[ 6 ].IsFaceSolid( face, solidCheck ) &&
+                        myChildren[ 7 ].IsFaceSolid( face, solidCheck );
+                case Face.Front:
+                    return
+                        myChildren[ 0 ].IsFaceSolid( face, solidCheck ) &&
+                        myChildren[ 2 ].IsFaceSolid( face, solidCheck ) &&
+                        myChildren[ 4 ].IsFaceSolid( face, solidCheck ) &&
+                        myChildren[ 6 ].IsFaceSolid( face, solidCheck );
+                case Face.Back:
+                    return
+                        myChildren[ 1 ].IsFaceSolid( face, solidCheck ) &&
+                        myChildren[ 3 ].IsFaceSolid( face, solidCheck ) &&
+                        myChildren[ 5 ].IsFaceSolid( face, solidCheck ) &&
+                        myChildren[ 7 ].IsFaceSolid( face, solidCheck );
             }
 
-            myChangedFaces = Face.None;
-        }
-
-        protected virtual Face FindSolidFaces()
-        {
-            return Face.All;
+            return false;
         }
 
         protected void SetCuboid( int x, int y, int z, int size, Cuboid cuboid, T value )
@@ -351,9 +323,6 @@ namespace MarsMiner.Shared
 
                     foreach ( Octant oct in Octant.All )
                         this[ oct ].SetCuboid( x + oct.X * h, y + oct.Y * h, z + oct.Z * h, h, i, value );
-
-                    if ( HasChildren )
-                        UpdateSolidity();
                 }
             }
         }

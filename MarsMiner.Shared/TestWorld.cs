@@ -118,7 +118,6 @@ namespace MarsMiner.Shared
                 Monitor.Enter( myLoadedChunks );
                 chunk.Generate();
                 myLoadedChunks.Add( FindChunkID( chunk.X, chunk.Z ), chunk );
-                chunk.UpdateNeighbours();
                 Monitor.Exit( myLoadedChunks );
 
                 if ( ChunkLoaded != null )
