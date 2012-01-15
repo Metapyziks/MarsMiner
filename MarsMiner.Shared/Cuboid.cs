@@ -79,6 +79,13 @@ namespace MarsMiner.Shared
                 && cuboid.Front <= Back && cuboid.Back >= Front;
         }
 
+        public bool IsIntersecting( int size )
+        {
+            return 0 <= Right && size >= Left
+                && 0 <= Top && size >= Bottom
+                && 0 <= Back && size >= Front;
+        }
+
         public bool IsIntersecting( int x, int y, int z, int size )
         {
             return x <= Right && x + size >= Left
@@ -103,6 +110,22 @@ namespace MarsMiner.Shared
             int right = Math.Min( Right, cuboid.Right );
             int top = Math.Min( Top, cuboid.Top );
             int back = Math.Min( Back, cuboid.Back );
+
+            return new Cuboid( left, bottom, front, right - left, top - bottom, back - front );
+        }
+
+        public Cuboid FindIntersection( int size )
+        {
+            if ( !IsIntersecting( size ) )
+                throw new InvalidOperationException();
+
+            int left = Math.Max( Left, 0 );
+            int bottom = Math.Max( Bottom, 0 );
+            int front = Math.Max( Front, 0 );
+
+            int right = Math.Min( Right, size );
+            int top = Math.Min( Top, size );
+            int back = Math.Min( Back, size );
 
             return new Cuboid( left, bottom, front, right - left, top - bottom, back - front );
         }
