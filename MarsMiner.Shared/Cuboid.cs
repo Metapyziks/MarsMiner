@@ -52,6 +52,15 @@ namespace MarsMiner.Shared
             get { return Width * Height * Depth; }
         }
 
+        public Cuboid( int x, int y, int z, int size )
+        {
+            X = x;
+            Y = y;
+            Z = z;
+
+            Width = Height = Depth = size;
+        }
+
         public Cuboid( int x, int y, int z, int width, int height, int depth )
         {
             X = x;
@@ -70,6 +79,18 @@ namespace MarsMiner.Shared
                 && cuboid.Front <= Back && cuboid.Back >= Front;
         }
 
+        public bool IsIntersecting( int x, int y, int z, int size )
+        {
+            return x <= Right && x + size >= Left
+                && y <= Top && y + size >= Bottom
+                && z <= Back && z + size >= Front;
+        }
+
+        public bool IsIntersecting( int x, int y, int z, int width, int height, int depth )
+        {
+            return IsIntersecting( new Cuboid( x, y, z, width, height, depth ) );
+        }
+
         public Cuboid FindIntersection( Cuboid cuboid )
         {
             if ( !IsIntersecting( cuboid ) )
@@ -84,6 +105,27 @@ namespace MarsMiner.Shared
             int back = Math.Min( Back, cuboid.Back );
 
             return new Cuboid( left, bottom, front, right - left, top - bottom, back - front );
+        }
+
+        public Cuboid FindIntersection( int x, int y, int z, int size )
+        {
+            if ( !IsIntersecting( x, y, z, size ) )
+                throw new InvalidOperationException();
+
+            int left = Math.Max( Left, x );
+            int bottom = Math.Max( Bottom, y );
+            int front = Math.Max( Front, z );
+
+            int right = Math.Min( Right, x + size );
+            int top = Math.Min( Top, y + size );
+            int back = Math.Min( Back, z + size );
+
+            return new Cuboid( left, bottom, front, right - left, top - bottom, back - front );
+        }
+
+        public Cuboid FindIntersection( int x, int y, int z, int width, int height, int depth )
+        {
+            return FindIntersection( new Cuboid( x, y, z, width, height, depth ) );
         }
 
         public override bool Equals( object obj )

@@ -147,15 +147,16 @@ namespace MarsMiner.Shared
                         {
                             int rz = z + nz * res;
                             int pz = nz >> 1;
-
+                            
                             int height = 256;
-
+                            
                             for ( int ix = nx * sca; ix < ( nx + 1 ) * sca; ++ix )
                                 for ( int iz = nz * sca; iz < ( nz + 1 ) * sca; ++iz )
                                     if ( map[ ix, iz ] < height )
                                         height = map[ ix, iz ];
 
-                            height = height / res * res;
+
+                            //int height = map[ nx * sca, nz * sca ] / res * res;
 
                             cur[ nx, nz ] = height;
 
