@@ -41,6 +41,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Structures\V0\FilePointer.cs" />
     <Compile Include="Structures\V0\Octree.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Structures\V0\BlockTypeTable.cs" />

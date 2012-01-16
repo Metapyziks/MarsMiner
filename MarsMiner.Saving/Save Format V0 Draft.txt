@@ -88,7 +88,12 @@ Pointer table file
 
 PointerFileIndex (block structure, length prefixed)
 ---------------------------------------------------
-int						pointer count
+int						file pointer count
 for (pointer count):
-	Pointer<String>		filename (relative path)
-	int					address in destination file
+	FilePointer
+
+FilePointer (embedded structure, fixed length)
+----------------------------------------------
+// FilePointers are typeless, the target type is inferred from the original pointer.
+Pointer<String>			filename (relative path) // This pointer must be local!
+int						address in destination file

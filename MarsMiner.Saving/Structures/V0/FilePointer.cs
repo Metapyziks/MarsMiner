@@ -24,14 +24,13 @@ using System.Text;
 
 namespace MarsMiner.Saving.Structures.V0
 {
-    internal class PointerFileIndex
+    internal struct FilePointer
     {
-        private FilePointer[] pointers;
+        private Pointer<String> filename;
+        private int address;
 
-        public FilePointer this[int index]
-        {
-            get { return pointers[index]; }
-        }
+        public Pointer<String> Filename { get { return filename; } }
+        public int Address { get { return address; } }
 
         //TODO: contructor, serializing
     }

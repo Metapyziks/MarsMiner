@@ -28,6 +28,11 @@ namespace MarsMiner.Saving.Structures.V0
     {
         private Pointer<String>[] blockTypeNames;
 
-        //TODO: constructor, accessor, serializing
+        public Pointer<String> this[int index]
+        {
+            get { return blockTypeNames[index]; }
+        }
+
+        //TODO: constructor, serializing
     }
 }
