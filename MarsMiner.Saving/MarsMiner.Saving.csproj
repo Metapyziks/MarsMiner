@@ -27,7 +27,7 @@
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRACE;AssertCorrectSaving</DefineConstants>
+    <DefineConstants>TRACE;AssertSaving</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
@@ -43,7 +43,7 @@
   <ItemGroup>
     <Compile Include="Cache\BlockWriteCache.cs" />
     <Compile Include="Interfaces\IBlockStructure.cs" />
-    <Compile Include="SaveHandle.cs" />
+    <Compile Include="SaveManager.cs" />
     <Compile Include="Structures\V0\FilePointer.cs" />
     <Compile Include="Structures\V0\Octree.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

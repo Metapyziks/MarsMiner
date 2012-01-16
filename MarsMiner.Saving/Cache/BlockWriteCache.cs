@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using MarsMiner.Saving.Interfaces;
 
-#if AssertCorrectSaving
+#if AssertSaving
 using System.Diagnostics;
 #endif
 
@@ -14,24 +14,24 @@ namespace MarsMiner.Saving.Cache
     {
         public byte[] Data { get; private set; }
 
-#if AssertCorrectSaving
+#if AssertSaving
         List<int> blanks;
 #endif
 
         //TODO: public event Action<Pointer
 
-        public BlockWriteCache(byte[] data, IEnumerable<KeyValuePair<int, IBlockStructure>> pointers)
+        public BlockWriteCache(byte[] data)
         {
-
+            throw new NotImplementedException();
         }
 
         private void FillBlank(int offset, byte[] data)
         {
-#if AssertCorrectSaving
+#if AssertSaving
             Debug.Assert(blanks.Contains(offset));
 #endif
             data.CopyTo(Data, offset);
-#if AssertCorrectSaving
+#if AssertSaving
             blanks.Remove(offset);
 #endif
         }
