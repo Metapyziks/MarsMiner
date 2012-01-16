@@ -17,46 +17,32 @@
  * along with MarsMiner. If not, see <http://www.gnu.org/licenses/>.
  */
 
-namespace MarsMiner.Shared
+using System.Collections.Generic;
+
+namespace MarsMiner.Shared.Octree
 {
-    public class Octree<T> : OctreeNode<T>
+    public class Octree<T> : OctreeNode<T>, IEnumerable<OctreeNode<T>>
     {
-        private readonly int myX;
-        private readonly int myY;
-        private readonly int myZ;
+        public readonly int X;
+        public readonly int Y;
+        public readonly int Z;
 
-        private readonly int mySize;
+        public readonly int Size;
 
-        public override int X
+        public IOctreeContainer<T> Container;
+
+        public bool HasContainer
         {
-	        get { return myX; }
-        }
-        public override int Y
-        {
-	        get { return myY; }
-        }
-        public override int Z
-        {
-	        get { return myZ; }
-        }
-        
-        public override int Size
-        {
-	        get { return mySize; }
+            get { return Container != null; }
         }
 
-        public override Cuboid Cube
+        public Octree( int x, int y, int z, int size, IOctreeContainer<T> container = null )
         {
-            get { return new Cuboid( X, Y, Z, Size ); }
-        }
+            X = x;
+            Y = y;
+            Z = z;
 
-        public Octree( int x, int y, int z, int size )
-        {
-            myX = x;
-            myY = y;
-            myZ = z;
-
-            mySize = size;
+            Size = size;
         }
 
         public void SetCuboid( Cuboid cuboid, T value )
@@ -76,7 +62,12 @@ namespace MarsMiner.Shared
         public override OctreeNode<T> FindNode( int x, int y, int z, int size )
         {
             if ( x < X || y < Y || z < Z || x >= X + Size || y >= Y + Size || z >= Z + Size )
-                return FindExternalNode( x, y, z, size );
+            {
+                if ( HasContainer )
+                    return Container.FindNode( x, y, z, size );
+
+                return null;
+            }
 
             return FindNode( Size, x - X, y - Y, z - Z, size );
         }
@@ -85,16 +76,16 @@ namespace MarsMiner.Shared
         {
             if ( oX < 0 || oY < 0 || oZ < 0 || oX >= mSize || oY >= mSize || oZ >= mSize )
             {
-                int scale = Size / mSize;
-                return FindExternalNode( X + oX * scale, Y + oY * scale, Z + oZ * scale, oSize * scale );
+                if ( HasContainer )
+                {
+                    int scale = Size / mSize;
+                    return Container.FindNode( X + oX * scale, Y + oY * scale, Z + oZ * scale, oSize * scale );
+                }
+
+                return null;
             }
 
             return base.FindNode( mSize, oX, oY, oZ, oSize );
-        }
-
-        protected virtual OctreeNode<T> FindExternalNode( int x, int y, int z, int size )
-        {
-            return null;
         }
 
         protected override Cuboid FindDimensionsOfChild( OctreeNode<T> child )
@@ -104,6 +95,21 @@ namespace MarsMiner.Shared
             int size = Size >> 1;
 
             return new Cuboid( X + oct.X * size, Y + oct.Y * size, Z + oct.Z * size, size );
+        }
+
+        public IEnumerator<OctreeNode<T>> GetEnumerator()
+        {
+            return new OctreeEnumerator<T>( this );
+        }
+
+        public IEnumerator<OctreeNode<T>> GetEnumerator( Face face )
+        {
+            return new OctreeEnumerator<T>( this, face );
+        }
+
+        System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
+        {
+            return GetEnumerator();
         }
     }
 }

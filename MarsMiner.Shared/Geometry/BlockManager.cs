@@ -19,16 +19,17 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
-namespace MarsMiner.Shared
+using MarsMiner.Shared.Octree;
+
+namespace MarsMiner.Shared.Geometry
 {
     public struct BlockType
     {
         public String Name;
 
-        public bool Solid;
+        public bool IsSolid;
+        public bool IsVisible;
 
         public Face SolidFaces;
     }
@@ -36,7 +37,7 @@ namespace MarsMiner.Shared
     public static class BlockManager
     {
         private static UInt16 myNextID = 0;
-        private static List<BlockType> myBlockTypes;
+        private static List<BlockType> myBlockTypes = new List<BlockType>();
 
         public static UInt16 RegisterType( BlockType type )
         {
@@ -45,6 +46,11 @@ namespace MarsMiner.Shared
 
             myBlockTypes.Add( type );
             return myNextID++;
+        }
+
+        public static BlockType Get( UInt16 id )
+        {
+            return myBlockTypes[ id ];
         }
     }
 }

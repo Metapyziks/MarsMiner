@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Copyright (c) 2012 James King [metapyziks@gmail.com]
  *
  * This file is part of MarsMiner.
@@ -18,28 +18,15 @@
  */
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
 using LibNoise;
 
-namespace MarsMiner.Shared
+using MarsMiner.Shared.Octree;
+
+namespace MarsMiner.Shared.Geometry
 {
-    public enum OctreeTestBlockType : byte
+    public class PerlinGenerator : WorldGenerator
     {
-        Empty = 0,
-        White = 1,
-        Black = 2,
-        Red = 3,
-        Green = 4,
-        Blue = 5,
-    }
-
-    public class OctreeTestWorldGenerator
-    {
-        private int mySeed;
-
         private Perlin myHillyNoise;
         private Perlin myPlainsNoise;
         private Perlin myTransNoise;
@@ -50,16 +37,9 @@ namespace MarsMiner.Shared
         private int myMinPlains;
         private int myMaxPlains;
 
-        public OctreeTestWorldGenerator( int seed = 0 )
+        public PerlinGenerator( int seed = 0 )
+            : base( seed )
         {
-            if ( seed == 0 )
-            {
-                Random rand = new Random();
-                seed = rand.Next( int.MaxValue );
-            }
-
-            mySeed = seed;
-
             myHillyNoise = new Perlin
             {
                 Seed = seed,
@@ -94,26 +74,13 @@ namespace MarsMiner.Shared
             myMaxPlains = 72;
         }
 
-        public OctreeTest Generate( int x, int y, int z, int size, int resolution = 1 )
+        public override Octree<UInt16> Generate( int x, int y, int z, int size, int resolution = 1 )
         {
-            OctreeTest octree = new OctreeTest( x, y, z, size );
-
-            /*if( y < 128 )
-                octree.SetCuboid( octree.Cube, OctreeTestBlockType.White );
-            else if ( y == 128 )
-            {
-                int blk = 16;
-                octree.SetCuboid( new Cuboid( x, y, z, blk, blk, blk ), OctreeTestBlockType.White );
-                octree.SetCuboid( new Cuboid( x + size - blk, y, z, blk, blk, blk ), OctreeTestBlockType.White );
-                octree.SetCuboid( new Cuboid( x, y, z + size - blk, blk, blk, blk ), OctreeTestBlockType.White );
-                octree.SetCuboid( new Cuboid( x + size - blk, y, z + size - blk, blk, blk, blk ), OctreeTestBlockType.White );
-            }
-
-            return octree;*/
+            Octree<UInt16> octree = base.Generate( x, y, z, size, resolution );
 
             int min = System.Math.Min( myMinHilly, myMinPlains );
 
-            octree.SetCuboid( x, 0, z, size, System.Math.Min( myMinHilly, myMinPlains ), size, OctreeTestBlockType.White );
+            octree.SetCuboid( x, 0, z, size, System.Math.Min( myMinHilly, myMinPlains ), size, 0x0000 );
 
             if ( y + size > min )
             {
@@ -166,14 +133,6 @@ namespace MarsMiner.Shared
                         {
                             int rz = z + nz * res;
                             int pz = nz >> 1;
-                            
-                            /*int height = 256;
-                            
-                            for ( int ix = nx * sca; ix < ( nx + 1 ) * sca; ++ix )
-                                for ( int iz = nz * sca; iz < ( nz + 1 ) * sca; ++iz )
-                                    if ( map[ ix, iz ] < height )
-                                        height = map[ ix, iz ];*/
-
 
                             int height = map[ nx * sca, nz * sca ] / res * res;
 
@@ -188,9 +147,9 @@ namespace MarsMiner.Shared
                             cuboid.Top    = System.Math.Max( height, prevHeight );
 
                             if( height > prevHeight )
-                                octree.SetCuboid( cuboid, OctreeTestBlockType.White );
+                                octree.SetCuboid( cuboid, 0x0001 );
                             else
-                                octree.SetCuboid( cuboid, OctreeTestBlockType.Empty );
+                                octree.SetCuboid( cuboid, 0x0000 );
 
                         }
                     }

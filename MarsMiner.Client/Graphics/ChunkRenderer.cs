@@ -17,20 +17,23 @@
  * along with MarsMiner. If not, see <http://www.gnu.org/licenses/>.
  */
 
+using System;
 using System.Collections.Generic;
 
 using MarsMiner.Shared;
+using MarsMiner.Shared.Geometry;
+using MarsMiner.Shared.Octree;
 
 namespace MarsMiner.Client.Graphics
 {
-    public class OctreeTestRenderer
+    public class ChunkRenderer
     {
         private VertexBuffer myVertexBuffer;
         private bool myChunkChanged;
 
-        public readonly TestChunk Chunk;
+        public readonly Chunk Chunk;
 
-        public OctreeTestRenderer( TestChunk chunk )
+        public ChunkRenderer( Chunk chunk )
         {
             Chunk = chunk;
             myVertexBuffer = new VertexBuffer( 3 );
@@ -45,21 +48,26 @@ namespace MarsMiner.Client.Graphics
         public float[] FindVertices()
         {
             List<float> verts = new List<float>();
-            FindSolidFacesDelegate<OctreeTestBlockType> solidCheck =
-                ( x => ( x == OctreeTestBlockType.Empty ? Face.None : Face.All ) );
+            FindSolidFacesDelegate<UInt16> solidCheck =
+                ( x => BlockManager.Get( x ).SolidFaces );
 
-            foreach ( OctreeTest chunkOctree in Chunk.Octrees )
+            foreach ( Octree<UInt16> octree in Chunk.Octrees )
             {
-                foreach ( OctreeNode<OctreeTestBlockType> octree in chunkOctree )
+                var iter = (OctreeEnumerator<UInt16>) octree.GetEnumerator();
+                while( iter.MoveNext() )
                 {
-                    if ( octree.Value == OctreeTestBlockType.Empty )
+                    OctreeNode<UInt16> node = iter.Current;
+
+                    if ( !BlockManager.Get( node.Value ).IsVisible )
                         continue;
 
-                    float x0 = octree.X; float x1 = x0 + octree.Size;
-                    float y0 = octree.Y; float y1 = y0 + octree.Size;
-                    float z0 = octree.Z; float z1 = z0 + octree.Size;
+                    int size = iter.Size;
 
-                    if ( octree.IsFaceExposed( Face.Front, solidCheck ) )
+                    float x0 = iter.X; float x1 = x0 + size;
+                    float y0 = iter.Y; float y1 = y0 + size;
+                    float z0 = iter.Z; float z1 = z0 + size;
+
+                    if ( node.IsFaceExposed( Face.Front, solidCheck ) )
                         verts.AddRange( new float[]
                         {
                             x0, y0, z0,
@@ -68,7 +76,7 @@ namespace MarsMiner.Client.Graphics
                             x0, y1, z0,
                         } );
 
-                    if ( octree.IsFaceExposed( Face.Right, solidCheck ) )
+                    if ( node.IsFaceExposed( Face.Right, solidCheck ) )
                         verts.AddRange( new float[]
                         {
                             x1, y0, z0,
@@ -77,7 +85,7 @@ namespace MarsMiner.Client.Graphics
                             x1, y1, z0,
                         } );
 
-                    if ( octree.IsFaceExposed( Face.Back, solidCheck ) )
+                    if ( node.IsFaceExposed( Face.Back, solidCheck ) )
                         verts.AddRange( new float[]
                         {
                             x1, y0, z1,
@@ -86,7 +94,7 @@ namespace MarsMiner.Client.Graphics
                             x1, y1, z1,
                         } );
 
-                    if ( octree.IsFaceExposed( Face.Left, solidCheck ) )
+                    if ( node.IsFaceExposed( Face.Left, solidCheck ) )
                         verts.AddRange( new float[]
                         {
                             x0, y0, z1,
@@ -95,7 +103,7 @@ namespace MarsMiner.Client.Graphics
                             x0, y1, z1,
                         } );
 
-                    if ( octree.IsFaceExposed( Face.Bottom, solidCheck ) )
+                    if ( node.IsFaceExposed( Face.Bottom, solidCheck ) )
                         verts.AddRange( new float[]
                         {
                             x0, y0, z0,
@@ -104,7 +112,7 @@ namespace MarsMiner.Client.Graphics
                             x1, y0, z0,
                         } );
 
-                    if ( octree.IsFaceExposed( Face.Top, solidCheck ) )
+                    if ( node.IsFaceExposed( Face.Top, solidCheck ) )
                         verts.AddRange( new float[]
                         {
                             x0, y1, z0,

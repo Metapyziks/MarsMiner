@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Copyright (c) 2012 James King [metapyziks@gmail.com]
  *
  * This file is part of MarsMiner.
@@ -17,20 +17,30 @@
  * along with MarsMiner. If not, see <http://www.gnu.org/licenses/>.
  */
 
-namespace MarsMiner.Shared
+using System;
+
+using MarsMiner.Shared.Octree;
+
+namespace MarsMiner.Shared.Geometry
 {
-    public enum Face : byte
+    public class WorldGenerator
     {
-        None = 0,
-        All = 63,
+        public int Seed { get; private set; }
 
-        Front = 1,
-        Right = 2,
-        Back = 4,
-        Left = 8,
-        Top = 16,
-        Bottom = 32
+        public WorldGenerator( int seed = 0 )
+        {
+            if ( seed == 0 )
+            {
+                Random rand = new Random();
+                seed = rand.Next( int.MaxValue );
+            }
+
+            Seed = seed;
+        }
+
+        public virtual Octree<UInt16> Generate( int x, int y, int z, int size, int resolution = 1 )
+        {
+            return new Octree<UInt16>( x, y, z, size );
+        }
     }
-
-    public delegate Face FindSolidFacesDelegate<T>( T value );
 }

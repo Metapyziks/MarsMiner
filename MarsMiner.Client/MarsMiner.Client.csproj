@@ -44,8 +44,8 @@
   <ItemGroup>
     <Compile Include="Graphics\AnimatedSprite.cs" />
     <Compile Include="Graphics\FrameSprite.cs" />
-    <Compile Include="Graphics\OctreeTestRenderer.cs" />
-    <Compile Include="Graphics\OctreeTestShader.cs" />
+    <Compile Include="Graphics\ChunkRenderer.cs" />
+    <Compile Include="Graphics\GeometryShader.cs" />
     <Compile Include="Graphics\ShaderBuilder.cs" />
     <Compile Include="Graphics\ShaderProgram.cs" />
     <Compile Include="Graphics\Sprite.cs" />

@@ -43,18 +43,20 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Face.cs" />
-    <Compile Include="Octant.cs" />
-    <Compile Include="Octree.cs" />
-    <Compile Include="OctreeEnumerator.cs" />
-    <Compile Include="OctreeNode.cs" />
-    <Compile Include="OctreeTest.cs" />
-    <Compile Include="OctreeTestWorldGenerator.cs" />
+    <Compile Include="Geometry\BlockManager.cs" />
+    <Compile Include="Geometry\Chunk.cs" />
+    <Compile Include="Octree\Face.cs" />
+    <Compile Include="Geometry\PerlinGenerator.cs" />
+    <Compile Include="Geometry\WorldGenerator.cs" />
+    <Compile Include="Octree\IOctreeContainer.cs" />
+    <Compile Include="Octree\Octant.cs" />
+    <Compile Include="Octree\Octree.cs" />
+    <Compile Include="Octree\OctreeEnumerator.cs" />
+    <Compile Include="Octree\OctreeNode.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="TestChunk.cs" />
-    <Compile Include="TestWorld.cs" />
     <Compile Include="Tools.cs" />
-    <Compile Include="Cuboid.cs" />
+    <Compile Include="Octree\Cuboid.cs" />
+    <Compile Include="Geometry\World.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

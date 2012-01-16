@@ -29,6 +29,7 @@ using OpenTK.Graphics.OpenGL;
 using OpenTK.Input;
 
 using MarsMiner.Shared;
+using MarsMiner.Shared.Geometry;
 using MarsMiner.Client.Graphics;
 using MarsMiner.Client.UI;
 
@@ -46,10 +47,10 @@ namespace MarsMiner
 
         private Stopwatch myFrameTimer;
 
-        private TestWorld myTestWorld;
+        private World myTestWorld;
 
-        private OctreeTestShader myTestShader;
-        private List<OctreeTestRenderer> myTestRenderers;
+        private GeometryShader myTestShader;
+        private List<ChunkRenderer> myTestRenderers;
 
         private bool myIgnoreMouse;
         private bool myCaptureMouse;
@@ -84,43 +85,14 @@ namespace MarsMiner
             Mouse.ButtonUp += OnMouseButtonEvent;
             Mouse.ButtonDown += OnMouseButtonEvent;
 
-            myTestWorld = new TestWorld();
+            myTestWorld = new World();
 
-            myTestShader = new OctreeTestShader( Width, Height );
-            myTestRenderers = new List<OctreeTestRenderer>();
+            myTestShader = new GeometryShader( Width, Height );
+            myTestRenderers = new List<ChunkRenderer>();
 
-            myTestWorld.ChunkLoaded += delegate( object sender, TestChunkLoadEventArgs ea )
-            {
-                if ( myClosing )
-                    return;
-
-                OctreeTestRenderer renderer = new OctreeTestRenderer( ea.Chunk );
-
-                Monitor.Enter( myTestRenderers );
-                myTestRenderers.Add( renderer );
-                Monitor.Exit( myTestRenderers );
-            };
-            myTestWorld.ChunkUnloaded += delegate( object sender, TestChunkLoadEventArgs ea )
-            {
-                if ( myClosing )
-                    return;
-
-                Monitor.Enter( myTestRenderers );
-                OctreeTestRenderer renderer = myTestRenderers.Find( x => x.Chunk == ea.Chunk );
-                myTestRenderers.Remove( renderer );
-                Monitor.Exit( myTestRenderers );
-                renderer.Dispose();
-            };
-            myTestWorld.ChunkChanged += delegate( object sender, TestChunkLoadEventArgs ea )
-            {
-                if ( myClosing )
-                    return;
-
-                Monitor.Enter( myTestRenderers );
-                OctreeTestRenderer renderer = myTestRenderers.Find( x => x.Chunk == ea.Chunk );
-                Monitor.Exit( myTestRenderers );
-                renderer.UpdateVertices();
-            };
+            myTestWorld.ChunkLoaded += OnChunkEvent;
+            myTestWorld.ChunkUnloaded += OnChunkEvent;
+            myTestWorld.ChunkChanged += OnChunkEvent;
 
             myTestWorld.StartGenerator();
 
@@ -131,6 +103,31 @@ namespace MarsMiner
             myFrameTimer.Start();
         }
 
+        private void OnChunkEvent( object sender, ChunkEventArgs e )
+        {
+            if ( myClosing )
+                return;
+
+            if ( e.EventType == ChunkEventType.Loaded )
+            {
+                ChunkRenderer renderer = new ChunkRenderer( e.Chunk );
+
+                Monitor.Enter( myTestRenderers );
+                myTestRenderers.Add( renderer );
+                Monitor.Exit( myTestRenderers );
+            }
+            else
+            {
+                Monitor.Enter( myTestRenderers );
+                ChunkRenderer renderer = myTestRenderers.Find( x => x.Chunk == e.Chunk );
+                if ( e.EventType == ChunkEventType.Unloaded )
+                    myTestRenderers.Remove( renderer );
+                Monitor.Exit( myTestRenderers );
+                if ( e.EventType == ChunkEventType.Changed )
+                    renderer.UpdateVertices();
+            }
+        }
+
         protected override void OnRenderFrame( FrameEventArgs e )
         {
             GL.Clear( ClearBufferMask.ColorBufferBit );
@@ -138,7 +135,7 @@ namespace MarsMiner
             
             myTestShader.StartBatch();
             Monitor.Enter( myTestRenderers );
-            foreach( OctreeTestRenderer renderer in myTestRenderers )
+            foreach( ChunkRenderer renderer in myTestRenderers )
                 renderer.Render( myTestShader );
             Monitor.Exit( myTestRenderers );
             myTestShader.EndBatch();
@@ -258,7 +255,7 @@ namespace MarsMiner
 
             myTestWorld.StopGenerator();
 
-            foreach ( OctreeTestRenderer renderer in myTestRenderers )
+            foreach ( ChunkRenderer renderer in myTestRenderers )
                 renderer.Dispose();
 
             base.Dispose();

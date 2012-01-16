@@ -20,41 +20,13 @@
 using System;
 using System.Collections.Generic;
 
-namespace MarsMiner.Shared
+namespace MarsMiner.Shared.Octree
 {
-    public class OctreeNode<T> : IEnumerable<OctreeNode<T>>
+    public class OctreeNode<T> : IOctreeContainer<T>
     {
         private T myValue;
         private OctreeNode<T>[] myChildren;
-
-        public Octant Octant
-        {
-            get { return Parent.FindOctantOfChild( this ); }
-        }
-
-        public virtual int X
-        {
-            get { return Parent.X + Octant.X * Size; }
-        }
-        public virtual int Y
-        {
-            get { return Parent.Y + Octant.Y * Size; }
-        }
-        public virtual int Z
-        {
-            get { return Parent.Z + Octant.Z * Size; }
-        }
-
-        public virtual int Size
-        {
-            get { return Parent.Size >> 1; }
-        }
-
-        public virtual Cuboid Cube
-        {
-            get { return Parent.FindDimensionsOfChild( this ); }
-        }
-
+        
         public readonly OctreeNode<T> Parent;
 
         public T Value
@@ -183,47 +155,47 @@ namespace MarsMiner.Shared
         {
             OctreeNode<T> n = FindNeighbour( face );
 
-            return n == null || !n.IsFaceSolid( Tools.Opposite( face ), solidCheck );
+            return n == null || !n.IsFaceSolid( face.Opposite, solidCheck );
         }
 
         public bool IsFaceSolid( Face face, FindSolidFacesDelegate<T> solidCheck )
         {
             if ( !HasChildren )
-                return ( solidCheck( Value ) & face ) != 0;
+                return solidCheck( Value ).HasFace( face );
 
-            switch ( face )
+            switch ( face.Index )
             {
-                case Face.Left:
+                case Face.LeftIndex:
                     return
                         myChildren[ 0 ].IsFaceSolid( face, solidCheck ) &&
                         myChildren[ 1 ].IsFaceSolid( face, solidCheck ) &&
                         myChildren[ 2 ].IsFaceSolid( face, solidCheck ) &&
                         myChildren[ 3 ].IsFaceSolid( face, solidCheck );
-                case Face.Right:
+                case Face.RightIndex:
                     return
                         myChildren[ 4 ].IsFaceSolid( face, solidCheck ) &&
                         myChildren[ 5 ].IsFaceSolid( face, solidCheck ) &&
                         myChildren[ 6 ].IsFaceSolid( face, solidCheck ) &&
                         myChildren[ 7 ].IsFaceSolid( face, solidCheck );
-                case Face.Bottom:
+                case Face.BottomIndex:
                     return
                         myChildren[ 0 ].IsFaceSolid( face, solidCheck ) &&
                         myChildren[ 1 ].IsFaceSolid( face, solidCheck ) &&
                         myChildren[ 4 ].IsFaceSolid( face, solidCheck ) &&
                         myChildren[ 5 ].IsFaceSolid( face, solidCheck );
-                case Face.Top:
+                case Face.TopIndex:
                     return
                         myChildren[ 2 ].IsFaceSolid( face, solidCheck ) &&
                         myChildren[ 3 ].IsFaceSolid( face, solidCheck ) &&
                         myChildren[ 6 ].IsFaceSolid( face, solidCheck ) &&
                         myChildren[ 7 ].IsFaceSolid( face, solidCheck );
-                case Face.Front:
+                case Face.FrontIndex:
                     return
                         myChildren[ 0 ].IsFaceSolid( face, solidCheck ) &&
                         myChildren[ 2 ].IsFaceSolid( face, solidCheck ) &&
                         myChildren[ 4 ].IsFaceSolid( face, solidCheck ) &&
                         myChildren[ 6 ].IsFaceSolid( face, solidCheck );
-                case Face.Back:
+                case Face.BackIndex:
                     return
                         myChildren[ 1 ].IsFaceSolid( face, solidCheck ) &&
                         myChildren[ 3 ].IsFaceSolid( face, solidCheck ) &&
@@ -298,38 +270,23 @@ namespace MarsMiner.Shared
 
         protected virtual OctreeNode<T> FindNeighbour( Face face )
         {
-            switch ( face )
+            switch ( face.Index )
             {
-                case Face.Left:
+                case Face.LeftIndex:
                     return FindNode( 1, -1, 0, 0, 1 );
-                case Face.Right:
+                case Face.RightIndex:
                     return FindNode( 1, 1, 0, 0, 1 );
-                case Face.Bottom:
+                case Face.BottomIndex:
                     return FindNode( 1, 0, -1, 0, 1 );
-                case Face.Top:
+                case Face.TopIndex:
                     return FindNode( 1, 0, 1, 0, 1 );
-                case Face.Front:
+                case Face.FrontIndex:
                     return FindNode( 1, 0, 0, -1, 1 );
-                case Face.Back:
+                case Face.BackIndex:
                     return FindNode( 1, 0, 0, 1, 1 );
             }
 
             return null;
-        }
-
-        public IEnumerator<OctreeNode<T>> GetEnumerator()
-        {
-            return new OctreeEnumerator<T>( this );
-        }
-
-        public IEnumerator<OctreeNode<T>> GetEnumerator( Face face )
-        {
-            return new OctreeEnumerator<T>( this, face );
-        }
-
-        System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
-        {
-            return GetEnumerator();
         }
 
         public override string ToString()

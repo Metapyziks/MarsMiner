@@ -17,12 +17,7 @@
  * along with MarsMiner. If not, see <http://www.gnu.org/licenses/>.
  */
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-
-namespace MarsMiner.Shared
+namespace MarsMiner.Shared.Octree
 {
     public struct Octant
     {
@@ -64,11 +59,7 @@ namespace MarsMiner.Shared
 
         public static Octant FromFaces( Face faces )
         {
-            bool right = ( faces & Face.Right ) != 0;
-            bool top = ( faces & Face.Top ) != 0;
-            bool back = ( faces & Face.Back ) != 0;
-
-            return XYZ[ right ? 1 : 0, top ? 1 : 0, back ? 1 : 0 ];
+            return XYZ[ faces.HasRight ? 1 : 0, faces.HasTop ? 1 : 0, faces.HasBack ? 1 : 0 ];
         }
 
         public int X

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Copyright (c) 2012 James King [metapyziks@gmail.com]
  *
  * This file is part of MarsMiner.
@@ -22,24 +22,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace MarsMiner.Shared
+namespace MarsMiner.Shared.Octree
 {
-    public class OctreeTest : Octree<OctreeTestBlockType>
+    public interface IOctreeContainer<T>
     {
-        public TestChunk Chunk;
-
-        public OctreeTest( int x, int y, int z, int size )
-            : base( x, y, z, size )
-        {
-
-        }
-
-        protected override OctreeNode<OctreeTestBlockType> FindExternalNode( int x, int y, int z, int size )
-        {
-            if( Chunk != null )
-                return Chunk.FindOctree( x, y, z, size );
-
-            return null;
-        }
+        OctreeNode<T> FindNode( int x, int y, int z, int size );
     }
 }

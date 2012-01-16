@@ -24,7 +24,7 @@ using OpenTK.Graphics.OpenGL;
 
 namespace MarsMiner.Client.Graphics
 {
-    public class OctreeTestShader : ShaderProgram
+    public class GeometryShader : ShaderProgram
     {
         private Matrix4 myViewMatrix;
         private int myViewMatrixLoc;
@@ -65,7 +65,7 @@ namespace MarsMiner.Client.Graphics
 
         public bool LineMode { get; set; }
 
-        public OctreeTestShader()
+        public GeometryShader()
         {
             ShaderBuilder vert = new ShaderBuilder( ShaderType.VertexShader, false );
             vert.AddUniform( ShaderVarType.Mat4, "view_matrix" );
@@ -98,7 +98,7 @@ namespace MarsMiner.Client.Graphics
             CameraRotation = new Vector2();
         }
 
-        public OctreeTestShader( int width, int height )
+        public GeometryShader( int width, int height )
             : this()
         {
             Create();
