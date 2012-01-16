@@ -24,10 +24,12 @@ using System.Text;
 
 namespace MarsMiner.Saving.Structures.V0
 {
-    internal class BlockTypeTable
+    internal class Chunk
     {
-        private Pointer<String>[] blockTypeNames;
+        private Pointer<BlockTypeTable> blockTypeTable;
+        private byte octreeCount;
+        private Pointer<Octree>[] octrees;
 
-        //TODO: constructor, accessor, serializing
+        //TODO: contructor, accessors, serializing
     }
 }

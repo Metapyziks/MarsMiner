@@ -24,10 +24,9 @@ using System.Text;
 
 namespace MarsMiner.Saving.Structures.V0
 {
-    internal class BlockTypeTable
+    internal class PointerFileIndex
     {
-        private Pointer<String>[] blockTypeNames;
-
-        //TODO: constructor, accessor, serializing
+        private Pointer<String>[] filenames;
+        private int[] addresses;
     }
 }

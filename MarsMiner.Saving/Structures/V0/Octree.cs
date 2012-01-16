@@ -21,13 +21,15 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Collections;
 
 namespace MarsMiner.Saving.Structures.V0
 {
-    internal class BlockTypeTable
+    internal class Octree
     {
-        private Pointer<String>[] blockTypeNames;
+        private BitArray octreeFlags;
+        private byte[] octreeValues;
 
-        //TODO: constructor, accessor, serializing
+        //TODO: contructor, accessors, serializing
     }
 }

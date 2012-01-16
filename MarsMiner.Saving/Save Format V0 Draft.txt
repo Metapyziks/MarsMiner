@@ -53,9 +53,9 @@ for (chunk count):
 
 Chunk (block structure, length prefixed)
 ----------------------------------------
-Pointer<BlockTypeTable>	Pointer to block table			// This is here so chunks can have different block tables.
+Pointer<BlockTypeTable>	Pointer to block type table		// This is here so chunks can have different block tables.
 														// It doesn't make much difference with less than 256 ids, but with more its possible to compress block id lists to roughly half the size if the id distribution is uneven.
-														// It also would allow id mapping changes in copy-on-write mode.
+														// It also allows id mapping changes in copy-on-write mode.
 byte					octree count
 for (octree count):
 	Pointer<Octree>
