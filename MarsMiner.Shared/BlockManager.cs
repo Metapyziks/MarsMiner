@@ -24,22 +24,27 @@ using System.Text;
 
 namespace MarsMiner.Shared
 {
-    public class OctreeTest : Octree<OctreeTestBlockType>
+    public struct BlockType
     {
-        public TestChunk Chunk;
+        public String Name;
 
-        public OctreeTest( int x, int y, int z, int size )
-            : base( x, y, z, size )
+        public bool Solid;
+
+        public Face SolidFaces;
+    }
+
+    public static class BlockManager
+    {
+        private static UInt16 myNextID = 0;
+        private static List<BlockType> myBlockTypes;
+
+        public static UInt16 RegisterType( BlockType type )
         {
+            if ( myBlockTypes.Count == 0xFFFF )
+                throw new Exception( "No more than 65536 block types can be registered." );
 
-        }
-
-        protected override OctreeNode<OctreeTestBlockType> FindExternalNode( int x, int y, int z, int size )
-        {
-            if( Chunk != null )
-                return Chunk.FindOctree( x, y, z, size );
-
-            return null;
+            myBlockTypes.Add( type );
+            return myNextID++;
         }
     }
 }

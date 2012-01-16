@@ -43,9 +43,11 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Face.cs" />
     <Compile Include="Octant.cs" />
     <Compile Include="Octree.cs" />
     <Compile Include="OctreeEnumerator.cs" />
+    <Compile Include="OctreeNode.cs" />
     <Compile Include="OctreeTest.cs" />
     <Compile Include="OctreeTestWorldGenerator.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

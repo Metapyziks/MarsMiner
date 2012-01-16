@@ -17,29 +17,20 @@
  * along with MarsMiner. If not, see <http://www.gnu.org/licenses/>.
  */
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-
 namespace MarsMiner.Shared
 {
-    public class OctreeTest : Octree<OctreeTestBlockType>
+    public enum Face : byte
     {
-        public TestChunk Chunk;
+        None = 0,
+        All = 63,
 
-        public OctreeTest( int x, int y, int z, int size )
-            : base( x, y, z, size )
-        {
-
-        }
-
-        protected override OctreeNode<OctreeTestBlockType> FindExternalNode( int x, int y, int z, int size )
-        {
-            if( Chunk != null )
-                return Chunk.FindOctree( x, y, z, size );
-
-            return null;
-        }
+        Front = 1,
+        Right = 2,
+        Back = 4,
+        Left = 8,
+        Top = 16,
+        Bottom = 32
     }
+
+    public delegate Face FindSolidFacesDelegate<T>( T value );
 }
