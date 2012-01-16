@@ -77,13 +77,6 @@ namespace MarsMiner.Shared.Geometry
                 for ( int z = -limit; z < limit; ++z )
                     LoadChunk( x * Chunk.Size, z * Chunk.Size );
 
-            /*
-            LoadChunk( 0, 0 );
-            LoadChunk( TestChunk.ChunkSize, 0 );
-            LoadChunk( -TestChunk.ChunkSize, 0 );
-            LoadChunk( 0, TestChunk.ChunkSize );
-            LoadChunk( 0, -TestChunk.ChunkSize );*/
-
             myChunksToLoad = new Queue<Chunk>( myChunksToLoad.OrderBy( x => Math.Max( Math.Abs( x.CenterX ), Math.Abs( x.CenterZ ) ) ) );
 
             GeneratorRunning = false;
@@ -93,14 +86,14 @@ namespace MarsMiner.Shared.Geometry
         {
             BlockType empty = new BlockType
             {
-                Name        = "Empty",
+                Name        = "Core_Empty",
                 IsSolid     = false,
                 IsVisible   = false,
                 SolidFaces  = Face.None
             };
             BlockType solid = new BlockType
             {
-                Name        = "Solid",
+                Name        = "Core_Solid",
                 IsSolid     = true,
                 IsVisible   = true,
                 SolidFaces  = Face.All

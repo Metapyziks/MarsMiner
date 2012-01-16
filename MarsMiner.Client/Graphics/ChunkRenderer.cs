@@ -19,6 +19,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Threading;
 
 using MarsMiner.Shared;
 using MarsMiner.Shared.Geometry;
@@ -31,6 +32,8 @@ namespace MarsMiner.Client.Graphics
         private VertexBuffer myVertexBuffer;
         private bool myChunkChanged;
 
+        private float[] myVertices;
+
         public readonly Chunk Chunk;
 
         public ChunkRenderer( Chunk chunk )
@@ -42,10 +45,12 @@ namespace MarsMiner.Client.Graphics
 
         public void UpdateVertices()
         {
-            myChunkChanged = true;
+            Monitor.Enter( this );
+            myVertices = FindVertices();
+            Monitor.Exit( this );
         }
 
-        public float[] FindVertices()
+        private float[] FindVertices()
         {
             List<float> verts = new List<float>();
             FindSolidFacesDelegate<UInt16> solidCheck =
@@ -128,10 +133,12 @@ namespace MarsMiner.Client.Graphics
 
         public void Render( ShaderProgram shader )
         {
-            if ( myChunkChanged )
+            if ( myVertices != null )
             {
-                myChunkChanged = false;
-                myVertexBuffer.SetData( FindVertices() );
+                Monitor.Enter( this );
+                myVertexBuffer.SetData( myVertices );
+                myVertices = null;
+                Monitor.Exit( this );
             }
 
             myVertexBuffer.Render( shader );
