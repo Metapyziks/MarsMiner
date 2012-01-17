@@ -42,7 +42,7 @@ namespace MarsMiner.Shared.Geometry
         {
             myHillyNoise = new Perlin
             {
-                Seed = seed,
+                Seed = Seed,
                 OctaveCount = 6,
                 Frequency = 1.0,
                 Lacunarity = 2.0,
@@ -51,7 +51,7 @@ namespace MarsMiner.Shared.Geometry
 
             myPlainsNoise = new Perlin
             {
-                Seed = seed,
+                Seed = Seed,
                 OctaveCount = 6,
                 Frequency = 8.0,
                 Lacunarity = 2.0,
@@ -60,7 +60,7 @@ namespace MarsMiner.Shared.Geometry
 
             myTransNoise = new Perlin
             {
-                Seed = seed,
+                Seed = Seed,
                 OctaveCount = 6,
                 Frequency = 1.0 / 32.0,
                 Lacunarity = 2.0,

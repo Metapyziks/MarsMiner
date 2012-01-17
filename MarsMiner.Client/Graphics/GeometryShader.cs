@@ -89,6 +89,7 @@ namespace MarsMiner.Client.Graphics
             vert.AddUniform( ShaderVarType.Mat4, "view_matrix" );
             vert.AddAttribute( ShaderVarType.Vec3, "in_position" );
             vert.AddAttribute( ShaderVarType.Vec3, "in_tex" );
+            vert.AddVarying( ShaderVarType.Float, "var_shade" );
             vert.AddVarying( ShaderVarType.Vec2, "var_tex_min" );
             vert.AddVarying( ShaderVarType.Vec2, "var_tex" );
             vert.Logic = @"
@@ -97,8 +98,27 @@ namespace MarsMiner.Client.Graphics
                     var_tex_min = vec2( float( int( in_tex.y ) % tilemap_size ) / float( tilemap_size ), floor( in_tex.y / float( tilemap_size ) ) / float( tilemap_size ) );
 
                     float size = in_tex.z / float( tilemap_size );
+                    
+                    int face = int( in_tex.x / 4 );
+                    int vert = int( in_tex.x ) % 4;                    
 
-                    switch( int( in_tex.x ) )
+                    switch( face )
+                    {
+                        case 0:
+                            var_shade = 0.9; break;
+                        case 1:
+                            var_shade = 0.7; break;
+                        case 2:
+                            var_shade = 0.8; break;
+                        case 3:
+                            var_shade = 0.9; break;
+                        case 4:
+                            var_shade = 1.0; break;
+                        case 5:
+                            var_shade = 0.8; break;
+                    }
+
+                    switch( vert )
                     {
                         case 0:
                             var_tex = vec2( 0.0f, size ); break;
@@ -118,6 +138,7 @@ namespace MarsMiner.Client.Graphics
             frag.AddUniform( ShaderVarType.Float, "texture_size" );
             frag.AddUniform( ShaderVarType.Int, "tilemap_size" );
             frag.AddUniform( ShaderVarType.Sampler2D, "tilemap" );
+            frag.AddVarying( ShaderVarType.Float, "var_shade" );
             frag.AddVarying( ShaderVarType.Vec2, "var_tex_min" );
             frag.AddVarying( ShaderVarType.Vec2, "var_tex" );
             frag.Logic = @"
@@ -127,7 +148,7 @@ namespace MarsMiner.Client.Graphics
 
                     vec2 pos = vec2( float( int( var_tex.x * texture_size ) % sixteenth ) / texture_size, float( int( var_tex.y * texture_size ) % sixteenth ) / texture_size ) + var_tex_min;
 
-                    out_frag_colour = texture( tilemap, pos );
+                    out_frag_colour = texture( tilemap, pos ) * vec4( var_shade, var_shade, var_shade, 1.0 );
                 }
             ";
 
