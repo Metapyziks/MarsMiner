@@ -25,7 +25,7 @@ namespace MarsMiner.Shared.Geometry
 {
     public class Chunk : IOctreeContainer<UInt16>
     {
-        public const int Size = 128;
+        public const int Size = 64;
         public const int Height = 256;
 
         public Octree<UInt16>[] Octrees { get; private set; }

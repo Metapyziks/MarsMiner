@@ -17,6 +17,7 @@
  * along with MarsMiner. If not, see <http://www.gnu.org/licenses/>.
  */
 
+using System;
 using System.IO;
 
 using ResourceLib;
@@ -29,7 +30,10 @@ namespace MarsMiner
         {
             Res.RegisterManager( new MarsMiner.Client.Graphics.RTextureManager() );
 
-            Res.MountArchive( Res.LoadArchive( "Data" + Path.DirectorySeparatorChar + "cl_baseui.rsa" ) );
+            String contentDir = "Data" + Path.DirectorySeparatorChar;
+
+            Res.MountArchive( Res.LoadArchive( contentDir + "cl_baseui.rsa" ) );
+            Res.MountArchive( Res.LoadArchive( contentDir + "cl_marsminer.rsa" ) );
 
             var window = new MarsMinerWindow();
             window.Run( 60.0f );

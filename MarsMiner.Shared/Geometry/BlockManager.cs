@@ -32,25 +32,46 @@ namespace MarsMiner.Shared.Geometry
         public bool IsVisible;
 
         public Face SolidFaces;
+
+        public String[] TileGraphics;
     }
 
     public static class BlockManager
     {
         private static UInt16 myNextID = 0;
         private static List<BlockType> myBlockTypes = new List<BlockType>();
+        private static Dictionary<String,UInt16> myIDs = new Dictionary<string, ushort>();
+
+        public static int TypeCount
+        {
+            get { return myBlockTypes.Count; }
+        }
+
+        public static void ClearTypes()
+        {
+            myNextID = 0;
+            myBlockTypes.Clear();
+            myIDs.Clear();
+        }
 
         public static UInt16 RegisterType( BlockType type )
         {
-            if ( myBlockTypes.Count == 0xFFFF )
+            if ( TypeCount == 0xFFFF )
                 throw new Exception( "No more than 65536 block types can be registered." );
 
             myBlockTypes.Add( type );
+            myIDs.Add( type.Name, myNextID );
             return myNextID++;
         }
 
         public static BlockType Get( UInt16 id )
         {
             return myBlockTypes[ id ];
+        }
+
+        public static UInt16 FindID( String name )
+        {
+            return myIDs[ name ];
         }
     }
 }

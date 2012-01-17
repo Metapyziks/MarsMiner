@@ -49,8 +49,8 @@ namespace MarsMiner
 
         private World myTestWorld;
 
-        private GeometryShader myTestShader;
-        private List<ChunkRenderer> myTestRenderers;
+        private GeometryShader myGeoShader;
+        private List<ChunkRenderer> myGeoRenderers;
 
         private bool myIgnoreMouse;
         private bool myCaptureMouse;
@@ -87,8 +87,12 @@ namespace MarsMiner
 
             myTestWorld = new World();
 
-            myTestShader = new GeometryShader( Width, Height );
-            myTestRenderers = new List<ChunkRenderer>();
+            myGeoShader = new GeometryShader( Width, Height );
+            myGeoShader.GenerateTileMap();
+
+            myUIRoot.AddChild( new UISprite( new Sprite( myGeoShader.TileMap ), new Vector2( 64, 64 ) ) );
+            
+            myGeoRenderers = new List<ChunkRenderer>();
 
             myTestWorld.ChunkLoaded += OnChunkEvent;
             myTestWorld.ChunkUnloaded += OnChunkEvent;
@@ -96,9 +100,9 @@ namespace MarsMiner
 
             myTestWorld.StartGenerator();
 
-            myTestShader.CameraPosition = new Vector3( 0.0f, 256.0f, 0.0f );
+            myGeoShader.CameraPosition = new Vector3( 0.0f, 256.0f, 0.0f );
 
-            GL.ClearColor( Color4.CornflowerBlue );
+            GL.ClearColor( new Color4( 223, 186, 168, 255 ) );
 
             myFrameTimer.Start();
         }
@@ -111,20 +115,21 @@ namespace MarsMiner
             if ( e.EventType == ChunkEventType.Loaded )
             {
                 ChunkRenderer renderer = new ChunkRenderer( e.Chunk );
+                renderer.UpdateVertices( myGeoShader );
 
-                Monitor.Enter( myTestRenderers );
-                myTestRenderers.Add( renderer );
-                Monitor.Exit( myTestRenderers );
+                Monitor.Enter( myGeoRenderers );
+                myGeoRenderers.Add( renderer );
+                Monitor.Exit( myGeoRenderers );
             }
             else
             {
-                Monitor.Enter( myTestRenderers );
-                ChunkRenderer renderer = myTestRenderers.Find( x => x.Chunk == e.Chunk );
+                Monitor.Enter( myGeoRenderers );
+                ChunkRenderer renderer = myGeoRenderers.Find( x => x.Chunk == e.Chunk );
                 if ( e.EventType == ChunkEventType.Unloaded )
-                    myTestRenderers.Remove( renderer );
-                Monitor.Exit( myTestRenderers );
+                    myGeoRenderers.Remove( renderer );
+                Monitor.Exit( myGeoRenderers );
                 if ( e.EventType == ChunkEventType.Changed )
-                    renderer.UpdateVertices();
+                    renderer.UpdateVertices( myGeoShader );
             }
         }
 
@@ -133,12 +138,12 @@ namespace MarsMiner
             GL.Clear( ClearBufferMask.ColorBufferBit );
             GL.Clear( ClearBufferMask.DepthBufferBit );
             
-            myTestShader.StartBatch();
-            Monitor.Enter( myTestRenderers );
-            foreach( ChunkRenderer renderer in myTestRenderers )
-                renderer.Render( myTestShader );
-            Monitor.Exit( myTestRenderers );
-            myTestShader.EndBatch();
+            myGeoShader.StartBatch();
+            Monitor.Enter( myGeoRenderers );
+            foreach( ChunkRenderer renderer in myGeoRenderers )
+                renderer.Render( myGeoShader );
+            Monitor.Exit( myGeoRenderers );
+            myGeoShader.EndBatch();
 
             mySpriteShader.Begin();
             myUIRoot.Render( mySpriteShader );
@@ -165,8 +170,8 @@ namespace MarsMiner
             }
 
             Vector3 movement = new Vector3( 0.0f, 0.0f, 0.0f );
-            float angleY = myTestShader.CameraRotation.Y;
-            float angleX = myTestShader.CameraRotation.X;
+            float angleY = myGeoShader.CameraRotation.Y;
+            float angleX = myGeoShader.CameraRotation.X;
 
             if ( Keyboard[ Key.D ] )
             {
@@ -194,7 +199,7 @@ namespace MarsMiner
             if ( movement.Length != 0 )
             {
                 movement.Normalize();
-                myTestShader.CameraPosition = myTestShader.CameraPosition + movement;
+                myGeoShader.CameraPosition = myGeoShader.CameraPosition + movement;
             }
         }
 
@@ -207,7 +212,7 @@ namespace MarsMiner
                     break;
                 case 'l':
                 case 'L':
-                    myTestShader.LineMode = !myTestShader.LineMode;
+                    myGeoShader.LineMode = !myGeoShader.LineMode;
                     break;
             }
 
@@ -227,13 +232,13 @@ namespace MarsMiner
 
             if ( myCaptureMouse )
             {
-                Vector2 rot = myTestShader.CameraRotation;
+                Vector2 rot = myGeoShader.CameraRotation;
 
                 rot.Y += e.XDelta / 180.0f;
                 rot.X += e.YDelta / 180.0f;
                 rot.X = Tools.Clamp( rot.X, (float) -Math.PI / 2.0f, (float) Math.PI / 2.0f );
 
-                myTestShader.CameraRotation = rot;
+                myGeoShader.CameraRotation = rot;
 
                 myIgnoreMouse = true;
                 System.Windows.Forms.Cursor.Position = new System.Drawing.Point( Bounds.Left + Width / 2, Bounds.Top + Height / 2 );
@@ -255,7 +260,7 @@ namespace MarsMiner
 
             myTestWorld.StopGenerator();
 
-            foreach ( ChunkRenderer renderer in myTestRenderers )
+            foreach ( ChunkRenderer renderer in myGeoRenderers )
                 renderer.Dispose();
 
             base.Dispose();

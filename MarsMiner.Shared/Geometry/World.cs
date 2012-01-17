@@ -62,6 +62,7 @@ namespace MarsMiner.Shared.Geometry
 
         public World( int seed = 0 )
         {
+            BlockManager.ClearTypes();
             OnInitialize();
 
             if ( Initialize != null )
@@ -91,15 +92,46 @@ namespace MarsMiner.Shared.Geometry
                 IsVisible   = false,
                 SolidFaces  = Face.None
             };
-            BlockType solid = new BlockType
+            BlockManager.RegisterType( empty );
+            BlockType sand = new BlockType
             {
-                Name        = "Core_Solid",
+                Name        = "MarsMiner_Sand",
                 IsSolid     = true,
                 IsVisible   = true,
-                SolidFaces  = Face.All
+                SolidFaces  = Face.All,
+
+                TileGraphics = new String[]
+                {
+                    "images_blocks_sand"
+                }
             };
-            BlockManager.RegisterType( empty );
-            BlockManager.RegisterType( solid );
+            BlockManager.RegisterType( sand );
+            BlockType rock = new BlockType
+            {
+                Name        = "MarsMiner_Rock",
+                IsSolid     = true,
+                IsVisible   = true,
+                SolidFaces  = Face.All,
+
+                TileGraphics = new String[]
+                {
+                    "images_blocks_rock"
+                }
+            };
+            BlockManager.RegisterType( rock );
+            BlockType boulder = new BlockType
+            {
+                Name        = "MarsMiner_Boulder",
+                IsSolid     = true,
+                IsVisible   = true,
+                SolidFaces  = Face.All,
+
+                TileGraphics = new String[]
+                {
+                    "images_blocks_boulder"
+                }
+            };
+            BlockManager.RegisterType( boulder );
         }
 
         public void LoadChunk( int x, int z )

@@ -39,18 +39,18 @@ namespace MarsMiner.Client.Graphics
         public ChunkRenderer( Chunk chunk )
         {
             Chunk = chunk;
-            myVertexBuffer = new VertexBuffer( 3 );
+            myVertexBuffer = new VertexBuffer( 6 );
             myChunkChanged = true;
         }
 
-        public void UpdateVertices()
+        public void UpdateVertices( GeometryShader shader )
         {
             Monitor.Enter( this );
-            myVertices = FindVertices();
+            myVertices = FindVertices( shader );
             Monitor.Exit( this );
         }
 
-        private float[] FindVertices()
+        private float[] FindVertices( GeometryShader shader )
         {
             List<float> verts = new List<float>();
             FindSolidFacesDelegate<UInt16> solidCheck =
@@ -73,58 +73,82 @@ namespace MarsMiner.Client.Graphics
                     float z0 = iter.Z; float z1 = z0 + size;
 
                     if ( node.IsFaceExposed( Face.Front, solidCheck ) )
+                    {
+                        int t = shader.GetFaceTileIndex( node.Value, Face.Front );
+
                         verts.AddRange( new float[]
                         {
-                            x0, y0, z0,
-                            x1, y0, z0,
-                            x1, y1, z0,
-                            x0, y1, z0,
+                            x0, y0, z0, 0, t, size,
+                            x1, y0, z0, 1, t, size,
+                            x1, y1, z0, 2, t, size,
+                            x0, y1, z0, 3, t, size,
                         } );
+                    }
 
                     if ( node.IsFaceExposed( Face.Right, solidCheck ) )
+                    {
+                        int t = shader.GetFaceTileIndex( node.Value, Face.Right );
+
                         verts.AddRange( new float[]
                         {
-                            x1, y0, z0,
-                            x1, y0, z1,
-                            x1, y1, z1,
-                            x1, y1, z0,
+                            x1, y0, z0, 0, t, size,
+                            x1, y0, z1, 1, t, size,
+                            x1, y1, z1, 2, t, size,
+                            x1, y1, z0, 3, t, size,
                         } );
+                    }
 
                     if ( node.IsFaceExposed( Face.Back, solidCheck ) )
+                    {
+                        int t = shader.GetFaceTileIndex( node.Value, Face.Back );
+
                         verts.AddRange( new float[]
                         {
-                            x1, y0, z1,
-                            x0, y0, z1,
-                            x0, y1, z1,
-                            x1, y1, z1,
+                            x1, y0, z1, 0, t, size,
+                            x0, y0, z1, 1, t, size,
+                            x0, y1, z1, 2, t, size,
+                            x1, y1, z1, 3, t, size,
                         } );
+                    }
 
                     if ( node.IsFaceExposed( Face.Left, solidCheck ) )
+                    {
+                        int t = shader.GetFaceTileIndex( node.Value, Face.Left );
+
                         verts.AddRange( new float[]
                         {
-                            x0, y0, z1,
-                            x0, y0, z0,
-                            x0, y1, z0,
-                            x0, y1, z1,
+                            x0, y0, z1, 0, t, size,
+                            x0, y0, z0, 1, t, size,
+                            x0, y1, z0, 2, t, size,
+                            x0, y1, z1, 3, t, size,
                         } );
+                    }
 
                     if ( node.IsFaceExposed( Face.Bottom, solidCheck ) )
+                    {
+                        int t = shader.GetFaceTileIndex( node.Value, Face.Bottom );
+
                         verts.AddRange( new float[]
                         {
-                            x0, y0, z0,
-                            x0, y0, z1,
-                            x1, y0, z1,
-                            x1, y0, z0,
+                            x0, y0, z0, 0, t, size,
+                            x0, y0, z1, 1, t, size,
+                            x1, y0, z1, 2, t, size,
+                            x1, y0, z0, 3, t, size,
                         } );
+                    }
 
                     if ( node.IsFaceExposed( Face.Top, solidCheck ) )
+                    {
+                        int t = shader.GetFaceTileIndex( node.Value, Face.Top );
+
                         verts.AddRange( new float[]
                         {
-                            x0, y1, z0,
-                            x1, y1, z0,
-                            x1, y1, z1,
-                            x0, y1, z1,
+                            x0, y1, z0, 0, t, size,
+                            x1, y1, z0, 1, t, size,
+                            x1, y1, z1, 2, t, size,
+                            x0, y1, z1, 3, t, size,
                         } );
+                    }
                 }
             }
 

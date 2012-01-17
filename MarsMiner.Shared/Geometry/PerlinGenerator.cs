@@ -78,7 +78,15 @@ namespace MarsMiner.Shared.Geometry
         {
             Octree<UInt16> octree = base.Generate( x, y, z, size, resolution );
 
+            Random rand = new Random( Seed );
+
+            UInt16 empty = BlockManager.FindID( "Core_Empty" );
+            UInt16 sand = BlockManager.FindID( "MarsMiner_Sand" );
+            UInt16 rock = BlockManager.FindID( "MarsMiner_Rock" );
+            UInt16 boulder = BlockManager.FindID( "MarsMiner_Boulder" );
+
             int min = System.Math.Min( myMinHilly, myMinPlains );
+            int gradRange = 2;
 
             octree.SetCuboid( x, 0, z, size, System.Math.Min( myMinHilly, myMinPlains ), size, 0x0000 );
 
@@ -92,24 +100,52 @@ namespace MarsMiner.Shared.Geometry
                 int maxCount = size / resolution;
                 double hres = resolution / 2.0;
 
-                int[,] map = new int[ maxCount, maxCount ];
+                int[,] heightmap = new int[ maxCount + gradRange * 2, maxCount + gradRange * 2 ];
+                double[,] gradmap = new double[ maxCount, maxCount ];
 
-                for( int i = 0; i < maxCount; ++ i )
+                for( int i = 0; i < maxCount + gradRange * 2; ++ i )
                 {
-                    double dx = ( x + i * resolution + hres ) / 256.0;
-                    for( int j = 0; j < maxCount; ++ j )
+                    double dx = ( x + ( i - gradRange ) * resolution + hres ) / 256.0;
+                    for( int j = 0; j < maxCount + gradRange * 2; ++ j )
                     {
-                        double dy = ( z + j * resolution + hres ) / 256.0;
+                        double dy = ( z + ( j - gradRange ) * resolution + hres ) / 256.0;
                         double hillVal = Tools.Clamp( myHillyNoise.GetValue( dx, dy, 0.5 ) * hillDiff + hillMid, myMinHilly, myMaxHilly );
                         double plainVal = Tools.Clamp( myHillyNoise.GetValue( dx, dy, 0.5 ) * plainDiff + plainMid, myMinPlains, myMaxPlains );
                         double trans = Tools.Clamp( ( myTransNoise.GetValue( dx, dy, 0.5 ) + 1.0 ) / 2.0, 0.0, 1.0 );
                         trans *= trans;
 
-                        map[ i, j ] = (int) System.Math.Round( ( trans * hillVal + ( 1 - trans ) * plainVal ) / resolution ) * resolution;
+                        heightmap[ i, j ] = (int) System.Math.Round( ( trans * hillVal + ( 1 - trans ) * plainVal ) / resolution ) * resolution;
                     }
                 }
 
-                Cuboid cuboid = new Cuboid( 0, 0, 0, resolution, 1, resolution );
+                for ( int i = 0; i < maxCount; ++i )
+                {
+                    for ( int j = 0; j < maxCount; ++j )
+                    {
+                        double grad = 0;
+
+                        for ( int gx = -gradRange; gx <= gradRange; ++gx )
+                        {
+                            for ( int gy = -gradRange; gy <= gradRange; ++gy )
+                            {
+                                if( gx == 0 && gy == 0 )
+                                    continue;
+
+                                double dist = System.Math.Sqrt( gx * gx + gy * gy );
+
+                                int diff = heightmap[ i + gradRange + gx, j + gradRange + gy ]
+                                    - heightmap[ i + gradRange, j + gradRange ];
+
+                                grad += System.Math.Abs( diff ) / dist;
+                            }
+                        }
+
+                        gradmap[ i, j ] = grad;
+                    }
+                }
+
+                Cuboid rcuboid = new Cuboid( 0, 0, 0, resolution, 1, resolution );
+                Cuboid scuboid = new Cuboid( 0, 0, 0, 1, 1, 1 );
 
                 int[,] prev = null;
 
@@ -121,8 +157,12 @@ namespace MarsMiner.Shared.Geometry
 
                     int sca = res / resolution;
 
-                    cuboid.Width = res;
-                    cuboid.Depth = res;
+                    rcuboid.Width = res;
+                    rcuboid.Depth = res;
+
+                    scuboid.Width = res;
+                    scuboid.Height = res;
+                    scuboid.Depth = res;
 
                     for ( int nx = 0; nx < count; ++nx )
                     {
@@ -134,23 +174,37 @@ namespace MarsMiner.Shared.Geometry
                             int rz = z + nz * res;
                             int pz = nz >> 1;
 
-                            int height = map[ nx * sca, nz * sca ] / res * res;
+                            int height = heightmap[ nx * sca + 1, nz * sca + 1 ] / res * res;
 
                             cur[ nx, nz ] = height;
 
                             int prevHeight = ( count == 1 ? 0 : prev[ px, pz ] );
 
-                            cuboid.X = rx;
-                            cuboid.Z = rz;
+                            rcuboid.X = rx;
+                            rcuboid.Z = rz;
 
-                            cuboid.Bottom = System.Math.Min( height, prevHeight );
-                            cuboid.Top    = System.Math.Max( height, prevHeight );
+                            rcuboid.Bottom = System.Math.Min( height, prevHeight );
+                            rcuboid.Top = System.Math.Max( height, prevHeight );
 
                             if( height > prevHeight )
-                                octree.SetCuboid( cuboid, 0x0001 );
+                                octree.SetCuboid( rcuboid, rock );
                             else
-                                octree.SetCuboid( cuboid, 0x0000 );
+                                octree.SetCuboid( rcuboid, empty );
 
+                            if ( res == resolution && gradmap[ nx, nz ] <= 8.0 * res )
+                            {
+                                scuboid.X = rx;
+                                scuboid.Y = height - res;
+                                scuboid.Z = rz;
+
+                                octree.SetCuboid( scuboid, sand );
+
+                                if ( res == 1 && rand.NextDouble() < 1.0 / 256.0 )
+                                {
+                                    scuboid.Y += 1;
+                                    octree.SetCuboid( scuboid, rock );
+                                }
+                            }
                         }
                     }
 
