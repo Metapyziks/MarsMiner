@@ -21,22 +21,42 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using MarsMiner.Saving.Interfaces;
+using System.IO;
 
 namespace MarsMiner.Saving.Structures.V0
 {
-    internal class Header
+    internal class Header : IBlockStructure
     {
         private const int version = 0;
-        private Pointer<SavedStateIndex> mainIndex;
+        private SavedStateIndex mainIndex;
 
-        public Header(Pointer<SavedStateIndex> mainIndex)
+        public Header(SavedStateIndex mainIndex)
         {
             this.mainIndex = mainIndex;
         }
 
         public int Version { get { return version; } }
-        public Pointer<SavedStateIndex> MainVersion { get { return mainIndex; } }
+        public SavedStateIndex MainVersion { get { return mainIndex; } }
 
-        //TODO: serializing
+        #region IBlockStructure
+        public int Length
+        {
+            get { return 8; }
+        }
+
+        public IBlockStructure[] GetTargets()
+        {
+            return new IBlockStructure[] { mainIndex };
+        }
+
+        public void Write(Stream stream, Func<object, uint> getPointerFunc)
+        {
+            var w = new BinaryWriter(stream);
+
+            w.Write(version);
+            w.Write(getPointerFunc(mainIndex));
+        }
+        #endregion
     }
 }

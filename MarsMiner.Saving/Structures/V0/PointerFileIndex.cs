@@ -33,6 +33,18 @@ namespace MarsMiner.Saving.Structures.V0
             get { return pointers[index]; }
         }
 
-        //TODO: contructor, serializing
+        //TODO: contructor
+
+        #region IBlockStructure
+        public int Length
+        {
+            get { throw new NotImplementedException(); }
+        }
+
+        public void Write(System.IO.Stream stream, Func<object, uint> getPointerFunc)
+        {
+            throw new NotImplementedException();
+        }
+        #endregion
     }
 }

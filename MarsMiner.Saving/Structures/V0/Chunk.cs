@@ -21,15 +21,45 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using MarsMiner.Saving.Interfaces;
+using System.IO;
 
 namespace MarsMiner.Saving.Structures.V0
 {
-    internal class Chunk
+    internal class Chunk : IBlockStructure
     {
-        private Pointer<BlockTypeTable> blockTypeTable;
-        private byte octreeCount;
-        private Pointer<Octree>[] octrees;
+        private BlockTypeTable blockTypeTable;
+        private Octree[] octrees;
 
-        //TODO: contructor, accessors, serializing
+        //TODO: contructor, accessors
+
+        #region IBlockStructure
+        public int Length
+        {
+            get
+            {
+                return 4 // blockTypeTable
+                    + 1 // octreeCount
+                    + 4 * octrees.Length; // octrees
+            }
+        }
+
+        public IBlockStructure[] GetTargets()
+        {
+            return new IBlockStructure[] { blockTypeTable }.Concat(octrees).ToArray();
+        }
+
+        public void Write(Stream stream, Func<object, uint> getPointerFunc)
+        {
+            var w = new BinaryWriter(stream);
+
+            w.Write(getPointerFunc(blockTypeTable));
+            w.Write((byte)octrees.Length);
+            foreach (var octree in octrees)
+            {
+                w.Write(getPointerFunc(octree));
+            }
+        }
+        #endregion
     }
 }

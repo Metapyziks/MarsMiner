@@ -17,36 +17,36 @@
  * along with MarsMiner. If not, see <http://www.gnu.org/licenses/>.
  */
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+//using System;
+//using System.Collections.Generic;
+//using System.Linq;
+//using System.Text;
 
-namespace MarsMiner.Saving.Structures.V0
-{
-    internal struct Pointer<T>
-    {
-        private const uint IsGlobalMask = 0x80000000;
-        private const uint DestinationMask = 0x7FFFFFFF;
+//namespace MarsMiner.Saving.Structures.V0
+//{
+//    internal struct Pointer<T>
+//    {
+//        private const uint IsGlobalMask = 0x80000000;
+//        private const uint DestinationMask = 0x7FFFFFFF;
 
-        private uint pointer;
+//        private uint pointer;
 
-        public Pointer(bool isGlobal, uint destination)
-        {
-            pointer = isGlobal ? IsGlobalMask : 0 |
-                destination & DestinationMask;
-        }
+//        public Pointer(bool isGlobal, uint destination)
+//        {
+//            pointer = isGlobal ? IsGlobalMask : 0 |
+//                destination & DestinationMask;
+//        }
 
-        public bool IsGlobal
-        {
-            get { return (pointer & IsGlobalMask) == IsGlobalMask; }
-        }
+//        public bool IsGlobal
+//        {
+//            get { return (pointer & IsGlobalMask) == IsGlobalMask; }
+//        }
 
-        public uint Destination
-        {
-            get { return (pointer & DestinationMask); }
-        }
+//        public uint Destination
+//        {
+//            get { return (pointer & DestinationMask); }
+//        }
 
-        //TODO: serializing
-    }
-}
+//        //TODO: serializing
+//    }
+//}

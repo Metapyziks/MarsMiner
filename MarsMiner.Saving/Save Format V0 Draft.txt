@@ -4,6 +4,13 @@ Most block structures can appear anywhere in the file and are either prefixed wi
 
 Embedded structures are always part of block structures and don't have any prefix.
 
+String File
+===========
+
+String (block structure, length prefixed)
+----------------------------------------------------------------------
+Utf-8 string
+
 Common
 ======
 
@@ -13,10 +20,6 @@ Pointer (embedded structure, fixed length)
 							0 means absolute pointer in this file
 							1 means reference to pointer in pointer table file
 7 bit					Destination address or pointer index
-
-String (block structure, length prefixed)
-----------------------------------------------------------------------
-Utf-8 string
 
 Save Blob
 =========

@@ -26,10 +26,10 @@ namespace MarsMiner.Saving.Structures.V0
 {
     internal struct FilePointer
     {
-        private Pointer<String> filename;
+        private string filename;
         private int address;
 
-        public Pointer<String> Filename { get { return filename; } }
+        public string Filename { get { return filename; } }
         public int Address { get { return address; } }
 
         //TODO: contructor, serializing

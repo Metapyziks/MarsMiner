@@ -21,16 +21,40 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using MarsMiner.Saving.Interfaces;
+using System.IO;
 
 namespace MarsMiner.Saving.Structures.V0
 {
-    internal class ChunkTable
+    internal class ChunkTable : IBlockStructure
     {
-        private uint chunkCount;
         private int[] xLocations;
         private int[] yLocations;
-        private Pointer<Chunk> chunks;
+        private Chunk[] chunks;
 
-        //TODO: contructor, accessors, serializing
+        //TODO: contructor, accessors
+
+        #region IBlockStructure
+        public int Length
+        {
+            get
+            {
+                return chunks.Length *
+                    (4 // xLocation
+                    + 4 // yLocation
+                    + 4); // chunk
+            }
+        }
+
+        public IBlockStructure[] GetTargets()
+        {
+            return chunks.ToArray();
+        }
+
+        public void Write(Stream stream, Func<object, uint> getPointerFunc)
+        {
+            throw new NotImplementedException();
+        }
+        #endregion
     }
 }

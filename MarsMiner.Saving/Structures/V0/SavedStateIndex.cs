@@ -21,17 +21,45 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using MarsMiner.Saving.Interfaces;
+using System.IO;
 
 namespace MarsMiner.Saving.Structures.V0
 {
-    internal class SavedStateIndex
+    internal class SavedStateIndex : IBlockStructure
     {
         private long timestamp;
-        private Pointer<String> saveName;
-        private Pointer<String> pointerFile;
-        private Pointer<PointerFileIndex> pointerFileIndex;
-        private Pointer<ChunkTable> chunkTable;
+        private string saveName;
+        private string pointerFile;
+        private PointerFileIndex pointerFileIndex;
+        private ChunkTable chunkTable;
 
-        //TODO: contructor, accessors, serializing
+        //TODO: contructor, accessors
+
+        #region IBlockStructure
+        public int Length
+        {
+            get
+            {
+                return 8 // timestamp
+                    + 4 // saveName
+                    + 4 // pointerFile
+                    + 4 // pointerFileIndex
+                    + 4 // pointerFileIndex
+                    + 4; // chunkTable
+            }
+        }
+
+        public void Write(Stream stream, Func<object, uint> getPointerFunc)
+        {
+            var w = new BinaryWriter(stream);
+
+            w.Write(timestamp);
+            w.Write(getPointerFunc(saveName));
+            w.Write(getPointerFunc(pointerFile));
+            w.Write(getPointerFunc(pointerFileIndex));
+            w.Write(getPointerFunc(chunkTable));
+        }
+        #endregion
     }
 }

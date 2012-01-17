@@ -22,14 +22,48 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Collections;
+using MarsMiner.Saving.Interfaces;
+using System.IO;
 
 namespace MarsMiner.Saving.Structures.V0
 {
-    internal class Octree
+    internal class Octree : IBlockStructure
     {
         private BitArray octreeFlags;
         private byte[] octreeValues;
 
-        //TODO: contructor, accessors, serializing
+        //TODO: contructor, accessors
+
+        #region IBlockStructure
+        public int Length
+        {
+            get
+            {
+                return 4 // octreeFlags length
+                    + (octreeFlags.Length / 8) + (octreeFlags.Length % 8 == 0 ? 0 : 1) // octreeFlags
+                    + octreeValues.Length; // octreeValues
+            }
+        }
+
+        public IBlockStructure[] GetTargets()
+        {
+            return new IBlockStructure[0];
+        }
+
+        public void Write(Stream stream, Func<object, uint> getPointerFunc)
+        {
+            var w = new BinaryWriter(stream);
+
+            int bitArrayLength = (octreeFlags.Length / 8) + (octreeFlags.Length % 8 == 0 ? 0 : 1);
+
+            w.Write(bitArrayLength);
+
+            var buffer = new byte[bitArrayLength];
+            octreeFlags.CopyTo(buffer, 0);
+            w.Write(buffer);
+
+            w.Write(octreeValues);
+        }
+        #endregion
     }
 }

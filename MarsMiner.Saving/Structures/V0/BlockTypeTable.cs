@@ -21,18 +21,36 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using MarsMiner.Saving.Interfaces;
 
 namespace MarsMiner.Saving.Structures.V0
 {
-    internal class BlockTypeTable
+    internal class BlockTypeTable : IBlockStructure
     {
-        private Pointer<String>[] blockTypeNames;
+        private string[] blockTypeNames;
 
-        public Pointer<String> this[int index]
+        public string this[int index]
         {
             get { return blockTypeNames[index]; }
         }
 
-        //TODO: constructor, serializing
+        //TODO: constructor
+
+        #region IBlockStructure
+        public int Length
+        {
+            get { throw new NotImplementedException(); }
+        }
+
+        public IBlockStructure[] GetTargets()
+        {
+            return new IBlockStructure[0];
+        }
+
+        public void Write(System.IO.Stream stream, Func<object, uint> getPointerFunc)
+        {
+            throw new NotImplementedException();
+        }
+        #endregion
     }
 }
