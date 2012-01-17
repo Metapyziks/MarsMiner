@@ -34,13 +34,14 @@ namespace MarsMiner.Shared.Geometry
         public readonly int X;
         public readonly int Z;
 
-        public int CenterX
+        public int DistanceToOrigin
         {
-            get { return X + Size >> 1; }
-        }
-        public int CenterZ
-        {
-            get { return Z + Size >> 1; }
+            get
+            {
+                return Math.Max(
+                    Math.Abs( X ) - ( X < 0 ? Size : 0 ),
+                    Math.Abs( Z ) - ( Z < 0 ? Size : 0 ) );
+            }
         }
 
         public bool Loaded { get; private set; }
@@ -62,7 +63,7 @@ namespace MarsMiner.Shared.Geometry
             int octrees = Height / Size;
             Octrees = new Octree<UInt16>[ octrees ];
 
-            int dist = Math.Max( Math.Abs( CenterX ), Math.Abs( CenterZ ) );
+            int dist = DistanceToOrigin;
 
             int res = 
                 dist < 128 ? 1 :

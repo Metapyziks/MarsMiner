@@ -88,7 +88,7 @@ namespace MarsMiner.Shared.Geometry
             int min = System.Math.Min( myMinHilly, myMinPlains );
             int gradRange = 2;
 
-            octree.SetCuboid( x, 0, z, size, System.Math.Min( myMinHilly, myMinPlains ), size, 0x0000 );
+            octree.SetCuboid( x, 0, z, size, System.Math.Min( myMinHilly, myMinPlains ), size, rock );
 
             if ( y + size > min )
             {
@@ -112,7 +112,7 @@ namespace MarsMiner.Shared.Geometry
                         double hillVal = Tools.Clamp( myHillyNoise.GetValue( dx, dy, 0.5 ) * hillDiff + hillMid, myMinHilly, myMaxHilly );
                         double plainVal = Tools.Clamp( myHillyNoise.GetValue( dx, dy, 0.5 ) * plainDiff + plainMid, myMinPlains, myMaxPlains );
                         double trans = Tools.Clamp( ( myTransNoise.GetValue( dx, dy, 0.5 ) + 1.0 ) / 2.0, 0.0, 1.0 );
-                        trans *= trans;
+                        //trans *= trans;
 
                         heightmap[ i, j ] = (int) System.Math.Round( ( trans * hillVal + ( 1 - trans ) * plainVal ) / resolution ) * resolution;
                     }
@@ -174,7 +174,7 @@ namespace MarsMiner.Shared.Geometry
                             int rz = z + nz * res;
                             int pz = nz >> 1;
 
-                            int height = heightmap[ nx * sca + 1, nz * sca + 1 ] / res * res;
+                            int height = heightmap[ nx * sca + gradRange, nz * sca + gradRange ] / res * res;
 
                             cur[ nx, nz ] = height;
 

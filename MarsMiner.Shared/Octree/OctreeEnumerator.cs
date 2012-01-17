@@ -121,6 +121,7 @@ namespace MarsMiner.Shared.Octree
             Z = myOriginal.Z;
 
             Size = myOriginal.Size;
+
             myStack = new Stack<int>();
             myCurOctIndex = 0;
         }

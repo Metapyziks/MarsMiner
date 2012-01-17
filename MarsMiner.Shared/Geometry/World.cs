@@ -78,7 +78,10 @@ namespace MarsMiner.Shared.Geometry
                 for ( int z = -limit; z < limit; ++z )
                     LoadChunk( x * Chunk.Size, z * Chunk.Size );
 
-            myChunksToLoad = new Queue<Chunk>( myChunksToLoad.OrderBy( x => Math.Max( Math.Abs( x.CenterX ), Math.Abs( x.CenterZ ) ) ) );
+            Random rand = new Random();
+
+            myChunksToLoad = new Queue<Chunk>( myChunksToLoad.OrderBy( x => rand.Next() )
+                .OrderBy( x => x.DistanceToOrigin ) );
 
             GeneratorRunning = false;
         }
