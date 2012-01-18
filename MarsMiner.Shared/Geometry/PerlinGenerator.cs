@@ -90,7 +90,7 @@ namespace MarsMiner.Shared.Geometry
 
             octree.SetCuboid( x, 0, z, size, System.Math.Min( myMinHilly, myMinPlains ), size, rock );
 
-            if ( y + size > min )
+            if ( y + size >= min )
             {
                 int hillDiff = ( myMaxHilly - myMinHilly ) / 2;
                 int hillMid = myMinHilly + hillDiff;
@@ -174,7 +174,8 @@ namespace MarsMiner.Shared.Geometry
                             int rz = z + nz * res;
                             int pz = nz >> 1;
 
-                            int height = heightmap[ nx * sca + gradRange, nz * sca + gradRange ] / res * res;
+                            int realHeight = heightmap[ nx * sca + gradRange, nz * sca + gradRange ];
+                            int height = realHeight / res * res;
 
                             cur[ nx, nz ] = height;
 
@@ -191,7 +192,8 @@ namespace MarsMiner.Shared.Geometry
                             else
                                 octree.SetCuboid( rcuboid, empty );
 
-                            if ( res == resolution && gradmap[ nx, nz ] <= 8.0 * res )
+                            if ( ( res == 1 || ( resolution > 1 && height == realHeight ) )
+                                && gradmap[ nx, nz ] <= 8.0 * res )
                             {
                                 scuboid.X = rx;
                                 scuboid.Y = height - res;
