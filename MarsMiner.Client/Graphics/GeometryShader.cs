@@ -35,8 +35,6 @@ namespace MarsMiner.Client.Graphics
     {
         private Matrix4 myViewMatrix;
         private int myViewMatrixLoc;
-        private int myTextureSizeLoc;
-        private int myTilemapSizeLoc;
 
         private Vector3 myCameraPosition;
         private Vector2 myCameraRotation;
