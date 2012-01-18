@@ -48,7 +48,15 @@ namespace MarsMiner.Saving.Structures.V0
 
         public void Write(Stream stream, Func<object, uint> getPointerFunc)
         {
-            throw new NotImplementedException();
+            var w = new BinaryWriter(stream);
+
+            w.Write((uint)chunks.LongLength);
+            for (long i = 0; i < chunks.LongLength; i++)
+            {
+                w.Write(xLocations[i]);
+                w.Write(yLocations[i]);
+                w.Write(getPointerFunc(chunks[i]));
+            }
         }
         #endregion
     }

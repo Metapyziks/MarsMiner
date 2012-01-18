@@ -31,7 +31,13 @@ namespace MarsMiner.Saving.Structures.V0
         private BlockTypeTable blockTypeTable;
         private Octree[] octrees;
 
-        //TODO: contructor, accessors
+        //TODO: accessors
+
+        public Chunk(BlockTypeTable blockTypeTable, Octree[] octrees)
+        {
+            this.blockTypeTable = blockTypeTable;
+            this.octrees = octrees;
+        }
 
         #region IBlockStructure
         public int Length

@@ -21,6 +21,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.IO;
 
 namespace MarsMiner.Saving.Structures.V0
 {
@@ -33,17 +34,28 @@ namespace MarsMiner.Saving.Structures.V0
             get { return pointers[index]; }
         }
 
-        //TODO: contructor
+        //TODO: constructor
 
         #region IBlockStructure
         public int Length
         {
-            get { throw new NotImplementedException(); }
+            get
+            {
+                return 4 // file pointer count
+                    + 8 * pointers.Length; // file pointers
+            }
         }
 
-        public void Write(System.IO.Stream stream, Func<object, uint> getPointerFunc)
+        public void Write(Stream stream, Func<object, uint> getPointerFunc)
         {
-            throw new NotImplementedException();
+            var w = new BinaryWriter(stream);
+
+            w.Write(pointers.Length);
+            foreach (var pointer in pointers)
+            {
+                w.Write(getPointerFunc(pointer.Filename));
+                w.Write(pointer.Address);
+            }
         }
         #endregion
     }
