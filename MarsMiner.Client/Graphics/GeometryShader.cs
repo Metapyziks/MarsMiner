@@ -86,16 +86,17 @@ namespace MarsMiner.Client.Graphics
             ShaderBuilder vert = new ShaderBuilder( ShaderType.VertexShader, false );
             vert.AddUniform( ShaderVarType.Mat4, "view_matrix" );
             vert.AddAttribute( ShaderVarType.Vec3, "in_position" );
-            vert.AddAttribute( ShaderVarType.Vec3, "in_tex" );
+            vert.AddAttribute( ShaderVarType.Vec2, "in_tex" );
             vert.AddVarying( ShaderVarType.Float, "var_shade" );
             vert.AddVarying( ShaderVarType.Vec3, "var_tex" );
             vert.Logic = @"
                 void main( void )
                 {
-                    int face = int( in_tex.x / 4 );
+                    int faceData = int( in_tex.x / 4 );
                     int vert = int( in_tex.x ) % 4;
 
-                    float size = in_tex.z;                    
+                    float size = float( faceData / 6 );
+                    int face = faceData % 6;                
 
                     switch( face )
                     {
@@ -168,7 +169,7 @@ namespace MarsMiner.Client.Graphics
             base.OnCreate();
 
             AddAttribute( "in_position", 3 );
-            AddAttribute( "in_tex", 3 );
+            AddAttribute( "in_tex", 2 );
             
             myViewMatrixLoc = GL.GetUniformLocation( Program, "view_matrix" );
 
