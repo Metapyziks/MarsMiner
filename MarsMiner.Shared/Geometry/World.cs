@@ -88,19 +88,18 @@ namespace MarsMiner.Shared.Geometry
 
         protected virtual void OnInitialize()
         {
-            BlockType empty = new BlockType
+            BlockType empty = new BlockType( "Core_Empty" )
             {
-                Name        = "Core_Empty",
                 IsSolid     = false,
                 IsVisible   = false,
                 SolidFaces  = Face.None
             };
             BlockManager.RegisterType( empty );
-            BlockType sand = new BlockType
+            BlockType sand = new BlockType( "MarsMiner_Sand" )
             {
-                Name        = "MarsMiner_Sand",
                 IsSolid     = true,
                 IsVisible   = true,
+                AutoSmooth  = true,
                 SolidFaces  = Face.All,
 
                 TileGraphics = new String[]
@@ -109,11 +108,11 @@ namespace MarsMiner.Shared.Geometry
                 }
             };
             BlockManager.RegisterType( sand );
-            BlockType rock = new BlockType
+            BlockType rock = new BlockType( "MarsMiner_Rock" )
             {
-                Name        = "MarsMiner_Rock",
                 IsSolid     = true,
                 IsVisible   = true,
+                AutoSmooth  = false,
                 SolidFaces  = Face.All,
 
                 TileGraphics = new String[]
@@ -122,11 +121,11 @@ namespace MarsMiner.Shared.Geometry
                 }
             };
             BlockManager.RegisterType( rock );
-            BlockType boulder = new BlockType
+            BlockType boulder = new BlockType( "MarsMiner_Boulder" )
             {
-                Name        = "MarsMiner_Boulder",
                 IsSolid     = true,
                 IsVisible   = true,
+                AutoSmooth  = false,
                 SolidFaces  = Face.All,
 
                 TileGraphics = new String[]

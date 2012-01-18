@@ -29,12 +29,12 @@ namespace MarsMiner.Shared.Octree
         public const int BackIndex      = 5;
 
         public static readonly Face None    = new Face( 0 );
-        public static readonly Face Left    = new Face( 1 << LeftIndex );
-        public static readonly Face Bottom  = new Face( 1 << BottomIndex );
-        public static readonly Face Front   = new Face( 1 << FrontIndex );
-        public static readonly Face Right   = new Face( 1 << RightIndex );
-        public static readonly Face Top     = new Face( 1 << TopIndex );
-        public static readonly Face Back    = new Face( 1 << BackIndex );
+        public static readonly Face Left    = FromIndex( LeftIndex );
+        public static readonly Face Bottom  = FromIndex( BottomIndex );
+        public static readonly Face Front   = FromIndex( FrontIndex );
+        public static readonly Face Right   = FromIndex( RightIndex );
+        public static readonly Face Top     = FromIndex( TopIndex );
+        public static readonly Face Back    = FromIndex( BackIndex );
         public static readonly Face All     = new Face( 63 );
 
         public static Face operator &( Face f0, Face f1 )
@@ -48,6 +48,11 @@ namespace MarsMiner.Shared.Octree
         public static Face operator ^( Face f0, Face f1 )
         {
             return new Face( (byte) ( f0.myBitmap ^ f1.myBitmap ) );
+        }
+
+        public static Face FromIndex( int index )
+        {
+            return new Face( (byte) ( 1 << index ) );
         }
 
         private byte myBitmap;

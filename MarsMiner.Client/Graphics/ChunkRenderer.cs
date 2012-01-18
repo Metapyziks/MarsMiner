@@ -61,7 +61,9 @@ namespace MarsMiner.Client.Graphics
                 {
                     OctreeNode<UInt16> node = iter.Current;
 
-                    if ( !BlockManager.Get( node.Value ).IsVisible )
+                    BlockType type = BlockManager.Get( node.Value );
+
+                    if ( !type.IsVisible )
                         continue;
 
                     int size = iter.Size;
@@ -69,6 +71,11 @@ namespace MarsMiner.Client.Graphics
                     float x0 = iter.X; float x1 = x0 + size;
                     float y0 = iter.Y; float y1 = y0 + size;
                     float z0 = iter.Z; float z1 = z0 + size;
+
+                    bool[] exposed = new bool[ 6 ];
+
+                    for ( int i = 0; i < 6; ++i )
+                        exposed[ i ] = node.IsFaceExposed( Face.FromIndex( i ), solidCheck );
 
                     if ( node.IsFaceExposed( Face.Front, solidCheck ) )
                     {
