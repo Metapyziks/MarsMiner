@@ -46,11 +46,6 @@ namespace MarsMiner.Saving.Structures.V0
             }
         }
 
-        public IBlockStructure[] GetTargets()
-        {
-            return chunks.ToArray();
-        }
-
         public void Write(Stream stream, Func<object, uint> getPointerFunc)
         {
             throw new NotImplementedException();

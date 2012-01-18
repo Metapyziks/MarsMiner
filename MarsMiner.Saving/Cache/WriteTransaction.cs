@@ -22,36 +22,18 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using MarsMiner.Saving.Interfaces;
-using System.IO;
 
-namespace MarsMiner.Saving.Structures.V0
+namespace MarsMiner.Saving.Cache
 {
-    internal class Header : IBlockStructure
+    internal class WriteTransaction
     {
-        private const int version = 0;
-        private SavedStateIndex mainIndex;
+        public IBlockStructure Header { get; private set; }
+        public IBlockStructure[] Blocks { get; private set; }
 
-        public Header(SavedStateIndex mainIndex)
+        public WriteTransaction(IBlockStructure header, IBlockStructure[] blocks)
         {
-            this.mainIndex = mainIndex;
+            Header = header;
+            Blocks = blocks;
         }
-
-        public int Version { get { return version; } }
-        public SavedStateIndex MainVersion { get { return mainIndex; } }
-
-        #region IBlockStructure
-        public int Length
-        {
-            get { return 8; }
-        }
-
-        public void Write(Stream stream, Func<object, uint> getPointerFunc)
-        {
-            var w = new BinaryWriter(stream);
-
-            w.Write(version);
-            w.Write(getPointerFunc(mainIndex));
-        }
-        #endregion
     }
 }

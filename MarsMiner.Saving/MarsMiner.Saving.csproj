@@ -41,7 +41,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Cache\BlockWriteCache.cs" />
+    <Compile Include="Cache\WriteTransaction.cs" />
     <Compile Include="Interfaces\IBlockStructure.cs" />
     <Compile Include="SaveManager.cs" />
     <Compile Include="Structures\V0\FilePointer.cs" />

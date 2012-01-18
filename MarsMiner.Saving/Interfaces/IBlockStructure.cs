@@ -28,7 +28,6 @@ namespace MarsMiner.Saving.Interfaces
     internal interface IBlockStructure
     {
         int Length { get; }
-        IBlockStructure[] GetTargets();
         void Write(Stream stream, Func<object, uint> getPointerFunc);
     }
 }

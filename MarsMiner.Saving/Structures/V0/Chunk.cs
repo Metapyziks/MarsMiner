@@ -44,11 +44,6 @@ namespace MarsMiner.Saving.Structures.V0
             }
         }
 
-        public IBlockStructure[] GetTargets()
-        {
-            return new IBlockStructure[] { blockTypeTable }.Concat(octrees).ToArray();
-        }
-
         public void Write(Stream stream, Func<object, uint> getPointerFunc)
         {
             var w = new BinaryWriter(stream);

@@ -22,6 +22,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using MarsMiner.Saving.Interfaces;
+using System.IO;
 
 namespace MarsMiner.Saving.Structures.V0
 {
@@ -34,22 +35,30 @@ namespace MarsMiner.Saving.Structures.V0
             get { return blockTypeNames[index]; }
         }
 
-        //TODO: constructor
+        public BlockTypeTable(string[] blockTypeNames)
+        {
+            this.blockTypeNames = blockTypeNames;
+        }
 
         #region IBlockStructure
         public int Length
         {
-            get { throw new NotImplementedException(); }
+            get
+            {
+                return 2 // block type count
+                    + 4 * blockTypeNames.Length; // block type names
+            }
         }
 
-        public IBlockStructure[] GetTargets()
+        public void Write(Stream stream, Func<object, uint> getPointerFunc)
         {
-            return new IBlockStructure[0];
-        }
+            var w = new BinaryWriter(stream);
 
-        public void Write(System.IO.Stream stream, Func<object, uint> getPointerFunc)
-        {
-            throw new NotImplementedException();
+            w.Write((ushort)blockTypeNames.Length);
+            foreach (var blockTypeName in blockTypeNames)
+            {
+                w.Write(getPointerFunc(blockTypeName));
+            }
         }
         #endregion
     }
