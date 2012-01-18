@@ -89,8 +89,6 @@ namespace MarsMiner
 
             myGeoShader = new GeometryShader( Width, Height );
             myGeoShader.GenerateTileMap();
-
-            myUIRoot.AddChild( new UISprite( new Sprite( myGeoShader.TileMap ), new Vector2( 64, 64 ) ) );
             
             myGeoRenderers = new List<ChunkRenderer>();
 
@@ -260,8 +258,10 @@ namespace MarsMiner
 
             myTestWorld.StopGenerator();
 
+            Monitor.Enter( myGeoRenderers );
             foreach ( ChunkRenderer renderer in myGeoRenderers )
                 renderer.Dispose();
+            Monitor.Exit( myGeoRenderers );
 
             base.Dispose();
         }

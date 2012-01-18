@@ -33,6 +33,7 @@ namespace MarsMiner.Client.Graphics
         Vec3,
         Vec4,
         Sampler2D,
+        Sampler2DArray,
         Mat4
     }
 

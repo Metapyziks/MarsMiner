@@ -44,11 +44,12 @@ namespace MarsMiner.Client.Graphics
 
         private bool myViewChanged;
 
+        private UInt32[] myTilemap;
+
         private int[,] myTileMapPointers;
+        private int myTileMapPos;
 
         public readonly int TileSize;
-
-        public Texture TileMap { get; private set; }
 
         public Vector3 CameraPosition
         {
@@ -85,22 +86,18 @@ namespace MarsMiner.Client.Graphics
             TileSize = tileSize;
 
             ShaderBuilder vert = new ShaderBuilder( ShaderType.VertexShader, false );
-            vert.AddUniform( ShaderVarType.Int, "tilemap_size" );
             vert.AddUniform( ShaderVarType.Mat4, "view_matrix" );
             vert.AddAttribute( ShaderVarType.Vec3, "in_position" );
             vert.AddAttribute( ShaderVarType.Vec3, "in_tex" );
             vert.AddVarying( ShaderVarType.Float, "var_shade" );
-            vert.AddVarying( ShaderVarType.Vec2, "var_tex_min" );
-            vert.AddVarying( ShaderVarType.Vec2, "var_tex" );
+            vert.AddVarying( ShaderVarType.Vec3, "var_tex" );
             vert.Logic = @"
                 void main( void )
                 {
-                    var_tex_min = vec2( float( int( in_tex.y ) % tilemap_size ) / float( tilemap_size ), floor( in_tex.y / float( tilemap_size ) ) / float( tilemap_size ) );
-
-                    float size = in_tex.z / float( tilemap_size );
-                    
                     int face = int( in_tex.x / 4 );
-                    int vert = int( in_tex.x ) % 4;                    
+                    int vert = int( in_tex.x ) % 4;
+
+                    float size = in_tex.z;                    
 
                     switch( face )
                     {
@@ -121,13 +118,13 @@ namespace MarsMiner.Client.Graphics
                     switch( vert )
                     {
                         case 0:
-                            var_tex = vec2( 0.0f, size ); break;
+                            var_tex = vec3( 0.0f, size, in_tex.y ); break;
                         case 1:
-                            var_tex = vec2( size, size ); break;
+                            var_tex = vec3( size, size, in_tex.y ); break;
                         case 2:
-                            var_tex = vec2( size, 0.0f ); break;
+                            var_tex = vec3( size, 0.0f, in_tex.y ); break;
                         case 3:
-                            var_tex = vec2( 0.0f, 0.0f ); break;
+                            var_tex = vec3( 0.0f, 0.0f, in_tex.y ); break;
                     }
 
                     gl_Position = view_matrix * vec4( in_position, 1.0 );
@@ -135,20 +132,13 @@ namespace MarsMiner.Client.Graphics
             ";
 
             ShaderBuilder frag = new ShaderBuilder( ShaderType.FragmentShader, false );
-            frag.AddUniform( ShaderVarType.Float, "texture_size" );
-            frag.AddUniform( ShaderVarType.Int, "tilemap_size" );
-            frag.AddUniform( ShaderVarType.Sampler2D, "tilemap" );
+            frag.AddUniform( ShaderVarType.Sampler2DArray, "tilemap" );
             frag.AddVarying( ShaderVarType.Float, "var_shade" );
-            frag.AddVarying( ShaderVarType.Vec2, "var_tex_min" );
-            frag.AddVarying( ShaderVarType.Vec2, "var_tex" );
+            frag.AddVarying( ShaderVarType.Vec3, "var_tex" );
             frag.Logic = @"
                 void main( void )
                 {
-                    int sixteenth = int( texture_size ) / tilemap_size;
-
-                    vec2 pos = vec2( float( int( var_tex.x * texture_size ) % sixteenth ) / texture_size, float( int( var_tex.y * texture_size ) % sixteenth ) / texture_size ) + var_tex_min;
-
-                    out_frag_colour = texture( tilemap, pos ) * vec4( var_shade, var_shade, var_shade, 1.0 );
+                    out_frag_colour = texture2DArray( tilemap, var_tex ) * vec4( var_shade, var_shade, var_shade, 1.0 );
                 }
             ";
 
@@ -181,12 +171,10 @@ namespace MarsMiner.Client.Graphics
 
             AddAttribute( "in_position", 3 );
             AddAttribute( "in_tex", 3 );
-
-            AddTexture( "tilemap", TextureUnit.Texture0 );
-
+            
             myViewMatrixLoc = GL.GetUniformLocation( Program, "view_matrix" );
-            myTextureSizeLoc = GL.GetUniformLocation( Program, "texture_size" );
-            myTilemapSizeLoc = GL.GetUniformLocation( Program, "tilemap_size" );
+
+            myTileMapPos = GL.GenTexture();
         }
 
         public void GenerateTileMap()
@@ -252,30 +240,46 @@ namespace MarsMiner.Client.Graphics
             }
 
             int size = 1;
-            while ( size * size < allocated.Count )
+            while ( size < allocated.Count )
                 size <<= 1;
 
-            Bitmap bmp = new Bitmap( size * TileSize, size * TileSize );
-            var g = System.Drawing.Graphics.FromImage( bmp );
+            int tileLength = TileSize * TileSize;
+
+            myTilemap = new uint[ tileLength * size ];
 
             for ( int i = 0; i < allocated.Count; ++i )
             {
                 Bitmap tile = Res.Get<Texture>( allocated[ i ] ).Bitmap;
-                if ( tile.Width != tile.Height || tile.Height != TileSize )
-                    tile = new Bitmap( tile, new Size( TileSize, TileSize ) );
 
-                Point pos = new Point( ( i % size ) * TileSize, ( i / size ) * TileSize );
+                int xScale = tile.Width / TileSize;
+                int yScale = tile.Height / TileSize;
 
-                g.DrawImage( tile, pos );
+                for ( int x = 0; x < TileSize; ++x )
+                {
+                    for ( int y = 0; y < TileSize; ++y )
+                    {
+                        int tx = x * xScale;
+                        int ty = y * yScale;
+
+                        Color clr = tile.GetPixel( tx, ty );
+
+                        myTilemap[ i * tileLength + x + y * TileSize ]
+                            = (UInt32) ( clr.R << 24 | clr.G << 16 | clr.B << 08 | clr.A << 00 );
+                    }
+                }
             }
 
-            g.Dispose();
-
-            TileMap = new Texture( bmp );
-
-            SetTexture( "tilemap", TileMap );
-            GL.Uniform1( myTextureSizeLoc, (float) ( size * TileSize ) );
-            GL.Uniform1( myTilemapSizeLoc, size );
+            GL.BindTexture( TextureTarget.Texture2DArray, myTileMapPos );
+            GL.TexParameterI( TextureTarget.Texture2DArray,
+                TextureParameterName.TextureMinFilter, new int[] { (int) TextureMinFilter.Nearest } );
+            GL.TexParameterI( TextureTarget.Texture2DArray,
+                TextureParameterName.TextureMagFilter, new int[] { (int) TextureMagFilter.Nearest } );
+            GL.TexParameterI( TextureTarget.Texture2DArray,
+                TextureParameterName.TextureWrapS, new int[] { (int) TextureWrapMode.Repeat } );
+            GL.TexParameterI( TextureTarget.Texture2DArray,
+                TextureParameterName.TextureWrapT, new int[] { (int) TextureWrapMode.Repeat } );
+            GL.TexImage3D( TextureTarget.Texture2DArray, 0, PixelInternalFormat.Rgba,
+                TileSize, TileSize, size, 0, PixelFormat.Rgba, PixelType.UnsignedInt8888, myTilemap );
         }
 
         public int GetFaceTileIndex( UInt16 typeID, Face face )
