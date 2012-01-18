@@ -96,9 +96,9 @@ namespace MarsMiner
             myTestWorld.ChunkUnloaded += OnChunkEvent;
             myTestWorld.ChunkChanged += OnChunkEvent;
 
-            myTestWorld.StartGenerator();
+            myTestWorld.Generate( 1024, 1024 );
 
-            myGeoShader.CameraPosition = new Vector3( 0.0f, 256.0f, 0.0f );
+            myGeoShader.CameraPosition = new Vector3( 0.0f, 1024.0f, 0.0f );
 
             GL.ClearColor( new Color4( 223, 186, 168, 255 ) );
 

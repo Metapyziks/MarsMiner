@@ -67,11 +67,11 @@ namespace MarsMiner.Shared.Geometry
                 Persistence = 1.0
             };
 
-            myMinHilly = 64;
-            myMaxHilly = 240;
+            myMinHilly = 768;
+            myMaxHilly = 896;
 
-            myMinPlains = 64;
-            myMaxPlains = 72;
+            myMinPlains = 768;
+            myMaxPlains = 776;
         }
 
         public override Octree<UInt16> Generate( int x, int y, int z, int size, int resolution = 1 )

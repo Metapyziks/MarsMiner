@@ -45,11 +45,12 @@ namespace MarsMiner.Shared.Geometry
         }
     }
 
-    public class World : IOctreeContainer<UInt16>
+    public class World : IOctreeContainer<UInt16>, IDisposable
     {
         private Thread myGeneratorThread;
         private Dictionary<UInt16,Chunk> myLoadedChunks;
         private Queue<Chunk> myChunksToLoad;
+        private Queue<Chunk> myChunksToUnload;
 
         public WorldGenerator Generator { get; private set; }
         public bool GeneratorRunning { get; private set; }
@@ -70,20 +71,20 @@ namespace MarsMiner.Shared.Geometry
 
             myLoadedChunks = new Dictionary<UInt16, Chunk>();
             myChunksToLoad = new Queue<Chunk>();
+            myChunksToUnload = new Queue<Chunk>();
             Generator = new PerlinGenerator( seed );
 
-            int limit = 1024 / Chunk.Size;
-
-            for ( int x = -limit; x < limit; ++x )
-                for ( int z = -limit; z < limit; ++z )
-                    LoadChunk( x * Chunk.Size, z * Chunk.Size );
-
-            Random rand = new Random();
-
-            myChunksToLoad = new Queue<Chunk>( myChunksToLoad.OrderBy( x => rand.Next() )
-                .OrderBy( x => x.DistanceToOrigin ) );
-
             GeneratorRunning = false;
+        }
+
+        public void Generate( int width, int height )
+        {
+            int xLimit = width  / Chunk.Size / 2;
+            int zLimit = height / Chunk.Size / 2;
+
+            for ( int x = -xLimit; x < xLimit; ++x )
+                for ( int z = -zLimit; z < zLimit; ++z )
+                    LoadChunk( x * Chunk.Size, z * Chunk.Size );
         }
 
         protected virtual void OnInitialize()
@@ -142,6 +143,20 @@ namespace MarsMiner.Shared.Geometry
             z = Tools.FloorDiv( z, Chunk.Size ) * Chunk.Size;
 
             myChunksToLoad.Enqueue( new Chunk( this, x, z ) );
+
+            if ( !GeneratorRunning )
+                StartGenerator();
+        }
+
+        public void UnloadChunk( int x, int z )
+        {
+            Chunk chunk = FindChunk( x, z );
+
+            if ( chunk != null )
+                myChunksToUnload.Enqueue( chunk );
+
+            if ( !GeneratorRunning )
+                StartGenerator();
         }
 
         private UInt16 FindChunkID( int x, int z )
@@ -175,10 +190,12 @@ namespace MarsMiner.Shared.Geometry
             return null;
         }
 
-        public void StartGenerator()
+        private void StartGenerator()
         {
             if ( GeneratorRunning )
                 return;
+
+            GeneratorRunning = true;
 
             myGeneratorThread = new Thread( GeneratorLoop );
             myGeneratorThread.Start();
@@ -193,34 +210,51 @@ namespace MarsMiner.Shared.Geometry
         {
             GeneratorRunning = true;
 
-            while ( GeneratorRunning && myChunksToLoad.Count != 0 )
+            while ( GeneratorRunning && ( myChunksToLoad.Count != 0 || myChunksToUnload.Count != 0 ) )
             {
-                Monitor.Enter( myChunksToLoad );
-                Chunk chunk = myChunksToLoad.Dequeue();
-                Monitor.Exit( myChunksToLoad );
-                Monitor.Enter( myLoadedChunks );
-                chunk.Generate();
-                myLoadedChunks.Add( FindChunkID( chunk.X, chunk.Z ), chunk );
-                Monitor.Exit( myLoadedChunks );
-
-                if ( ChunkLoaded != null )
-                    ChunkLoaded( this, new ChunkEventArgs( chunk, ChunkEventType.Loaded ) );
-
-                if ( ChunkChanged != null )
+                if ( myChunksToLoad.Count != 0 )
                 {
-                    Chunk n;
-                    n = FindChunk( chunk.X - Chunk.Size, chunk.Z );
-                    if ( n != null ) ChunkChanged( this, new ChunkEventArgs( n, ChunkEventType.Changed ) );
-                    n = FindChunk( chunk.X + Chunk.Size, chunk.Z );
-                    if ( n != null ) ChunkChanged( this, new ChunkEventArgs( n, ChunkEventType.Changed ) );
-                    n = FindChunk( chunk.X, chunk.Z - Chunk.Size );
-                    if ( n != null ) ChunkChanged( this, new ChunkEventArgs( n, ChunkEventType.Changed ) );
-                    n = FindChunk( chunk.X, chunk.Z + Chunk.Size );
-                    if ( n != null ) ChunkChanged( this, new ChunkEventArgs( n, ChunkEventType.Changed ) );
+                    Chunk chunk = myChunksToLoad.Dequeue();
+                    Monitor.Enter( myLoadedChunks );
+                    chunk.Generate();
+                    myLoadedChunks.Add( FindChunkID( chunk.X, chunk.Z ), chunk );
+                    Monitor.Exit( myLoadedChunks );
+
+                    if ( ChunkLoaded != null )
+                        ChunkLoaded( this, new ChunkEventArgs( chunk, ChunkEventType.Loaded ) );
+
+                    if ( ChunkChanged != null )
+                    {
+                        Chunk n;
+                        n = FindChunk( chunk.X - Chunk.Size, chunk.Z );
+                        if ( n != null ) ChunkChanged( this, new ChunkEventArgs( n, ChunkEventType.Changed ) );
+                        n = FindChunk( chunk.X + Chunk.Size, chunk.Z );
+                        if ( n != null ) ChunkChanged( this, new ChunkEventArgs( n, ChunkEventType.Changed ) );
+                        n = FindChunk( chunk.X, chunk.Z - Chunk.Size );
+                        if ( n != null ) ChunkChanged( this, new ChunkEventArgs( n, ChunkEventType.Changed ) );
+                        n = FindChunk( chunk.X, chunk.Z + Chunk.Size );
+                        if ( n != null ) ChunkChanged( this, new ChunkEventArgs( n, ChunkEventType.Changed ) );
+                    }
+                }
+                if ( myChunksToUnload.Count != 0 )
+                {
+                    Chunk chunk = myChunksToLoad.Dequeue();
+                    Monitor.Enter( myLoadedChunks );
+                    myLoadedChunks.Remove( FindChunkID( chunk.X, chunk.Z ) );
+                    Monitor.Exit( myLoadedChunks );
+
+                    if ( ChunkUnloaded != null )
+                        ChunkUnloaded( this, new ChunkEventArgs( chunk, ChunkEventType.Unloaded ) );
                 }
             }
 
             GeneratorRunning = false;
+        }
+
+        public void Dispose()
+        {
+            if ( GeneratorRunning )
+                StopGenerator();
         }
     }
 }
