@@ -80,96 +80,96 @@ namespace MarsMiner.Client.Graphics
                     if ( leaf.IsFaceExposed( Face.Front, solidCheck ) )
                     {
                         int t = shader.GetFaceTileIndex( leaf.Value, Face.Front );
-                        int f = ( size * 6 + Face.Front.Index ) * 4;
+                        int f = ( size * 6 + Face.Front.Index ) * 289;
 
                         verts.AddRange( new float[]
                         {
                             x0, y0, z0, 0 + f, t,
-                            x1, y0, z0, 1 + f, t,
-                            x1, y1, z0, 2 + f, t,
+                            x1, y0, z0, 16 + f, t,
+                            x1, y1, z0, 288 + f, t,
                             x0, y0, z0, 0 + f, t,
-                            x1, y1, z0, 2 + f, t,
-                            x0, y1, z0, 3 + f, t,
+                            x1, y1, z0, 288 + f, t,
+                            x0, y1, z0, 272 + f, t,
                         } );
                     }
 
                     if ( leaf.IsFaceExposed( Face.Right, solidCheck ) )
                     {
                         int t = shader.GetFaceTileIndex( leaf.Value, Face.Right );
-                        int f = ( size * 6 + Face.Right.Index ) * 4;
+                        int f = ( size * 6 + Face.Right.Index ) * 289;
 
                         verts.AddRange( new float[]
                         {
                             x1, y0, z0, 0 + f, t,
-                            x1, y0, z1, 1 + f, t,
-                            x1, y1, z1, 2 + f, t,
+                            x1, y0, z1, 16 + f, t,
+                            x1, y1, z1, 288 + f, t,
                             x1, y0, z0, 0 + f, t,
-                            x1, y1, z1, 2 + f, t,
-                            x1, y1, z0, 3 + f, t,
+                            x1, y1, z1, 288 + f, t,
+                            x1, y1, z0, 272 + f, t,
                         } );
                     }
 
                     if ( leaf.IsFaceExposed( Face.Back, solidCheck ) )
                     {
                         int t = shader.GetFaceTileIndex( leaf.Value, Face.Back );
-                        int f = ( size * 6 + Face.Back.Index ) * 4;
+                        int f = ( size * 6 + Face.Back.Index ) * 289;
 
                         verts.AddRange( new float[]
                         {
                             x1, y0, z1, 0 + f, t,
-                            x0, y0, z1, 1 + f, t,
-                            x0, y1, z1, 2 + f, t,
+                            x0, y0, z1, 16 + f, t,
+                            x0, y1, z1, 288 + f, t,
                             x1, y0, z1, 0 + f, t,
-                            x0, y1, z1, 2 + f, t,
-                            x1, y1, z1, 3 + f, t,
+                            x0, y1, z1, 288 + f, t,
+                            x1, y1, z1, 272 + f, t,
                         } );
                     }
 
                     if ( leaf.IsFaceExposed( Face.Left, solidCheck ) )
                     {
                         int t = shader.GetFaceTileIndex( leaf.Value, Face.Left );
-                        int f = ( size * 6 + Face.Left.Index ) * 4;
+                        int f = ( size * 6 + Face.Left.Index ) * 289;
 
                         verts.AddRange( new float[]
                         {
                             x0, y0, z1, 0 + f, t,
-                            x0, y0, z0, 1 + f, t,
-                            x0, y1, z0, 2 + f, t,
+                            x0, y0, z0, 16 + f, t,
+                            x0, y1, z0, 288 + f, t,
                             x0, y0, z1, 0 + f, t,
-                            x0, y1, z0, 2 + f, t,
-                            x0, y1, z1, 3 + f, t,
+                            x0, y1, z0, 288 + f, t,
+                            x0, y1, z1, 272 + f, t,
                         } );
                     }
 
                     if ( leaf.IsFaceExposed( Face.Bottom, solidCheck ) )
                     {
                         int t = shader.GetFaceTileIndex( leaf.Value, Face.Bottom );
-                        int f = ( size * 6 + Face.Bottom.Index ) * 4;
+                        int f = ( size * 6 + Face.Bottom.Index ) * 289;
 
                         verts.AddRange( new float[]
                         {
                             x0, y0, z0, 0 + f, t,
-                            x0, y0, z1, 1 + f, t,
-                            x1, y0, z1, 2 + f, t,
+                            x0, y0, z1, 16 + f, t,
+                            x1, y0, z1, 288 + f, t,
                             x0, y0, z0, 0 + f, t,
-                            x1, y0, z1, 2 + f, t,
-                            x1, y0, z0, 3 + f, t,
+                            x1, y0, z1, 288 + f, t,
+                            x1, y0, z0, 272 + f, t,
                         } );
                     }
 
                     if ( leaf.IsFaceExposed( Face.Top, solidCheck ) )
                     {
                         int t = shader.GetFaceTileIndex( leaf.Value, Face.Top );
-                        int f = ( size * 6 + Face.Top.Index ) * 4;
+                        int f = ( size * 6 + Face.Top.Index ) * 289;
 
                         verts.AddRange( new float[]
                         {
                             x0, y1, z0, 0 + f, t,
-                            x1, y1, z0, 1 + f, t,
-                            x1, y1, z1, 2 + f, t,
+                            x1, y1, z0, 16 + f, t,
+                            x1, y1, z1, 288 + f, t,
                             x0, y1, z0, 0 + f, t,
-                            x1, y1, z1, 2 + f, t,
-                            x0, y1, z1, 3 + f, t,
+                            x1, y1, z1, 288 + f, t,
+                            x0, y1, z1, 272 + f, t,
                         } );
                     }
                 }

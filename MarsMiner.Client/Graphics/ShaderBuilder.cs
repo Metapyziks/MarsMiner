@@ -162,9 +162,10 @@ namespace MarsMiner.Client.Graphics
 
             if ( Type == ShaderType.FragmentShader )
             {
-                if ( !gl3 )
+                if ( gl3 )
                     logic = logic.Replace( FragOutIdentifier, "gl_FragColor" )
-                        .Replace( "texture(", "texture2D(" );
+                        .Replace( "texture2DArray(", "texture(" )
+                        .Replace( "texture2D(", "texture(" );
             }
             else if( myTwoDimensional )
             {

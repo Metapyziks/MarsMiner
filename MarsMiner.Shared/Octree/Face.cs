@@ -39,7 +39,7 @@ namespace MarsMiner.Shared.Octree
 
         public static Face operator &( Face f0, Face f1 )
         {
-            return new Face( (byte)( f0.myBitmap & f1.myBitmap ) );
+            return new Face( (byte) ( f0.myBitmap & f1.myBitmap ) );
         }
         public static Face operator |( Face f0, Face f1 )
         {

@@ -92,11 +92,11 @@ namespace MarsMiner.Client.Graphics
             vert.Logic = @"
                 void main( void )
                 {
-                    int faceData = int( in_tex.x / 4 );
-                    int vert = int( in_tex.x ) % 4;
+                    int faceData = int( in_tex.x / 289 );
+                    int texPosIndex = int( in_tex.x ) % 289;
 
                     float size = float( faceData / 6 );
-                    int face = faceData % 6;                
+                    int face = faceData % 6;
 
                     switch( face )
                     {
@@ -114,17 +114,9 @@ namespace MarsMiner.Client.Graphics
                             var_shade = 0.8; break;
                     }
 
-                    switch( vert )
-                    {
-                        case 0:
-                            var_tex = vec3( 0.0f, size, in_tex.y ); break;
-                        case 1:
-                            var_tex = vec3( size, size, in_tex.y ); break;
-                        case 2:
-                            var_tex = vec3( size, 0.0f, in_tex.y ); break;
-                        case 3:
-                            var_tex = vec3( 0.0f, 0.0f, in_tex.y ); break;
-                    }
+                    vec2 texPos = vec2( texPosIndex % 17, texPosIndex / 17 );
+
+                    var_tex = vec3( texPos / 16.0 * size, in_tex.y );
 
                     gl_Position = view_matrix * vec4( in_position, 1.0 );
                 }
