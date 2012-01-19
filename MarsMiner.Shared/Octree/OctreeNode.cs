@@ -74,7 +74,7 @@ namespace MarsMiner.Shared.Octree
             throw new NotImplementedException();
         }
 
-        protected virtual OctreeNode<T> FindNeighbour( Face face )
+        public virtual OctreeNode<T> FindNeighbour( Face face )
         {
             switch ( face.Index )
             {

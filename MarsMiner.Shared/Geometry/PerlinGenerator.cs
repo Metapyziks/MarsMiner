@@ -114,7 +114,9 @@ namespace MarsMiner.Shared.Geometry
                         double trans = Tools.Clamp( ( myTransNoise.GetValue( dx, dy, 0.5 ) + 1.0 ) / 2.0, 0.0, 1.0 );
                         //trans *= trans;
 
-                        heightmap[ i, j ] = (int) System.Math.Round( ( trans * hillVal + ( 1 - trans ) * plainVal ) / resolution ) * resolution;
+                        int val = (int) System.Math.Floor( trans * hillVal + ( 1 - trans ) * plainVal );
+                        
+                        heightmap[ i, j ] = val / resolution * resolution;
                     }
                 }
 

@@ -87,6 +87,8 @@ namespace MarsMiner.Client.Graphics
                             x0, y0, z0, 0 + f, t,
                             x1, y0, z0, 1 + f, t,
                             x1, y1, z0, 2 + f, t,
+                            x0, y0, z0, 0 + f, t,
+                            x1, y1, z0, 2 + f, t,
                             x0, y1, z0, 3 + f, t,
                         } );
                     }
@@ -100,6 +102,8 @@ namespace MarsMiner.Client.Graphics
                         {
                             x1, y0, z0, 0 + f, t,
                             x1, y0, z1, 1 + f, t,
+                            x1, y1, z1, 2 + f, t,
+                            x1, y0, z0, 0 + f, t,
                             x1, y1, z1, 2 + f, t,
                             x1, y1, z0, 3 + f, t,
                         } );
@@ -115,6 +119,8 @@ namespace MarsMiner.Client.Graphics
                             x1, y0, z1, 0 + f, t,
                             x0, y0, z1, 1 + f, t,
                             x0, y1, z1, 2 + f, t,
+                            x1, y0, z1, 0 + f, t,
+                            x0, y1, z1, 2 + f, t,
                             x1, y1, z1, 3 + f, t,
                         } );
                     }
@@ -128,6 +134,8 @@ namespace MarsMiner.Client.Graphics
                         {
                             x0, y0, z1, 0 + f, t,
                             x0, y0, z0, 1 + f, t,
+                            x0, y1, z0, 2 + f, t,
+                            x0, y0, z1, 0 + f, t,
                             x0, y1, z0, 2 + f, t,
                             x0, y1, z1, 3 + f, t,
                         } );
@@ -143,6 +151,8 @@ namespace MarsMiner.Client.Graphics
                             x0, y0, z0, 0 + f, t,
                             x0, y0, z1, 1 + f, t,
                             x1, y0, z1, 2 + f, t,
+                            x0, y0, z0, 0 + f, t,
+                            x1, y0, z1, 2 + f, t,
                             x1, y0, z0, 3 + f, t,
                         } );
                     }
@@ -156,6 +166,8 @@ namespace MarsMiner.Client.Graphics
                         {
                             x0, y1, z0, 0 + f, t,
                             x1, y1, z0, 1 + f, t,
+                            x1, y1, z1, 2 + f, t,
+                            x0, y1, z0, 0 + f, t,
                             x1, y1, z1, 2 + f, t,
                             x0, y1, z1, 3 + f, t,
                         } );

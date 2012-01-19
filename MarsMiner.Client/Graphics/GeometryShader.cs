@@ -144,7 +144,7 @@ namespace MarsMiner.Client.Graphics
             VertexSource = vert.Generate( GL3 );
             FragmentSource = frag.Generate( GL3 );
 
-            BeginMode = BeginMode.Quads;
+            BeginMode = BeginMode.Triangles;
 
             CameraPosition = new Vector3();
             CameraRotation = new Vector2();
