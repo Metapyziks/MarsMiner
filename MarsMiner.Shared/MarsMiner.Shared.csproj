@@ -51,7 +51,9 @@
     <Compile Include="Octree\IOctreeContainer.cs" />
     <Compile Include="Octree\Octant.cs" />
     <Compile Include="Octree\Octree.cs" />
+    <Compile Include="Octree\OctreeBranch.cs" />
     <Compile Include="Octree\OctreeEnumerator.cs" />
+    <Compile Include="Octree\OctreeLeaf.cs" />
     <Compile Include="Octree\OctreeNode.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Tools.cs" />

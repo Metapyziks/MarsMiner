@@ -59,9 +59,9 @@ namespace MarsMiner.Client.Graphics
                 var iter = (OctreeEnumerator<UInt16>) octree.GetEnumerator();
                 while( iter.MoveNext() )
                 {
-                    OctreeNode<UInt16> node = iter.Current;
+                    OctreeLeaf<UInt16> leaf = iter.Current;
 
-                    BlockType type = BlockManager.Get( node.Value );
+                    BlockType type = BlockManager.Get( leaf.Value );
 
                     if ( !type.IsVisible )
                         continue;
@@ -75,11 +75,11 @@ namespace MarsMiner.Client.Graphics
                     bool[] exposed = new bool[ 6 ];
 
                     for ( int i = 0; i < 6; ++i )
-                        exposed[ i ] = node.IsFaceExposed( Face.FromIndex( i ), solidCheck );
+                        exposed[ i ] = leaf.IsFaceExposed( Face.FromIndex( i ), solidCheck );
 
-                    if ( node.IsFaceExposed( Face.Front, solidCheck ) )
+                    if ( leaf.IsFaceExposed( Face.Front, solidCheck ) )
                     {
-                        int t = shader.GetFaceTileIndex( node.Value, Face.Front );
+                        int t = shader.GetFaceTileIndex( leaf.Value, Face.Front );
                         int f = ( size * 6 + Face.Front.Index ) * 4;
 
                         verts.AddRange( new float[]
@@ -91,9 +91,9 @@ namespace MarsMiner.Client.Graphics
                         } );
                     }
 
-                    if ( node.IsFaceExposed( Face.Right, solidCheck ) )
+                    if ( leaf.IsFaceExposed( Face.Right, solidCheck ) )
                     {
-                        int t = shader.GetFaceTileIndex( node.Value, Face.Right );
+                        int t = shader.GetFaceTileIndex( leaf.Value, Face.Right );
                         int f = ( size * 6 + Face.Right.Index ) * 4;
 
                         verts.AddRange( new float[]
@@ -105,9 +105,9 @@ namespace MarsMiner.Client.Graphics
                         } );
                     }
 
-                    if ( node.IsFaceExposed( Face.Back, solidCheck ) )
+                    if ( leaf.IsFaceExposed( Face.Back, solidCheck ) )
                     {
-                        int t = shader.GetFaceTileIndex( node.Value, Face.Back );
+                        int t = shader.GetFaceTileIndex( leaf.Value, Face.Back );
                         int f = ( size * 6 + Face.Back.Index ) * 4;
 
                         verts.AddRange( new float[]
@@ -119,9 +119,9 @@ namespace MarsMiner.Client.Graphics
                         } );
                     }
 
-                    if ( node.IsFaceExposed( Face.Left, solidCheck ) )
+                    if ( leaf.IsFaceExposed( Face.Left, solidCheck ) )
                     {
-                        int t = shader.GetFaceTileIndex( node.Value, Face.Left );
+                        int t = shader.GetFaceTileIndex( leaf.Value, Face.Left );
                         int f = ( size * 6 + Face.Left.Index ) * 4;
 
                         verts.AddRange( new float[]
@@ -133,9 +133,9 @@ namespace MarsMiner.Client.Graphics
                         } );
                     }
 
-                    if ( node.IsFaceExposed( Face.Bottom, solidCheck ) )
+                    if ( leaf.IsFaceExposed( Face.Bottom, solidCheck ) )
                     {
-                        int t = shader.GetFaceTileIndex( node.Value, Face.Bottom );
+                        int t = shader.GetFaceTileIndex( leaf.Value, Face.Bottom );
                         int f = ( size * 6 + Face.Bottom.Index ) * 4;
 
                         verts.AddRange( new float[]
@@ -147,9 +147,9 @@ namespace MarsMiner.Client.Graphics
                         } );
                     }
 
-                    if ( node.IsFaceExposed( Face.Top, solidCheck ) )
+                    if ( leaf.IsFaceExposed( Face.Top, solidCheck ) )
                     {
-                        int t = shader.GetFaceTileIndex( node.Value, Face.Top );
+                        int t = shader.GetFaceTileIndex( leaf.Value, Face.Top );
                         int f = ( size * 6 + Face.Top.Index ) * 4;
 
                         verts.AddRange( new float[]

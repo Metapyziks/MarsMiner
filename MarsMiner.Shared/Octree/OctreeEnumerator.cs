@@ -21,7 +21,7 @@ using System.Collections.Generic;
 
 namespace MarsMiner.Shared.Octree
 {
-    public class OctreeEnumerator<T> : IEnumerator<OctreeNode<T>>
+    public class OctreeEnumerator<T> : IEnumerator<OctreeLeaf<T>>
     {
         private Octree<T> myOriginal;
         private Octant[] myValidOctants;
@@ -38,9 +38,14 @@ namespace MarsMiner.Shared.Octree
 
         public int Size { get; private set; }
 
-        public OctreeNode<T> Current
+        public OctreeLeaf<T> Current
         {
-            get { return Node; }
+            get { return (OctreeLeaf<T>) Node; }
+        }
+
+        object System.Collections.IEnumerator.Current
+        {
+            get { return Current; }
         }
 
         public OctreeEnumerator( Octree<T> octree )
@@ -68,20 +73,15 @@ namespace MarsMiner.Shared.Octree
             Reset();
         }
 
-        object System.Collections.IEnumerator.Current
-        {
-            get { return Current; }
-        }
-
         public bool MoveNext()
         {
             if ( Node == null )
                 Node = myOriginal;
             else
             {
-                while ( !Node.HasChildren || myCurOctIndex == myValidOctants.Length )
+                while ( Node is OctreeLeaf<T> || myCurOctIndex == myValidOctants.Length )
                 {
-                    if ( !Node.HasParent )
+                    if ( Node is Octree<T> )
                         return false;
 
                     Node = Node.Parent;
@@ -95,10 +95,10 @@ namespace MarsMiner.Shared.Octree
                 }
             }
 
-            while ( Node.HasChildren )
+            while ( Node is OctreeBranch<T> )
             {
                 Octant oct = myValidOctants[ myCurOctIndex ];
-                Node = Node[ oct ];
+                Node = ( (OctreeBranch<T>) Node )[ oct ];
                 myStack.Push( myCurOctIndex );
                 myCurOctIndex = 0;
 

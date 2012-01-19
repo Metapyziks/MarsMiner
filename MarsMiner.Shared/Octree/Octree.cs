@@ -21,7 +21,7 @@ using System.Collections.Generic;
 
 namespace MarsMiner.Shared.Octree
 {
-    public class Octree<T> : OctreeNode<T>, IEnumerable<OctreeNode<T>>
+    public class Octree<T> : OctreeBranch<T>, IEnumerable<OctreeNode<T>>
     {
         public readonly int X;
         public readonly int Y;
@@ -59,6 +59,11 @@ namespace MarsMiner.Shared.Octree
             SetCuboid( Size, new Cuboid( x - X, y - Y, z - Z, width, height, depth ), value );
         }
 
+        public override bool ShouldMerge()
+        {
+            return false;
+        }
+
         public override OctreeNode<T> FindNode( int x, int y, int z, int size )
         {
             if ( x < X || y < Y || z < Z || x >= X + Size || y >= Y + Size || z >= Z + Size )
@@ -72,7 +77,7 @@ namespace MarsMiner.Shared.Octree
             return FindNode( Size, x - X, y - Y, z - Z, size );
         }
 
-        protected override OctreeNode<T> FindNode( int mSize, int oX, int oY, int oZ, int oSize )
+        internal override OctreeNode<T> FindNode( int mSize, int oX, int oY, int oZ, int oSize )
         {
             if ( oX < 0 || oY < 0 || oZ < 0 || oX >= mSize || oY >= mSize || oZ >= mSize )
             {
@@ -110,6 +115,11 @@ namespace MarsMiner.Shared.Octree
         System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
         {
             return GetEnumerator();
+        }
+
+        public override string ToString()
+        {
+            return "Octree Root";
         }
     }
 }

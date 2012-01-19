@@ -21,6 +21,6 @@ namespace MarsMiner.Shared.Octree
 {
     public interface IOctreeContainer<T>
     {
-        OctreeNode<T> FindNode( int x, int y, int z, int size );
+        OctreeNode<T> FindNode( int x, int y, int z, int size ); 
     }
 }
