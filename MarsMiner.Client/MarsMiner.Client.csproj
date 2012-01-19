@@ -46,6 +46,8 @@
     <Compile Include="Graphics\FrameSprite.cs" />
     <Compile Include="Graphics\ChunkRenderer.cs" />
     <Compile Include="Graphics\GeometryShader.cs" />
+    <Compile Include="Graphics\Model.cs" />
+    <Compile Include="Graphics\ModelFace.cs" />
     <Compile Include="Graphics\ShaderBuilder.cs" />
     <Compile Include="Graphics\ShaderProgram.cs" />
     <Compile Include="Graphics\Sprite.cs" />
