@@ -18,7 +18,6 @@
  */
 
 using System;
-using System.Collections.Generic;
 
 namespace MarsMiner.Shared.Octree
 {
