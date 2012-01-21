@@ -23,9 +23,9 @@ namespace MarsMiner.Client.Graphics
 {
     public class SpriteShader : ShaderProgram2D
     {
-        private Texture myTexture;
+        private Texture2D myTexture;
 
-        public Texture Texture
+        public Texture2D Texture
         {
             get
             {

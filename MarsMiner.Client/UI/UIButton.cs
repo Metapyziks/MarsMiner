@@ -81,7 +81,7 @@ namespace MarsMiner.Client.UI
 
             PaddingLeft = PaddingTop = PaddingRight = PaddingBottom = 4.0f * scale;
 
-            myButtonSprite = new FrameSprite( Res.Get<Texture>( "images_gui_panels" ), scale )
+            myButtonSprite = new FrameSprite( Res.Get<Texture2D>( "images_gui_panels" ), scale )
             {
                 SubrectSize = new Vector2( 16, 16 ),
                 SubrectOffset = new Vector2( 32, 16 ),

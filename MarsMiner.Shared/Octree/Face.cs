@@ -17,9 +17,11 @@
  * along with MarsMiner. If not, see <http://www.gnu.org/licenses/>.
  */
 
+using System.Collections.Generic;
+
 namespace MarsMiner.Shared.Octree
 {
-    public struct Face
+    public struct Face : IEnumerable<Face>
     {
         public const int LeftIndex      = 0;
         public const int BottomIndex    = 1;
@@ -107,6 +109,29 @@ namespace MarsMiner.Shared.Octree
         public bool HasFace( Face face )
         {
             return ( myBitmap & face.myBitmap ) == face.myBitmap;
+        }
+
+        public override bool Equals( object obj )
+        {
+            if ( obj is Face )
+                return myBitmap == ( (Face) obj ).myBitmap;
+
+            return false;
+        }
+
+        public override int GetHashCode()
+        {
+            return myBitmap;
+        }
+
+        public IEnumerator<Face> GetEnumerator()
+        {
+            return new FaceEnumerator( this );
+        }
+
+        System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
+        {
+            return GetEnumerator();
         }
     }
 

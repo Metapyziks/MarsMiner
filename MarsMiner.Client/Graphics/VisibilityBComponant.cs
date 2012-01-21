@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Copyright (c) 2012 James King [metapyziks@gmail.com]
  *
  * This file is part of MarsMiner.
@@ -17,27 +17,20 @@
  * along with MarsMiner. If not, see <http://www.gnu.org/licenses/>.
  */
 
-using System;
-using System.IO;
+using MarsMiner.Shared.Geometry;
+using MarsMiner.Shared.Octree;
 
-using ResourceLib;
-
-namespace MarsMiner
+namespace MarsMiner.Client.Graphics
 {
-    class Program
+    public class VisibilityBComponant : BlockComponant
     {
-        static void Main( string[] args )
+        public readonly bool IsVisible;
+        public readonly Face SolidFaces;
+
+        public VisibilityBComponant( bool isVisible, Face solidFaces )
         {
-            Res.RegisterManager( new MarsMiner.Client.Graphics.RTexture2DManager() );
-
-            String contentDir = "Data" + Path.DirectorySeparatorChar;
-
-            Res.MountArchive( Res.LoadArchive( contentDir + "cl_baseui.rsa" ) );
-            Res.MountArchive( Res.LoadArchive( contentDir + "cl_marsminer.rsa" ) );
-
-            var window = new MarsMinerWindow();
-            window.Run( 60.0f );
-            window.Dispose();
+            IsVisible = isVisible;
+            SolidFaces = solidFaces;
         }
     }
 }

@@ -46,7 +46,7 @@ namespace MarsMiner.Client.Graphics
 
         public double FrameRate;
 
-        public AnimatedSprite( Texture texture, int frameWidth, int frameHeight, double frameRate, float scale = 1.0f )
+        public AnimatedSprite( Texture2D texture, int frameWidth, int frameHeight, double frameRate, float scale = 1.0f )
             : base( texture, scale )
         {
             myFrameWidth = frameWidth;

@@ -32,7 +32,7 @@ namespace ResourceArchiveBuilder
         {
             if ( first )
             {
-                Res.RegisterManager( new MarsMiner.Client.Graphics.RTextureManager() );
+                Res.RegisterManager( new MarsMiner.Client.Graphics.RTexture2DManager() );
                 first = false;
             }
 

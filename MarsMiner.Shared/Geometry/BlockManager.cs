@@ -24,34 +24,6 @@ using MarsMiner.Shared.Octree;
 
 namespace MarsMiner.Shared.Geometry
 {
-    public struct BlockType
-    {
-        public readonly String Name;
-        public readonly int SubType;
-
-        public bool IsSolid;
-        public bool IsVisible;
-        public bool AutoSmooth;
-
-        public Face SolidFaces;
-
-        public String[] TileGraphics;
-
-        public BlockType( String name, int subType = 0 )
-        {
-            Name = name;
-            SubType = subType;
-
-            IsSolid = false;
-            IsVisible = false;
-            AutoSmooth = false;
-
-            SolidFaces = Face.None;
-
-            TileGraphics = new string[ 0 ];
-        }
-    }
-
     public static class BlockManager
     {
         private static UInt16 myNextID = 0;
@@ -70,10 +42,12 @@ namespace MarsMiner.Shared.Geometry
             myIDs.Clear();
         }
 
-        public static UInt16 RegisterType( BlockType type )
+        public static BlockType RegisterType( String name, int subType = 0 )
         {
             if ( TypeCount == 0xFFFF )
                 throw new Exception( "No more than 65536 block types can be registered." );
+
+            BlockType type = new BlockType( name, subType );
 
             myBlockTypes.Add( type );
             if( !myIDs.ContainsKey( type.Name ) )
@@ -82,15 +56,9 @@ namespace MarsMiner.Shared.Geometry
             List<ushort> subTypes = myIDs[ type.Name ];
             while ( subTypes.Count <= type.SubType )
                 subTypes.Add( 0xFFFF );
-            subTypes[ type.SubType ] = myNextID;
+            subTypes[ type.SubType ] = myNextID++;
 
-            return myNextID++;
-        }
-
-        public static void UpdateType( BlockType type )
-        {
-            UInt16 id = FindID( type.Name, type.SubType );
-            myBlockTypes[ id ] = type;
+            return type;
         }
 
         public static BlockType Get( UInt16 id )
@@ -98,7 +66,12 @@ namespace MarsMiner.Shared.Geometry
             return myBlockTypes[ id ];
         }
 
-        public static UInt16 FindID( String name, int subType = 0 )
+        public static BlockType Get( String name, int subType = 0 )
+        {
+            return Get( GetID( name, subType ) );
+        }
+
+        public static UInt16 GetID( String name, int subType = 0 )
         {
             return myIDs[ name ][ subType ];
         }

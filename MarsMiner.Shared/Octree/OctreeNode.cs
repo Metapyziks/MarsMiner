@@ -35,6 +35,16 @@ namespace MarsMiner.Shared.Octree
             Parent = parent;
         }
 
+        public Face FindExposedFaces( FindSolidFacesDelegate<T> solidCheck )
+        {
+            Face res = Face.None;
+            foreach ( Face face in Face.All )
+                if ( IsFaceExposed( face, solidCheck ) )
+                    res |= face;
+
+            return res;
+        }
+
         public bool IsFaceExposed( Face face, FindSolidFacesDelegate<T> solidCheck )
         {
             OctreeNode<T> n = FindNeighbour( face );

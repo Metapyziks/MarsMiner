@@ -29,20 +29,20 @@ using OpenTK.Graphics.OpenGL;
 
 namespace MarsMiner.Client.Graphics
 {
-    public class RTextureManager : RManager
+    public class RTexture2DManager : RManager<Texture2D>
     {
-        public RTextureManager()
-            : base( typeof( Texture ), 2, "png" )
+        public RTexture2DManager()
+            : base( 2, "png" )
         {
 
         }
 
         public override ResourceItem[] LoadFromFile( String keyPrefix, String fileName, String fileExtension, FileStream stream )
         {
-            return new ResourceItem[] { new ResourceItem( keyPrefix + fileName, new Texture( new Bitmap( stream ) ) ) };
+            return new ResourceItem[] { new ResourceItem( keyPrefix + fileName, new Texture2D( new Bitmap( stream ) ) ) };
         }
 
-        public override Object LoadFromArchive( BinaryReader stream )
+        public override Texture2D LoadFromArchive( BinaryReader stream )
         {
             ushort wid = stream.ReadUInt16();
             ushort hei = stream.ReadUInt16();
@@ -60,16 +60,15 @@ namespace MarsMiner.Client.Graphics
                     ) );
                 }
 
-            return new Texture( bmp );
+            return new Texture2D( bmp );
         }
 
-        public override void SaveToArchive( BinaryWriter stream, Object item )
+        public override void SaveToArchive( BinaryWriter stream, Texture2D item )
         {
-            Texture tex = item as Texture;
-            Bitmap bmp = tex.Bitmap;
+            Bitmap bmp = item.Bitmap;
 
-            ushort wid = (ushort) tex.Width;
-            ushort hei = (ushort) tex.Height;
+            ushort wid = (ushort) item.Width;
+            ushort hei = (ushort) item.Height;
 
             stream.Write( wid );
             stream.Write( hei );
@@ -88,16 +87,7 @@ namespace MarsMiner.Client.Graphics
 
     public class Texture
     {
-        public static readonly Texture Blank;
-
-        static Texture()
-        {
-            Bitmap blankBmp = new Bitmap( 1, 1 );
-            blankBmp.SetPixel( 0, 0, Color.White );
-            Blank = new Texture( blankBmp );
-        }
-
-        private static int GetNextPOTS( int wid, int hei )
+        protected static int GetNextPOTS( int wid, int hei )
         {
             int max = wid > hei ? wid : hei;
 
@@ -115,16 +105,15 @@ namespace MarsMiner.Client.Graphics
         }
 
         private int myID;
-        private Bitmap myBitmap;
-        private int myWidth;
-        private int myHeight;
         private bool myLoaded;
+
+        public TextureTarget TextureTarget { get; private set; }
 
         public bool Ready
         {
             get
             {
-                return myID != 0;
+                return myID > -1;
             }
         }
 
@@ -139,52 +128,76 @@ namespace MarsMiner.Client.Graphics
             }
         }
 
-        public int Width
+        public Texture( TextureTarget target )
         {
-            get
-            {
-                return myWidth;
-            }
+            TextureTarget = target;
+
+            myID = -1;
+            myLoaded = false;
         }
 
-        public int Height
+        public void Update()
         {
-            get
-            {
-                return myHeight;
-            }
+            myLoaded = false;
         }
 
-        public Bitmap Bitmap
+        protected virtual void Load()
         {
-            get
-            {
-                return myBitmap;
-            }
+
         }
 
-        public Texture( Bitmap bitmap )
+        public void Bind()
         {
-            myWidth = bitmap.Width;
-            myHeight = bitmap.Height;
+            if ( stCurrentLoadedTexture != ID )
+            {
+                GL.BindTexture( TextureTarget, ID );
+                stCurrentLoadedTexture = ID;
+            }
+
+            if ( !myLoaded )
+            {
+                Load();
+                myLoaded = true;
+            }
+        }
+    }
+
+    public class Texture2D : Texture
+    {
+        public static readonly Texture2D Blank;
+
+        static Texture2D()
+        {
+            Bitmap blankBmp = new Bitmap( 1, 1 );
+            blankBmp.SetPixel( 0, 0, Color.White );
+            Blank = new Texture2D( blankBmp );
+        }
+
+        public int Width { get; private set; }
+        public int Height { get; private set; }
+        public Bitmap Bitmap { get; private set; }
+
+        public Texture2D( Bitmap bitmap )
+            : base( TextureTarget.Texture2D )
+        {
+            Width = bitmap.Width;
+            Height = bitmap.Height;
 
             int size = GetNextPOTS( bitmap.Width, bitmap.Height );
 
             if ( size == bitmap.Width && size == bitmap.Height )
-                myBitmap = bitmap;
+                Bitmap = bitmap;
             else
             {
-                myBitmap = new Bitmap( size, size );
+                Bitmap = new Bitmap( size, size );
 
-                for ( int x = 0; x < myWidth; ++x )
-                    for ( int y = 0; y < myHeight; ++y )
-                        myBitmap.SetPixel( x, y, bitmap.GetPixel( x, y ) );
+                for ( int x = 0; x < Width; ++x )
+                    for ( int y = 0; y < Height; ++y )
+                        Bitmap.SetPixel( x, y, bitmap.GetPixel( x, y ) );
             }
-
-            myLoaded = false;
         }
 
-        public Texture( string resourceKey )
+        public Texture2D( string resourceKey )
             : this( Res.Get<Bitmap>( resourceKey ) )
         {
            
@@ -199,14 +212,14 @@ namespace MarsMiner.Client.Graphics
         {
             return new Vector2
             {
-                X = x / myBitmap.Width,
-                Y = y / myBitmap.Height
+                X = x / Bitmap.Width,
+                Y = y / Bitmap.Height
             };
         }
 
         public Color GetPixel( int x, int y )
         {
-            return myBitmap.GetPixel( x, y );
+            return Bitmap.GetPixel( x, y );
         }
 
         public void SetPixel( int x, int y, Color colour )
@@ -214,37 +227,22 @@ namespace MarsMiner.Client.Graphics
             if ( this == Blank )
                 return;
 
-            myBitmap.SetPixel( x, y, colour );
-            myLoaded = false;
+            Bitmap.SetPixel( x, y, colour );
+            Update();
         }
 
-        private void Use()
+        private void Load()
         {
             GL.TexEnv( TextureEnvTarget.TextureEnv, TextureEnvParameter.TextureEnvMode, (float) TextureEnvMode.Modulate );
 
-            BitmapData data = myBitmap.LockBits( new Rectangle( 0, 0, myBitmap.Width, myBitmap.Height ), ImageLockMode.ReadOnly, System.Drawing.Imaging.PixelFormat.Format32bppArgb );
+            BitmapData data = Bitmap.LockBits( new Rectangle( 0, 0, Bitmap.Width, Bitmap.Height ), ImageLockMode.ReadOnly, System.Drawing.Imaging.PixelFormat.Format32bppArgb );
 
-            GL.TexImage2D( TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, myBitmap.Width, myBitmap.Height, 0, OpenTK.Graphics.OpenGL.PixelFormat.Bgra, PixelType.UnsignedByte, data.Scan0 );
-            //GL.GenerateMipmap( GenerateMipmapTarget.Texture2D );
+            GL.TexImage2D( TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, Bitmap.Width, Bitmap.Height, 0, OpenTK.Graphics.OpenGL.PixelFormat.Bgra, PixelType.UnsignedByte, data.Scan0 );
 
-            myBitmap.UnlockBits( data );
+            Bitmap.UnlockBits( data );
 
             GL.TexParameter( TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (float) TextureMinFilter.Nearest );
             GL.TexParameter( TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (float) TextureMagFilter.Nearest );
-
-            myLoaded = true;
-        }
-
-        public void Bind()
-        {
-            if ( stCurrentLoadedTexture != ID )
-            {
-                GL.BindTexture( TextureTarget.Texture2D, ID );
-                stCurrentLoadedTexture = ID;
-            }
-
-            if ( !myLoaded )
-                Use();
         }
     }
 }

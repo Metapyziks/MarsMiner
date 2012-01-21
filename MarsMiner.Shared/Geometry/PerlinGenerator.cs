@@ -80,10 +80,10 @@ namespace MarsMiner.Shared.Geometry
 
             Random rand = new Random( Seed );
 
-            UInt16 empty = BlockManager.FindID( "Core_Empty" );
-            UInt16 sand = BlockManager.FindID( "MarsMiner_Sand" );
-            UInt16 rock = BlockManager.FindID( "MarsMiner_Rock" );
-            UInt16 boulder = BlockManager.FindID( "MarsMiner_Boulder" );
+            UInt16 empty = BlockManager.GetID( "Core_Empty" );
+            UInt16 sand = BlockManager.GetID( "MarsMiner_Sand" );
+            UInt16 rock = BlockManager.GetID( "MarsMiner_Rock" );
+            UInt16 boulder = BlockManager.GetID( "MarsMiner_Boulder" );
 
             int min = System.Math.Min( myMinHilly, myMinPlains );
             int gradRange = 2;

@@ -17,17 +17,33 @@
  * along with MarsMiner. If not, see <http://www.gnu.org/licenses/>.
  */
 
-namespace MarsMiner.Client.Graphics
-{
-    public abstract class Model
-    {
-        public abstract ModelFace[] Faces { get; }
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
 
-        public Model()
+using MarsMiner.Shared.Geometry;
+
+namespace MarsMiner.Shared
+{
+    public class CorePlugin : Plugin
+    {
+        protected CorePlugin( bool client, bool server )
+            : base( client, server )
         {
 
         }
 
-        public abstract void Render( ShaderProgram shader );
+        public override void OnRegister()
+        {
+            if ( Client )
+                Register( "MarsMiner.Client.CorePlugin", Client, Server );
+        }
+
+        public override void OnWorldIntitialize( World world )
+        {
+            BlockType empty = BlockManager.RegisterType( "Core_Empty" );
+            empty.SetComponant( new SolidityBComponant( false ) );
+        }
     }
 }

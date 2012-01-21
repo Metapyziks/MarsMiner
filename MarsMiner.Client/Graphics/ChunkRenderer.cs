@@ -24,6 +24,7 @@ using System.Threading;
 using MarsMiner.Shared;
 using MarsMiner.Shared.Geometry;
 using MarsMiner.Shared.Octree;
+using OpenTK;
 
 namespace MarsMiner.Client.Graphics
 {
@@ -51,8 +52,13 @@ namespace MarsMiner.Client.Graphics
         private float[] FindVertices( GeometryShader shader )
         {
             List<float> verts = new List<float>();
-            FindSolidFacesDelegate<UInt16> solidCheck =
-                ( x => BlockManager.Get( x ).SolidFaces );
+            FindSolidFacesDelegate<UInt16> solidCheck = ( x =>
+            {
+                var comp = BlockManager.Get( x ).GetComponant<VisibilityBComponant>();
+                if ( comp != null )
+                    return comp.SolidFaces;
+                return Face.None;
+            } );
 
             foreach ( Octree<UInt16> octree in Chunk.Octrees )
             {
@@ -62,116 +68,22 @@ namespace MarsMiner.Client.Graphics
                     OctreeLeaf<UInt16> leaf = iter.Current;
 
                     BlockType type = BlockManager.Get( leaf.Value );
+                    var vis = type.GetComponant<VisibilityBComponant>();
 
-                    if ( !type.IsVisible )
+                    if ( vis == null || !vis.IsVisible )
+                        continue;
+
+                    var mdl = type.GetComponant<ModelBComponant>();
+
+                    if ( mdl == null )
                         continue;
 
                     int size = iter.Size;
 
-                    float x0 = iter.X; float x1 = x0 + size;
-                    float y0 = iter.Y; float y1 = y0 + size;
-                    float z0 = iter.Z; float z1 = z0 + size;
+                    Vector3 offset = new Vector3( iter.X, iter.Y, iter.Z );
 
-                    bool[] exposed = new bool[ 6 ];
-
-                    for ( int i = 0; i < 6; ++i )
-                        exposed[ i ] = leaf.IsFaceExposed( Face.FromIndex( i ), solidCheck );
-
-                    if ( leaf.IsFaceExposed( Face.Front, solidCheck ) )
-                    {
-                        int t = shader.GetFaceTileIndex( leaf.Value, Face.Front );
-                        int f = ( size * 6 + Face.Front.Index ) * 289;
-
-                        verts.AddRange( new float[]
-                        {
-                            x0, y0, z0, 0 + f, t,
-                            x1, y0, z0, 16 + f, t,
-                            x1, y1, z0, 288 + f, t,
-                            x0, y0, z0, 0 + f, t,
-                            x1, y1, z0, 288 + f, t,
-                            x0, y1, z0, 272 + f, t,
-                        } );
-                    }
-
-                    if ( leaf.IsFaceExposed( Face.Right, solidCheck ) )
-                    {
-                        int t = shader.GetFaceTileIndex( leaf.Value, Face.Right );
-                        int f = ( size * 6 + Face.Right.Index ) * 289;
-
-                        verts.AddRange( new float[]
-                        {
-                            x1, y0, z0, 0 + f, t,
-                            x1, y0, z1, 16 + f, t,
-                            x1, y1, z1, 288 + f, t,
-                            x1, y0, z0, 0 + f, t,
-                            x1, y1, z1, 288 + f, t,
-                            x1, y1, z0, 272 + f, t,
-                        } );
-                    }
-
-                    if ( leaf.IsFaceExposed( Face.Back, solidCheck ) )
-                    {
-                        int t = shader.GetFaceTileIndex( leaf.Value, Face.Back );
-                        int f = ( size * 6 + Face.Back.Index ) * 289;
-
-                        verts.AddRange( new float[]
-                        {
-                            x1, y0, z1, 0 + f, t,
-                            x0, y0, z1, 16 + f, t,
-                            x0, y1, z1, 288 + f, t,
-                            x1, y0, z1, 0 + f, t,
-                            x0, y1, z1, 288 + f, t,
-                            x1, y1, z1, 272 + f, t,
-                        } );
-                    }
-
-                    if ( leaf.IsFaceExposed( Face.Left, solidCheck ) )
-                    {
-                        int t = shader.GetFaceTileIndex( leaf.Value, Face.Left );
-                        int f = ( size * 6 + Face.Left.Index ) * 289;
-
-                        verts.AddRange( new float[]
-                        {
-                            x0, y0, z1, 0 + f, t,
-                            x0, y0, z0, 16 + f, t,
-                            x0, y1, z0, 288 + f, t,
-                            x0, y0, z1, 0 + f, t,
-                            x0, y1, z0, 288 + f, t,
-                            x0, y1, z1, 272 + f, t,
-                        } );
-                    }
-
-                    if ( leaf.IsFaceExposed( Face.Bottom, solidCheck ) )
-                    {
-                        int t = shader.GetFaceTileIndex( leaf.Value, Face.Bottom );
-                        int f = ( size * 6 + Face.Bottom.Index ) * 289;
-
-                        verts.AddRange( new float[]
-                        {
-                            x0, y0, z0, 0 + f, t,
-                            x0, y0, z1, 16 + f, t,
-                            x1, y0, z1, 288 + f, t,
-                            x0, y0, z0, 0 + f, t,
-                            x1, y0, z1, 288 + f, t,
-                            x1, y0, z0, 272 + f, t,
-                        } );
-                    }
-
-                    if ( leaf.IsFaceExposed( Face.Top, solidCheck ) )
-                    {
-                        int t = shader.GetFaceTileIndex( leaf.Value, Face.Top );
-                        int f = ( size * 6 + Face.Top.Index ) * 289;
-
-                        verts.AddRange( new float[]
-                        {
-                            x0, y1, z0, 0 + f, t,
-                            x1, y1, z0, 16 + f, t,
-                            x1, y1, z1, 288 + f, t,
-                            x0, y1, z0, 0 + f, t,
-                            x1, y1, z1, 288 + f, t,
-                            x0, y1, z1, 272 + f, t,
-                        } );
-                    }
+                    verts.AddRange( mdl.Model.GenerateVertexData( offset, size,
+                        leaf.FindExposedFaces( solidCheck ) ) );
                 }
             }
 

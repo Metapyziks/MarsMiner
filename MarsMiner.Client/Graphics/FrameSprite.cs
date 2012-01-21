@@ -113,7 +113,7 @@ namespace MarsMiner.Client.Graphics
             }
         }
 
-        public FrameSprite( Texture texture, float scale = 1.0f )
+        public FrameSprite( Texture2D texture, float scale = 1.0f )
             : base( texture, scale )
         {
             myFrameTopLeft = new Vector2();

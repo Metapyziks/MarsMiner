@@ -74,6 +74,9 @@ namespace MarsMiner
 
         protected override void OnLoad( System.EventArgs e )
         {
+            Plugin.Register( "MarsMiner.Shared.CorePlugin", true, true );
+            Plugin.Register( "MarsMiner.Shared.MarsMinerPlugin", true, true );
+
             mySpriteShader = new SpriteShader( Width, Height );
             myUIRoot = new UIObject( new Vector2( Width, Height ) );
 
@@ -88,7 +91,7 @@ namespace MarsMiner
             myTestWorld = new World();
 
             myGeoShader = new GeometryShader( Width, Height );
-            myGeoShader.GenerateTileMap();
+            myGeoShader.UpdateTileMap( 16 );
             
             myGeoRenderers = new List<ChunkRenderer>();
 

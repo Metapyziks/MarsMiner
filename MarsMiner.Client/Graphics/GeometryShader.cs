@@ -42,10 +42,9 @@ namespace MarsMiner.Client.Graphics
 
         private bool myViewChanged;
 
-        private UInt32[] myTilemap;
+        private Texture2DArray myTileMap;
 
-        private int[,] myTileMapPointers;
-        private int myTileMapPos;
+        private Dictionary<String,UInt16> myTileMapPointers;
 
         public readonly int TileSize;
 
@@ -79,10 +78,8 @@ namespace MarsMiner.Client.Graphics
 
         public bool LineMode { get; set; }
 
-        public GeometryShader( int tileSize = 16 )
+        public GeometryShader()
         {
-            TileSize = tileSize;
-
             ShaderBuilder vert = new ShaderBuilder( ShaderType.VertexShader, false );
             vert.AddUniform( ShaderVarType.Mat4, "view_matrix" );
             vert.AddAttribute( ShaderVarType.Vec3, "in_position" );
@@ -162,120 +159,23 @@ namespace MarsMiner.Client.Graphics
 
             AddAttribute( "in_position", 3 );
             AddAttribute( "in_tex", 2 );
+
+            AddTexture( "tilemap ", TextureUnit.Texture0 );
             
             myViewMatrixLoc = GL.GetUniformLocation( Program, "view_matrix" );
-
-            myTileMapPos = GL.GenTexture();
         }
 
-        public void GenerateTileMap()
+        public void UpdateTileMap( int size )
         {
-            int count = BlockManager.TypeCount;
+            Texture2DArray tileMap = new Texture2DArray( size, size, GeometryModel.UsedTextures );
 
-            List<String> allocated = new List<string>();
-            myTileMapPointers = new int[ count, 6 ];
-
-            for ( UInt16 i = 0; i < count; ++i )
-            {
-                BlockType type = BlockManager.Get( i );
-                String[] faceImages = type.TileGraphics;
-
-                if ( faceImages == null || faceImages.Length == 0 )
-                    continue;
-
-                int[] indexes = new int[ faceImages.Length ];
-
-                for ( int j = 0; j < faceImages.Length; ++j )
-                {
-                    int index = allocated.IndexOf( faceImages[ j ] );
-                    if ( index == -1 )
-                    {
-                        index = allocated.Count;
-                        allocated.Add( faceImages[ j ] );
-                    }
-                    indexes[ j ] = index;
-                }
-
-                if ( indexes.Length == 1 )
-                {
-                    int img = indexes[ 0 ];
-                    indexes = new int[]
-                    {
-                        img, img, img, img, img, img
-                    };
-                }
-                else if ( indexes.Length == 2 )
-                {
-                    int floor = indexes[ 0 ];
-                    int wall = indexes[ 1 ];
-                    indexes = new int[]
-                    {
-                        wall, floor, wall, wall, floor, wall
-                    };
-                }
-                else if ( indexes.Length == 3 )
-                {
-                    int floor = indexes[ 0 ];
-                    int wall = indexes[ 1 ];
-                    int ceil = indexes[ 2 ];
-                    indexes = new int[]
-                    {
-                        wall, ceil, wall, wall, floor, wall
-                    };
-                }
-                else if ( indexes.Length != 6 )
-                    continue;
-
-                for ( int f = 0; f < 6; ++f )
-                    myTileMapPointers[ i, f ] = indexes[ f ];
-            }
-
-            int size = 1;
-            while ( size < allocated.Count )
-                size <<= 1;
-
-            int tileLength = TileSize * TileSize;
-
-            myTilemap = new uint[ tileLength * size ];
-
-            for ( int i = 0; i < allocated.Count; ++i )
-            {
-                Bitmap tile = Res.Get<Texture>( allocated[ i ] ).Bitmap;
-
-                int xScale = tile.Width / TileSize;
-                int yScale = tile.Height / TileSize;
-
-                for ( int x = 0; x < TileSize; ++x )
-                {
-                    for ( int y = 0; y < TileSize; ++y )
-                    {
-                        int tx = x * xScale;
-                        int ty = y * yScale;
-
-                        Color clr = tile.GetPixel( tx, ty );
-
-                        myTilemap[ i * tileLength + x + y * TileSize ]
-                            = (UInt32) ( clr.R << 24 | clr.G << 16 | clr.B << 08 | clr.A << 00 );
-                    }
-                }
-            }
-
-            GL.BindTexture( TextureTarget.Texture2DArray, myTileMapPos );
-            GL.TexParameterI( TextureTarget.Texture2DArray,
-                TextureParameterName.TextureMinFilter, new int[] { (int) TextureMinFilter.Nearest } );
-            GL.TexParameterI( TextureTarget.Texture2DArray,
-                TextureParameterName.TextureMagFilter, new int[] { (int) TextureMagFilter.Nearest } );
-            GL.TexParameterI( TextureTarget.Texture2DArray,
-                TextureParameterName.TextureWrapS, new int[] { (int) TextureWrapMode.Repeat } );
-            GL.TexParameterI( TextureTarget.Texture2DArray,
-                TextureParameterName.TextureWrapT, new int[] { (int) TextureWrapMode.Repeat } );
-            GL.TexImage3D( TextureTarget.Texture2DArray, 0, PixelInternalFormat.Rgba,
-                TileSize, TileSize, size, 0, PixelFormat.Rgba, PixelType.UnsignedInt8888, myTilemap );
+            myTileMap = tileMap;
+            SetTexture( "tilemap", tileMap );
         }
 
-        public int GetFaceTileIndex( UInt16 typeID, Face face )
+        public int GetTileIndex( String textureName )
         {
-            return myTileMapPointers[ typeID, face.Index ];
+            return myTileMapPointers[ textureName ];
         }
 
         private void UpdateViewMatrix()

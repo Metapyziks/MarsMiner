@@ -34,7 +34,7 @@ namespace MarsMiner.Client.Graphics
             }
         }
 
-        private Texture myTexture;
+        private Texture2D myTexture;
         private float[] myVertices;
 
         private Vector2 myPosition;
@@ -326,7 +326,7 @@ namespace MarsMiner.Client.Graphics
             }
         }
 
-        public Texture Texture
+        public Texture2D Texture
         {
             get
             {
@@ -336,7 +336,7 @@ namespace MarsMiner.Client.Graphics
 
         public Sprite( float width, float height, Color4 colour )
         {
-            myTexture = Texture.Blank;
+            myTexture = Texture2D.Blank;
 
             Position = new Vector2();
             Scale = new Vector2( width, height );
@@ -349,7 +349,7 @@ namespace MarsMiner.Client.Graphics
             Colour = colour;
         }
 
-        public Sprite( Texture texture, float scale = 1.0f )
+        public Sprite( Texture2D texture, float scale = 1.0f )
         {
             myTexture = texture;
 
