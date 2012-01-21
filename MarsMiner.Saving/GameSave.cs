@@ -34,11 +34,18 @@ namespace MarsMiner.Saving
     public class GameSave
     {
         const int MaximumBlockStartAddress = 100000000;
+        private const uint NullPointer = 0;
+
+        private const uint GlobalPointerFlag = 0x80000000;
 
         private Queue<WriteTransaction> writeQueue;
 
         private FileStream pointerFile;
+        List<Tuple<int, uint>> pointers;
+
         private FileStream stringFile;
+        Dictionary<uint, string> stringsByAddress;
+        Dictionary<string, uint> addressByString;
 
         private FileStream[] blobFiles;
         private IntRangeList[] freeSpace;
@@ -46,9 +53,102 @@ namespace MarsMiner.Saving
         private void WriteTransaction(WriteTransaction transaction)
         {
             var addresses = transaction.Blocks.ToDictionary(x => x, AllocateSpace);
+
+            foreach (var block in transaction.Blocks)
+            {
+                WriteBlock(block, addresses);
+            }
+
+            //TODO: Finish saving
         }
 
-        private Tuple<int, int> AllocateSpace(IBlockStructure blockStructure)
+        private void WriteBlock(IBlockStructure block, Dictionary<IBlockStructure, Tuple<int, uint>> addresses)
+        {
+            var blockAddress = addresses[block];
+
+            var blockBlob = blobFiles[blockAddress.Item1];
+
+            blockBlob.Seek(blockAddress.Item2, SeekOrigin.Begin);
+
+            block.Write(blockBlob, o =>
+            {
+                {
+                    var s = o as string;
+                    if (s != null)
+                    {
+                        uint address;
+                        if (!addressByString.TryGetValue(s, out address))
+                        {
+                            address = AddString(s);
+                        }
+                        return address;
+                    }
+                }
+                {
+                    var b = o as IBlockStructure;
+                    if (b != null)
+                    {
+                        var bAddress = addresses[b];
+
+                        if (blockAddress.Item1 == bAddress.Item1)
+                        {
+                            //Same file
+                            return bAddress.Item2;
+                        }
+                        else
+                        {
+                            return GetPointerTo(bAddress);
+                        }
+                    }
+                }
+
+                if (o == null)
+                {
+                    return NullPointer;
+                }
+
+                throw new ArgumentException("Tried to find address for object that was neither a string nor an IBlockStructure!");
+            });
+        }
+
+        private uint GetPointerTo(Tuple<int, uint> target)
+        {
+            var pointerIds = pointers.Where(x => x.Item1 == target.Item1 && x.Item2 == target.Item2).Select(x => (uint)pointers.IndexOf(x)).ToArray();
+
+            if (pointerIds.Length > 0)
+            {
+                return GlobalPointerFlag | pointerIds[0];
+            }
+
+
+            //TODO: Put this somewhere else?
+            pointerFile.Seek(pointerFile.Length, SeekOrigin.Begin);
+            var w = new BinaryWriter(pointerFile);
+
+            w.Write(target.Item1);
+            w.Write(target.Item2);
+
+            pointers.Add(target);
+
+            return GlobalPointerFlag | (uint)(pointers.Count - 1);
+        }
+
+        private uint AddString(string s)
+        {
+            stringFile.Seek(stringFile.Length, SeekOrigin.Begin);
+
+            var address = (uint)stringFile.Position;
+
+            var w = new BinaryWriter(stringFile);
+            w.Write(s);
+
+            stringsByAddress.Add(address, s);
+            addressByString.Add(s, address);
+
+            return address;
+        }
+
+        private Tuple<int, uint> AllocateSpace(IBlockStructure blockStructure)
         {
             var blockLength = blockStructure.Length;
 
@@ -87,7 +187,7 @@ namespace MarsMiner.Saving
 
             AllocateSpace(bestMatch.Item1, bestMatch.Item2);
 
-            return new Tuple<int, int>(bestMatch.Item1, bestMatch.Item2.Item1);
+            return new Tuple<int, uint>(bestMatch.Item1, (uint)bestMatch.Item2.Item1);
         }
 
         private void AllocateSpace(int fileIndex, Tuple<int, int> spaceArea)

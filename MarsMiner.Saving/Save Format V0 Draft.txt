@@ -7,8 +7,13 @@ Embedded structures are always part of block structures and don't have any prefi
 String File
 ===========
 
+StringFileHeader (block structure, fixed length)
+------------------------------------------------
+int						Version
+int						StringCount
+
 String (block structure, length prefixed)
-----------------------------------------------------------------------
+-----------------------------------------
 Utf-8 string
 
 Common
@@ -24,7 +29,7 @@ Pointer (embedded structure, fixed length)
 Save Blob
 =========
 
-Header (always at 0) (only in main blob) (block structure, fixed length)
+Header (always at 0) (block structure, fixed length)
 ------------------------------------------------------------------------
 // Saving updates the header after a write barrier, wich makes saves transactional:
 // If the save completes, the load method uses the new main index, if it crashes the old main index still points to the old valid saved state.
@@ -91,6 +96,7 @@ Pointer table file
 
 PointerFileIndex (block structure, length prefixed)
 ---------------------------------------------------
+int						Version
 int						file pointer count
 for (pointer count):
 	FilePointer
