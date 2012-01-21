@@ -18,6 +18,7 @@
  */
 
 using System;
+using System.Collections.Generic;
 
 using LibNoise;
 
@@ -81,7 +82,15 @@ namespace MarsMiner.Shared.Geometry
             Random rand = new Random( Seed );
 
             UInt16 empty = BlockManager.GetID( "Core_Empty" );
-            UInt16 sand = BlockManager.GetID( "MarsMiner_Sand" );
+            UInt16 sandCube = BlockManager.GetID( "MarsMiner_Sand", 0 );
+            UInt16[] sandSlopes = new UInt16[]
+            {
+                BlockManager.GetID( "MarsMiner_Sand", 1 ),
+                BlockManager.GetID( "MarsMiner_Sand", 2 ),
+                BlockManager.GetID( "MarsMiner_Sand", 3 ),
+                BlockManager.GetID( "MarsMiner_Sand", 4 )
+            };
+            Face[] slopeFaces = new Face[] { Face.Front, Face.Left, Face.Back, Face.Right };
             UInt16 rock = BlockManager.GetID( "MarsMiner_Rock" );
             UInt16 boulder = BlockManager.GetID( "MarsMiner_Boulder" );
 
@@ -201,7 +210,7 @@ namespace MarsMiner.Shared.Geometry
                                 scuboid.Y = height - res;
                                 scuboid.Z = rz;
 
-                                octree.SetCuboid( scuboid, sand );
+                                octree.SetCuboid( scuboid, sandCube );
 
                                 if ( res == 1 && rand.NextDouble() < 1.0 / 256.0 )
                                 {
@@ -213,6 +222,36 @@ namespace MarsMiner.Shared.Geometry
                     }
 
                     prev = cur;
+                }
+
+                if ( resolution == 1 )
+                {
+                    List<Tuple<int,int,int,int>> toSlope = new List<Tuple<int, int, int, int>>();
+
+                    var enumer = new OctreeEnumerator<UInt16>( octree );
+                    while( enumer.MoveNext() )
+                    {
+                        OctreeLeaf<UInt16> leaf = enumer.Current;
+                        if ( enumer.Size == 1 && leaf.Value == sandCube )
+                        {
+                            int start = rand.Next( 4 );
+                            for ( int i = start; i < start + 4; ++i )
+                            {
+                                Face face = slopeFaces[ i % 4 ];
+                                var n = leaf.FindNeighbour( face ) as OctreeLeaf<UInt16>;
+                                if ( n != null && n.Value == empty )
+                                {
+                                    toSlope.Add( new Tuple<int, int, int, int>
+                                        ( enumer.X, enumer.Y, enumer.Z, i % 4 ) );
+                                    break;
+                                }
+                            }
+                        }
+                    }
+
+                    foreach ( var item in toSlope )
+                        octree.SetCuboid( item.Item1, item.Item2, item.Item3,
+                            1, 1, 1, sandSlopes[ item.Item4 ] );
                 }
             }
 

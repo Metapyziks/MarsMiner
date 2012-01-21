@@ -39,9 +39,19 @@ namespace MarsMiner.Client
 
         public override void OnWorldIntitialize( World world )
         {
-            BlockType sand = BlockManager.Get( "MarsMiner_Sand" );
-            sand.SetComponant( new VisibilityBComponant( true, Face.All ) );
-            sand.SetComponant( new ModelBComponant( GeometryModel.Cube( "images_blocks_sand" ) ) );
+            BlockType sandCube = BlockManager.Get( "MarsMiner_Sand", 0 );
+            sandCube.SetComponant( new VisibilityBComponant( true, Face.All ) );
+            sandCube.SetComponant( new ModelBComponant( GeometryModel.Cube( "images_blocks_sand" ) ) );
+
+            Face[] faces = new Face[] { Face.Front, Face.Left, Face.Back, Face.Right };
+
+            for ( int i = 0; i < 4; ++i )
+            {
+                Face face = faces[ i ];
+                BlockType sandSlope = BlockManager.Get( "MarsMiner_Sand", i + 1 );
+                sandSlope.SetComponant( new VisibilityBComponant( true, Face.Bottom | face.Opposite ) );
+                sandSlope.SetComponant( new ModelBComponant( GeometryModel.Slope( face, "images_blocks_sand", "images_blocks_sandtri" ) ) );
+            }
 
             BlockType rock = BlockManager.Get( "MarsMiner_Rock" );
             rock.SetComponant( new VisibilityBComponant( true, Face.All ) );

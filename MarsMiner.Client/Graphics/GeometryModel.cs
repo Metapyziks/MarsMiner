@@ -127,6 +127,80 @@ namespace MarsMiner.Client.Graphics
             return cube;
         }
         #endregion
+        #region Slope
+        public static GeometryModel Slope( Face dir, string tex )
+        {
+            return Slope( dir, tex, tex, tex, tex );
+        }
+
+        public static GeometryModel Slope( Face dir, string texQuads, string texSides )
+        {
+            return Slope( dir, texQuads, texSides, texQuads, texQuads );
+        }
+
+        public static GeometryModel Slope( Face dir, string texSlope, string texSides,
+            string texBack, string texBottom )
+        {
+            if ( dir.Equals( Face.Top ) || dir.Equals( Face.Bottom ) )
+                throw new Exception( "Slopes can not face up or down" );
+
+            GeometryModel slope = new GeometryModel();
+
+            Vector2 fl = new Vector2( 0.0f, 0.0f );
+            Vector2 fr = new Vector2( 1.0f, 0.0f );
+            Vector2 bl = new Vector2( 0.0f, 1.0f );
+            Vector2 br = new Vector2( 1.0f, 1.0f );
+
+            Face f = Face.Front;
+
+            while ( !f.Equals( dir ) )
+            {
+                f = f.HorzLeft;
+
+                Vector2 temp = fl;
+                fl = bl;
+                bl = br;
+                br = fr;
+                fr = temp;
+            }
+
+            slope.AddFace( new ModelFace( texSides, new float[]
+            {
+                bl.X, 0.0f, bl.Y, 1.0f, 0.0f,
+                fl.X, 0.0f, fl.Y, 0.0f, 0.0f,
+                bl.X, 1.0f, bl.Y, 1.0f, 1.0f,
+            } ), dir.HorzLeft );
+            slope.AddFace( new ModelFace( texBottom, new float[]
+            {
+                fl.X, 0.0f, fl.Y, 0.0f, 0.0f,
+                bl.X, 0.0f, bl.Y, 1.0f, 0.0f,
+                br.X, 0.0f, br.Y, 1.0f, 1.0f,
+                fr.X, 0.0f, fr.Y, 0.0f, 1.0f,
+            } ), Face.Bottom );
+            slope.AddFace( new ModelFace( texSlope, new float[]
+            {
+                fl.X, 0.0f, fl.Y, 0.0f, 0.0f,
+                fr.X, 0.0f, fr.Y, 1.0f, 0.0f,
+                br.X, 1.0f, br.Y, 1.0f, 1.0f,
+                bl.X, 1.0f, bl.Y, 0.0f, 1.0f,
+            } ), dir | dir.HorzLeft | dir.HorzRight | Face.Top );
+            slope.AddFace( new ModelFace( texSides, new float[]
+            {
+                fr.X, 0.0f, fr.Y, 0.0f, 0.0f,
+                br.X, 0.0f, br.Y, 1.0f, 0.0f,
+                br.X, 1.0f, br.Y, 1.0f, 1.0f,
+            } ), dir.HorzRight );
+            slope.AddFace( new ModelFace( texBack, new float[]
+            {
+                br.X, 0.0f, br.Y, 0.0f, 0.0f,
+                bl.X, 0.0f, bl.Y, 1.0f, 0.0f,
+                bl.X, 1.0f, bl.Y, 1.0f, 1.0f,
+                br.X, 1.0f, br.Y, 0.0f, 1.0f,
+            } ), dir.Opposite );
+
+            return slope;
+        }
+        #endregion
         #endregion
 
         private static List<String> stUsedTextures = new List<string>();

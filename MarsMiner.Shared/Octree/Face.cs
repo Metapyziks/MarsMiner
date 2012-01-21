@@ -96,9 +96,36 @@ namespace MarsMiner.Shared.Octree
         {
             get { return Tools.QuickLog2( Bitmap ); }
         }
+
+        public Face HorzLeft
+        {
+            get
+            {
+                switch( Index )
+                {
+                    case LeftIndex:
+                        return Back;
+                    case BackIndex:
+                        return Right;
+                    case RightIndex:
+                        return Front;
+                    case FrontIndex:
+                        return Left;
+                    default:
+                        return this;
+                }
+            }
+        }
+        public Face HorzRight
+        {
+            get
+            {
+                return HorzLeft.Opposite;
+            }
+        }
         public Face Opposite
         {
-            get { return new Face( (byte)( 1 << ( ( Index + 3 ) % 6 ) ) ); }
+            get { return FromIndex( ( Index + 3 ) % 6 ); }
         }
 
         public Face( byte bitmap )

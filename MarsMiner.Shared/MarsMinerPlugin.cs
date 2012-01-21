@@ -42,10 +42,18 @@ namespace MarsMiner.Shared
 
         public override void OnWorldIntitialize( World world )
         {
-            BlockType sand = BlockManager.RegisterType( "MarsMiner_Sand" );
-            sand.SetComponant( new SolidityBComponant( true ) );
+            BlockType sandCube = BlockManager.RegisterType( "MarsMiner_Sand", 0 );
+            sandCube.SetComponant( new SolidityBComponant( true ) );
+
+            for ( int i = 0; i < 4; ++i )
+            {
+                BlockType sandSlope = BlockManager.RegisterType( "MarsMiner_Sand", i + 1 );
+                sandSlope.SetComponant( new SolidityBComponant( true ) );
+            }
+
             BlockType rock = BlockManager.RegisterType( "MarsMiner_Rock" );
             rock.SetComponant( new SolidityBComponant( true ) );
+
             BlockType boulder = BlockManager.RegisterType( "MarsMiner_Boulder" );
             boulder.SetComponant( new SolidityBComponant( true ) );
         }
