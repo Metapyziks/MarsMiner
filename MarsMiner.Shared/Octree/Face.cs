@@ -41,15 +41,15 @@ namespace MarsMiner.Shared.Octree
 
         public static Face operator &( Face f0, Face f1 )
         {
-            return new Face( (byte) ( f0.myBitmap & f1.myBitmap ) );
+            return new Face( (byte) ( f0.Bitmap & f1.Bitmap ) );
         }
         public static Face operator |( Face f0, Face f1 )
         {
-            return new Face( (byte) ( f0.myBitmap | f1.myBitmap ) );
+            return new Face( (byte) ( f0.Bitmap | f1.Bitmap ) );
         }
         public static Face operator ^( Face f0, Face f1 )
         {
-            return new Face( (byte) ( f0.myBitmap ^ f1.myBitmap ) );
+            return new Face( (byte) ( f0.Bitmap ^ f1.Bitmap ) );
         }
 
         public static Face FromIndex( int index )
@@ -57,71 +57,71 @@ namespace MarsMiner.Shared.Octree
             return new Face( (byte) ( 1 << index ) );
         }
 
-        private byte myBitmap;
+        public readonly byte Bitmap;
 
         public bool HasNone
         {
-            get { return myBitmap == 0; }
+            get { return Bitmap == 0; }
         }
         public bool HasLeft
         {
-            get { return ( myBitmap & 1 ) != 0; }
+            get { return ( Bitmap & 1 ) != 0; }
         }
         public bool HasBottom
         {
-            get { return ( myBitmap & 2 ) != 0; }
+            get { return ( Bitmap & 2 ) != 0; }
         }
         public bool HasFront
         {
-            get { return ( myBitmap & 4 ) != 0; }
+            get { return ( Bitmap & 4 ) != 0; }
         }
         public bool HasRight
         {
-            get { return ( myBitmap & 8 ) != 0; }
+            get { return ( Bitmap & 8 ) != 0; }
         }
         public bool HasTop
         {
-            get { return ( myBitmap & 16 ) != 0; }
+            get { return ( Bitmap & 16 ) != 0; }
         }
         public bool HasBack
         {
-            get { return ( myBitmap & 32 ) != 0; }
+            get { return ( Bitmap & 32 ) != 0; }
         }
         public bool HasAll
         {
-            get { return myBitmap == 63; }
+            get { return Bitmap == 63; }
         }
 
         public int Index
         {
-            get { return Tools.QuickLog2( myBitmap ); }
+            get { return Tools.QuickLog2( Bitmap ); }
         }
         public Face Opposite
         {
             get { return new Face( (byte)( 1 << ( ( Index + 3 ) % 6 ) ) ); }
         }
 
-        private Face( byte bitmap )
+        public Face( byte bitmap )
         {
-            myBitmap = bitmap;
+            Bitmap = bitmap;
         }
 
         public bool HasFace( Face face )
         {
-            return ( myBitmap & face.myBitmap ) == face.myBitmap;
+            return ( Bitmap & face.Bitmap ) == face.Bitmap;
         }
 
         public override bool Equals( object obj )
         {
             if ( obj is Face )
-                return myBitmap == ( (Face) obj ).myBitmap;
+                return Bitmap == ( (Face) obj ).Bitmap;
 
             return false;
         }
 
         public override int GetHashCode()
         {
-            return myBitmap;
+            return Bitmap;
         }
 
         public IEnumerator<Face> GetEnumerator()

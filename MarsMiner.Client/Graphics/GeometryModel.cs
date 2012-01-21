@@ -19,16 +19,33 @@
 
 using System;
 using System.Collections.Generic;
+using System.IO;
 
 using OpenTK;
 
+using ResourceLib;
+
+using MarsMiner.Shared;
 using MarsMiner.Shared.Octree;
 using MarsMiner.Shared.Geometry;
 
 namespace MarsMiner.Client.Graphics
 {
+    public class RGeometryModelManager : RManager
+    {
+        public RGeometryModelManager()
+            : base( typeof( GeometryModel ), 3, "gml" )
+        {
+
+        }
+    }
+
     public class GeometryModel
-    {        
+    {
+        public const UInt16 FileFormatVersion = 0x0000;
+
+        #region Default Models
+        #region Cube
         public static GeometryModel Cube( string tex )
         {
             return Cube( tex, tex, tex, tex, tex, tex );
@@ -94,6 +111,8 @@ namespace MarsMiner.Client.Graphics
 
             return cube;
         }
+        #endregion
+        #endregion
 
         private static List<String> stUsedTextures = new List<string>();
 
@@ -107,6 +126,22 @@ namespace MarsMiner.Client.Graphics
         public GeometryModel()
         {
             myFaces = new Dictionary<Face, List<ModelFace>>();
+        }
+
+        public GeometryModel( String filePath )
+        {
+            myFaces = new Dictionary<Face, List<ModelFace>>();
+
+            FileStream stream = File.Open( filePath, FileMode.Open );
+            Load( stream );
+            stream.Close();
+        }
+
+        public GeometryModel( Stream stream )
+        {
+            myFaces = new Dictionary<Face, List<ModelFace>>();
+
+            Load( stream );
         }
 
         public void AddFace( ModelFace face )
@@ -163,6 +198,77 @@ namespace MarsMiner.Client.Graphics
             }
 
             return startIndex;
+        }
+
+        public void Save( Stream stream )
+        {
+            BinaryWriter writer = new BinaryWriter( stream );
+
+            writer.Write( FileFormatVersion );
+            writer.Write( (byte) myFaces.Count );
+
+            foreach( KeyValuePair<Face, List<ModelFace>> keyVal in myFaces )
+            {
+                writer.Write( keyVal.Key.Bitmap );
+                writer.Write( (UInt16) keyVal.Value.Count );
+
+                foreach ( ModelFace face in keyVal.Value )
+                {
+                    writer.Write( face.TextureName );
+                    writer.Write( (byte) face.Vertices.Length );
+
+                    for ( int i = 0; i < face.Vertices.Length; ++i )
+                    {
+                        writer.Write( face.Vertices[ i ].X );
+                        writer.Write( face.Vertices[ i ].Y );
+                        writer.Write( face.Vertices[ i ].Z );
+                        writer.Write( face.TextureCoords[ i ].X );
+                        writer.Write( face.TextureCoords[ i ].Y );
+                    }
+                }
+            }
+        }
+
+        public void Load( Stream stream )
+        {
+            myFaces.Clear();
+
+            BinaryReader reader = new BinaryReader( stream );
+
+            UInt16 vers = reader.ReadUInt16();
+            UInt16 faceGroups = reader.ReadByte();
+
+            for ( int i = 0; i < faceGroups; ++i )
+            {
+                Face face = new Face( reader.ReadByte() );
+                UInt16 faces = reader.ReadUInt16();
+
+                for ( int j = 0; j < faces; ++j )
+                {
+                    String texName = reader.ReadString();
+                    byte vertsCount = reader.ReadByte();
+
+                    Vector3[] verts = new Vector3[ vertsCount ];
+                    Vector2[] txCos = new Vector2[ vertsCount ];
+
+                    for ( int k = 0; k < vertsCount; ++k )
+                    {
+                        verts[ k ] = new Vector3
+                        {
+                            X = reader.ReadSingle(),
+                            Y = reader.ReadSingle(),
+                            Z = reader.ReadSingle()
+                        };
+                        txCos[ k ] = new Vector2
+                        {
+                            X = reader.ReadSingle(),
+                            Y = reader.ReadSingle()
+                        };
+                    }
+
+                    AddFace( new ModelFace( texName, verts, txCos ), face );
+                }
+            }
         }
     }
 }

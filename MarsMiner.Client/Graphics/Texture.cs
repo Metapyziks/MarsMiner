@@ -27,63 +27,6 @@ using OpenTK.Graphics.OpenGL;
 
 namespace MarsMiner.Client.Graphics
 {
-    public class RTexture2DManager : RManager
-    {
-        public RTexture2DManager()
-            : base( typeof(Texture2D), 2, "png" )
-        {
-
-        }
-
-        public override ResourceItem[] LoadFromFile( String keyPrefix, String fileName, String fileExtension, FileStream stream )
-        {
-            return new ResourceItem[] { new ResourceItem( keyPrefix + fileName, new Texture2D( new Bitmap( stream ) ) ) };
-        }
-
-        public override Object LoadFromArchive( BinaryReader stream )
-        {
-            ushort wid = stream.ReadUInt16();
-            ushort hei = stream.ReadUInt16();
-
-            Bitmap bmp = new Bitmap( wid, hei );
-
-            for ( int x = 0; x < wid; ++x )
-                for ( int y = 0; y < hei; ++y )
-                {
-                    bmp.SetPixel( x, y, Color.FromArgb(
-                        stream.ReadByte(),
-                        stream.ReadByte(),
-                        stream.ReadByte(),
-                        stream.ReadByte()
-                    ) );
-                }
-
-            return new Texture2D( bmp );
-        }
-
-        public override void SaveToArchive( BinaryWriter stream, Object item )
-        {
-            Texture2D tex = (Texture2D) item;
-            Bitmap bmp = tex.Bitmap;
-
-            ushort wid = (ushort) tex.Width;
-            ushort hei = (ushort) tex.Height;
-
-            stream.Write( wid );
-            stream.Write( hei );
-
-            for ( int x = 0; x < wid; ++x )
-                for ( int y = 0; y < hei; ++y )
-                {
-                    Color pix = bmp.GetPixel( x, y );
-                    stream.Write( pix.A );
-                    stream.Write( pix.R );
-                    stream.Write( pix.G );
-                    stream.Write( pix.B );
-                }
-        }
-    }
-
     public class Texture
     {
         protected static int GetNextPOTS( int wid, int hei )
