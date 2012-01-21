@@ -91,13 +91,13 @@ namespace MarsMiner.Client.Graphics
 
         protected override void Load()
         {
-            GL.TexParameterI( TextureTarget.Texture2DArray,
+            GL.TexParameter( TextureTarget.Texture2DArray,
                 TextureParameterName.TextureMinFilter, new int[] { (int) TextureMinFilter.Nearest } );
-            GL.TexParameterI( TextureTarget.Texture2DArray,
+            GL.TexParameter( TextureTarget.Texture2DArray,
                 TextureParameterName.TextureMagFilter, new int[] { (int) TextureMagFilter.Nearest } );
-            GL.TexParameterI( TextureTarget.Texture2DArray,
+            GL.TexParameter( TextureTarget.Texture2DArray,
                 TextureParameterName.TextureWrapS, new int[] { (int) TextureWrapMode.Repeat } );
-            GL.TexParameterI( TextureTarget.Texture2DArray,
+            GL.TexParameter( TextureTarget.Texture2DArray,
                 TextureParameterName.TextureWrapT, new int[] { (int) TextureWrapMode.Repeat } );
             GL.TexImage3D( TextureTarget.Texture2DArray, 0, PixelInternalFormat.Rgba,
                 Width, Height, Count, 0, PixelFormat.Rgba, PixelType.UnsignedInt8888, myData );
