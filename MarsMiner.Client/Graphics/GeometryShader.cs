@@ -160,17 +160,22 @@ namespace MarsMiner.Client.Graphics
             AddAttribute( "in_position", 3 );
             AddAttribute( "in_tex", 2 );
 
-            AddTexture( "tilemap ", TextureUnit.Texture0 );
+            AddTexture( "tilemap", TextureUnit.Texture0 );
             
             myViewMatrixLoc = GL.GetUniformLocation( Program, "view_matrix" );
         }
 
         public void UpdateTileMap( int size )
         {
-            Texture2DArray tileMap = new Texture2DArray( size, size, GeometryModel.UsedTextures );
+            myTileMap = new Texture2DArray( size, size, GeometryModel.UsedTextures );
+            SetTexture( "tilemap", myTileMap );
 
-            myTileMap = tileMap;
-            SetTexture( "tilemap", tileMap );
+            foreach ( BlockType type in BlockManager.GetAll() )
+            {
+                var mdl = type.GetComponant<ModelBComponant>();
+                if ( mdl != null )
+                    mdl.Model.UpdateTextureIndexes( myTileMap );
+            }
         }
 
         public int GetTileIndex( String textureName )

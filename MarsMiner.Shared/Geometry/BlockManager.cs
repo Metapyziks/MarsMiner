@@ -66,6 +66,11 @@ namespace MarsMiner.Shared.Geometry
             return myBlockTypes[ id ];
         }
 
+        public static BlockType[] GetAll()
+        {
+            return myBlockTypes.ToArray();
+        }
+
         public static BlockType Get( String name, int subType = 0 )
         {
             return Get( GetID( name, subType ) );

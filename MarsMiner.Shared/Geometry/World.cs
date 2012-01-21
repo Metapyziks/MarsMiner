@@ -69,6 +69,9 @@ namespace MarsMiner.Shared.Geometry
             if ( Initialize != null )
                 Initialize( this, new EventArgs() );
 
+            foreach ( Plugin plugin in Plugin.Registered )
+                plugin.OnWorldIntitialize( this );
+
             myLoadedChunks = new Dictionary<UInt16, Chunk>();
             myChunksToLoad = new Queue<Chunk>();
             myChunksToUnload = new Queue<Chunk>();

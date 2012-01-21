@@ -65,13 +65,13 @@ namespace MarsMiner.Client.Graphics
             for ( int i = 0; i < verts.Length; ++i )
             {
                 verts[ i ] = new Vector3(
-                    vertices[ i * 3 ] + 0,
-                    vertices[ i * 3 ] + 1,
-                    vertices[ i * 3 ] + 2
+                    vertices[ i * 3 + 0 ],
+                    vertices[ i * 3 + 1 ],
+                    vertices[ i * 3 + 2 ]
                 );
                 txCos[ i ] = new Vector2(
-                    vertices[ i * 2 ] + 0,
-                    vertices[ i * 2 ] + 1
+                    texCoords[ i * 2 + 0 ],
+                    texCoords[ i * 2 + 1 ]
                 );
             }
 
@@ -89,13 +89,13 @@ namespace MarsMiner.Client.Graphics
             for ( int i = 0; i < verts.Length; ++i )
             {
                 verts[ i ] = new Vector3(
-                    data[ i * 5 ] + 0,
-                    data[ i * 5 ] + 1,
-                    data[ i * 5 ] + 2
+                    data[ i * 5 + 0 ],
+                    data[ i * 5 + 1 ],
+                    data[ i * 5 + 2 ]
                 );
                 txCos[ i ] = new Vector2(
-                    data[ i * 5 ] + 3,
-                    data[ i * 5 ] + 4
+                    data[ i * 5 + 3 ],
+                    data[ i * 5 + 4 ]
                 );
             }
 
@@ -112,7 +112,7 @@ namespace MarsMiner.Client.Graphics
                 myTexCoordIndexes[ i ] = (float) Math.Round( TextureCoords[ i ].X * 16.0f )
                     + (float) Math.Round( TextureCoords[ i ].Y * 16.0f ) * 17.0f;
 
-            Normal = Vector3.Cross( Vertices[ 1 ] - Vertices[ 0 ], Vertices[ 2 ] - Vertices[ 0 ] );
+            Normal = Vector3.Cross( Vertices[ 2 ] - Vertices[ 0 ], Vertices[ 1 ] - Vertices[ 0 ] );
 
             float absX = Math.Abs( Normal.X );
             float absY = Math.Abs( Normal.Y );

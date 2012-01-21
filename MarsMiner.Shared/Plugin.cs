@@ -55,6 +55,11 @@ namespace MarsMiner.Shared
             throw new Exception( "Type \"" + name + "\" not found" );
         }
 
+        public static IEnumerable<Plugin> Registered
+        {
+            get { return myRegisteredPlugins; }
+        }
+
         protected readonly bool Client;
         protected readonly bool Server;
 

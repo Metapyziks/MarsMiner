@@ -28,7 +28,73 @@ using MarsMiner.Shared.Geometry;
 namespace MarsMiner.Client.Graphics
 {
     public class GeometryModel
-    {
+    {        
+        public static GeometryModel Cube( string tex )
+        {
+            return Cube( tex, tex, tex, tex, tex, tex );
+        }
+
+        public static GeometryModel Cube( string texTop, string texSide )
+        {
+            return Cube( texSide, texSide, texSide, texSide, texTop, texSide );
+        }
+
+        public static GeometryModel Cube( string texTop, string texBottom, string texSide )
+        {
+            return Cube( texSide, texBottom, texSide, texSide, texTop, texSide );
+        }
+
+        public static GeometryModel Cube( string texLeft, string texBottom, string texFront,
+            string texRight, string texTop, string texBack )
+        {
+            GeometryModel cube = new GeometryModel();
+
+            cube.AddFace( new ModelFace( texLeft, new float[]
+            {
+                0.0f, 0.0f, 1.0f, 0.0f, 0.0f,
+                0.0f, 0.0f, 0.0f, 1.0f, 0.0f,
+                0.0f, 1.0f, 0.0f, 1.0f, 1.0f,
+                0.0f, 1.0f, 1.0f, 0.0f, 1.0f,
+            } ), Face.Left );
+            cube.AddFace( new ModelFace( texBottom, new float[]
+            {
+                0.0f, 0.0f, 0.0f, 0.0f, 0.0f,
+                0.0f, 0.0f, 1.0f, 1.0f, 0.0f,
+                1.0f, 0.0f, 1.0f, 1.0f, 1.0f,
+                1.0f, 0.0f, 0.0f, 0.0f, 1.0f,
+            } ), Face.Bottom );
+            cube.AddFace( new ModelFace( texFront, new float[]
+            {
+                0.0f, 0.0f, 0.0f, 0.0f, 0.0f,
+                1.0f, 0.0f, 0.0f, 1.0f, 0.0f,
+                1.0f, 1.0f, 0.0f, 1.0f, 1.0f,
+                0.0f, 1.0f, 0.0f, 0.0f, 1.0f,
+            } ), Face.Front );
+            cube.AddFace( new ModelFace( texRight, new float[]
+            {
+                1.0f, 0.0f, 0.0f, 0.0f, 0.0f,
+                1.0f, 0.0f, 1.0f, 1.0f, 0.0f,
+                1.0f, 1.0f, 1.0f, 1.0f, 1.0f,
+                1.0f, 1.0f, 0.0f, 0.0f, 1.0f,
+            } ), Face.Right );
+            cube.AddFace( new ModelFace( texTop, new float[]
+            {
+                0.0f, 1.0f, 0.0f, 0.0f, 0.0f,
+                1.0f, 1.0f, 0.0f, 1.0f, 0.0f,
+                1.0f, 1.0f, 1.0f, 1.0f, 1.0f,
+                0.0f, 1.0f, 1.0f, 0.0f, 1.0f,
+            } ), Face.Top );
+            cube.AddFace( new ModelFace( texBack, new float[]
+            {
+                1.0f, 0.0f, 1.0f, 0.0f, 0.0f,
+                0.0f, 0.0f, 1.0f, 1.0f, 0.0f,
+                0.0f, 1.0f, 1.0f, 1.0f, 1.0f,
+                1.0f, 1.0f, 1.0f, 0.0f, 1.0f,
+            } ), Face.Back );
+
+            return cube;
+        }
+
         private static List<String> stUsedTextures = new List<string>();
 
         public static String[] UsedTextures
@@ -40,15 +106,12 @@ namespace MarsMiner.Client.Graphics
 
         public GeometryModel()
         {
-
+            myFaces = new Dictionary<Face, List<ModelFace>>();
         }
 
         public void AddFace( ModelFace face )
         {
             AddFace( face, Face.All );
-
-            if ( !stUsedTextures.Contains( face.TextureName ) )
-                stUsedTextures.Add( face.TextureName );
         }
 
         public void AddFace( ModelFace face, Face requiredVisibleFaces )
@@ -57,6 +120,9 @@ namespace MarsMiner.Client.Graphics
                 myFaces.Add( requiredVisibleFaces, new List<ModelFace>() );
 
             myFaces[ requiredVisibleFaces ].Add( face );
+
+            if ( !stUsedTextures.Contains( face.TextureName ) )
+                stUsedTextures.Add( face.TextureName );
         }
 
         public void UpdateTextureIndexes( Texture2DArray texArray )
@@ -97,86 +163,6 @@ namespace MarsMiner.Client.Graphics
             }
 
             return startIndex;
-        }
-    }
-
-    public class CubeGModel : GeometryModel
-    {
-        public CubeGModel( string tex )
-            : this( tex, tex, tex, tex, tex, tex )
-        {
-
-        }
-
-        public CubeGModel( string texTop, string texSide )
-            : this( texSide, texSide, texSide, texSide, texTop, texSide )
-        {
-
-        }
-
-        public CubeGModel( string texTop, string texBottom, string texSide )
-            : this( texSide, texBottom, texSide, texSide, texTop, texSide )
-        {
-
-        }
-
-        public CubeGModel( string texLeft, string texBottom, string texFront,
-            string texRight, string texTop, string texBack )
-        {
-            AddFace( new ModelFace( texLeft, new float[]
-            {
-                0.0f, 0.0f, 1.0f, 0.0f, 0.0f,
-                0.0f, 0.0f, 0.0f, 1.0f, 0.0f,
-                0.0f, 1.0f, 0.0f, 1.0f, 1.0f,
-                0.0f, 0.0f, 1.0f, 0.0f, 0.0f,
-                0.0f, 1.0f, 0.0f, 1.0f, 1.0f,
-                0.0f, 1.0f, 1.0f, 0.0f, 1.0f,
-            } ), Face.Left );
-            AddFace( new ModelFace( texBottom, new float[]
-            {
-                0.0f, 0.0f, 0.0f, 0.0f, 0.0f,
-                0.0f, 0.0f, 1.0f, 1.0f, 0.0f,
-                1.0f, 0.0f, 1.0f, 1.0f, 1.0f,
-                0.0f, 0.0f, 0.0f, 0.0f, 0.0f,
-                1.0f, 0.0f, 1.0f, 1.0f, 1.0f,
-                1.0f, 0.0f, 0.0f, 0.0f, 1.0f,
-            } ), Face.Bottom );
-            AddFace( new ModelFace( texFront, new float[]
-            {
-                0.0f, 0.0f, 0.0f, 0.0f, 0.0f,
-                1.0f, 0.0f, 0.0f, 1.0f, 0.0f,
-                1.0f, 1.0f, 0.0f, 1.0f, 1.0f,
-                0.0f, 0.0f, 0.0f, 0.0f, 0.0f,
-                1.0f, 1.0f, 0.0f, 1.0f, 1.0f,
-                0.0f, 1.0f, 0.0f, 0.0f, 1.0f,
-            } ), Face.Front );
-            AddFace( new ModelFace( texRight, new float[]
-            {
-                1.0f, 0.0f, 0.0f, 0.0f, 0.0f,
-                1.0f, 0.0f, 1.0f, 1.0f, 0.0f,
-                1.0f, 1.0f, 1.0f, 1.0f, 1.0f,
-                1.0f, 0.0f, 0.0f, 0.0f, 0.0f,
-                1.0f, 1.0f, 1.0f, 1.0f, 1.0f,
-                1.0f, 1.0f, 0.0f, 0.0f, 1.0f,
-            } ), Face.Right );
-            AddFace( new ModelFace( texTop, new float[]
-            {
-                0.0f, 1.0f, 0.0f, 0.0f, 0.0f,
-                1.0f, 1.0f, 0.0f, 1.0f, 0.0f,
-                1.0f, 1.0f, 1.0f, 1.0f, 1.0f,
-                0.0f, 1.0f, 0.0f, 0.0f, 0.0f,
-                1.0f, 1.0f, 1.0f, 1.0f, 1.0f,
-                0.0f, 1.0f, 1.0f, 0.0f, 1.0f,
-            } ), Face.Top );
-            AddFace( new ModelFace( texBack, new float[]
-            {
-                1.0f, 0.0f, 1.0f, 0.0f, 0.0f,
-                0.0f, 0.0f, 1.0f, 1.0f, 0.0f,
-                0.0f, 1.0f, 1.0f, 1.0f, 1.0f,
-                1.0f, 0.0f, 1.0f, 0.0f, 0.0f,
-                0.0f, 1.0f, 1.0f, 1.0f, 1.0f,
-                1.0f, 1.0f, 1.0f, 0.0f, 1.0f,
-            } ), Face.Back );
         }
     }
 }

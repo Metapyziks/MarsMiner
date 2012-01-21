@@ -41,15 +41,15 @@ namespace MarsMiner.Client
         {
             BlockType sand = BlockManager.Get( "MarsMiner_Sand" );
             sand.SetComponant( new VisibilityBComponant( true, Face.All ) );
-            sand.SetComponant( new ModelBComponant( new CubeGModel( "images_blocks_sand" ) ) );
+            sand.SetComponant( new ModelBComponant( GeometryModel.Cube( "images_blocks_sand" ) ) );
 
             BlockType rock = BlockManager.Get( "MarsMiner_Rock" );
-            sand.SetComponant( new VisibilityBComponant( true, Face.All ) );
-            sand.SetComponant( new ModelBComponant( new CubeGModel( "images_blocks_rock" ) ) );
+            rock.SetComponant( new VisibilityBComponant( true, Face.All ) );
+            rock.SetComponant( new ModelBComponant( GeometryModel.Cube( "images_blocks_rock" ) ) );
 
             BlockType boulder = BlockManager.Get( "MarsMiner_Boulder" );
-            sand.SetComponant( new VisibilityBComponant( true, Face.All ) );
-            sand.SetComponant( new ModelBComponant( new CubeGModel( "images_blocks_boulder" ) ) );
+            boulder.SetComponant( new VisibilityBComponant( true, Face.All ) );
+            boulder.SetComponant( new ModelBComponant( GeometryModel.Cube( "images_blocks_boulder" ) ) );
         }
     }
 }
