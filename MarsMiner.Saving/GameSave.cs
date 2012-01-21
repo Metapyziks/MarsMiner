@@ -59,7 +59,19 @@ namespace MarsMiner.Saving
                 WriteBlock(block, addresses);
             }
 
-            //TODO: Finish saving
+            pointerFile.Flush();
+            stringFile.Flush();
+            foreach (var blobFile in blobFiles)
+            {
+                blobFile.Flush();
+            }
+
+            {
+                //Write header
+                blobFiles[0].Seek(0, SeekOrigin.Begin);
+                transaction.Header.Write(blobFiles[0], o => FindAddress(addresses, new Tuple<int, uint>(0, 0), o));
+                blobFiles[0].Flush();
+            }
         }
 
         private void WriteBlock(IBlockStructure block, Dictionary<IBlockStructure, Tuple<int, uint>> addresses)
@@ -70,45 +82,47 @@ namespace MarsMiner.Saving
 
             blockBlob.Seek(blockAddress.Item2, SeekOrigin.Begin);
 
-            block.Write(blockBlob, o =>
+            block.Write(blockBlob, o => FindAddress(addresses, blockAddress, o));
+        }
+
+        private uint FindAddress(Dictionary<IBlockStructure, Tuple<int, uint>> addresses, Tuple<int, uint> blockAddress, object o)
+        {
             {
+                var s = o as string;
+                if (s != null)
                 {
-                    var s = o as string;
-                    if (s != null)
+                    uint address;
+                    if (!addressByString.TryGetValue(s, out address))
                     {
-                        uint address;
-                        if (!addressByString.TryGetValue(s, out address))
-                        {
-                            address = AddString(s);
-                        }
-                        return address;
+                        address = AddString(s);
+                    }
+                    return address;
+                }
+            }
+            {
+                var b = o as IBlockStructure;
+                if (b != null)
+                {
+                    var bAddress = addresses[b];
+
+                    if (blockAddress.Item1 == bAddress.Item1)
+                    {
+                        //Same file
+                        return bAddress.Item2;
+                    }
+                    else
+                    {
+                        return GetPointerTo(bAddress);
                     }
                 }
-                {
-                    var b = o as IBlockStructure;
-                    if (b != null)
-                    {
-                        var bAddress = addresses[b];
+            }
 
-                        if (blockAddress.Item1 == bAddress.Item1)
-                        {
-                            //Same file
-                            return bAddress.Item2;
-                        }
-                        else
-                        {
-                            return GetPointerTo(bAddress);
-                        }
-                    }
-                }
+            if (o == null)
+            {
+                return NullPointer;
+            }
 
-                if (o == null)
-                {
-                    return NullPointer;
-                }
-
-                throw new ArgumentException("Tried to find address for object that was neither a string nor an IBlockStructure!");
-            });
+            throw new ArgumentException("Tried to find address for object that was neither a string nor an IBlockStructure!");
         }
 
         private uint GetPointerTo(Tuple<int, uint> target)
