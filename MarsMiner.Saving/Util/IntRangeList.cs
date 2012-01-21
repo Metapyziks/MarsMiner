@@ -55,7 +55,7 @@ namespace MarsMiner.Saving.Util
             ranges = newRanges;
         }
 
-        public void Remove(Tuple<int,int> range)
+        public void Subtract(Tuple<int, int> range)
         {
             var newRanges = new List<Tuple<int, int>>();
 
@@ -71,7 +71,7 @@ namespace MarsMiner.Saving.Util
                     {
                         newRanges.Add(new Tuple<int, int>(r.Item1, range.Item1));
                     }
-                    if (range.Item2<r.Item2)
+                    if (range.Item2 < r.Item2)
                     {
                         newRanges.Add(new Tuple<int, int>(range.Item2, r.Item2));
                     }
@@ -89,11 +89,19 @@ namespace MarsMiner.Saving.Util
             }
         }
 
-        public void Remove(IntRangeList rangeList)
+        public void Subtract(IntRangeList rangeList)
         {
             foreach (var range in rangeList.ranges)
             {
-                Remove(range);
+                Subtract(range);
+            }
+        }
+
+        public readonly Tuple<int, int>[] Items
+        {
+            get
+            {
+                return ranges.ToArray();
             }
         }
     }

@@ -22,6 +22,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using MarsMiner.Saving.Cache;
+using System.IO;
+using MarsMiner.Saving.Util;
+using MarsMiner.Saving.Interfaces;
 
 namespace MarsMiner.Saving
 {
@@ -30,6 +33,66 @@ namespace MarsMiner.Saving
     /// </summary>
     public class GameSave
     {
+        const int MaximumBlockStartAddress = 100000000;
+
         private Queue<WriteTransaction> writeQueue;
+
+        private FileStream pointerFile;
+        private FileStream stringFile;
+
+        private FileStream[] blobFiles;
+        private IntRangeList[] freeSpace;
+
+        private void WriteTransaction(WriteTransaction transaction)
+        {
+            var addresses = transaction.Blocks.ToDictionary(x => x, AllocateSpace);
+        }
+
+        private Tuple<int, int> AllocateSpace(IBlockStructure blockStructure)
+        {
+            var blockLength = blockStructure.Length;
+
+            Tuple<int, Tuple<int, int>> bestMatch = null;
+
+            for (int fileIndex = 0; fileIndex < freeSpace.Length; fileIndex++)
+            {
+                foreach (var freeArea in freeSpace[fileIndex].Items)
+                {
+                    var freeAreaLength = freeArea.Item2 - freeArea.Item1;
+
+                    if (freeAreaLength < blockLength) { continue; }
+
+                    if (bestMatch != null && bestMatch.Item2.Item2 - bestMatch.Item2.Item1 < freeAreaLength) { continue; }
+
+                    bestMatch = new Tuple<int, Tuple<int, int>>(fileIndex, freeArea);
+                }
+            }
+
+            if (bestMatch == null)
+            {
+                for (int fileIndex = 0; fileIndex < blobFiles.Length; fileIndex++)
+                {
+                    if (blobFiles[fileIndex].Length < MaximumBlockStartAddress)
+                    {
+                        bestMatch = new Tuple<int, Tuple<int, int>>(
+                            fileIndex,
+                            new Tuple<int, int>(
+                                (int)blobFiles[fileIndex].Length,
+                                (int)blobFiles[fileIndex].Length + blockLength));
+
+                        blobFiles[fileIndex].SetLength(blobFiles[fileIndex].Length + blockLength);
+                    }
+                }
+            }
+
+            AllocateSpace(bestMatch.Item1, bestMatch.Item2);
+
+            return new Tuple<int, int>(bestMatch.Item1, bestMatch.Item2.Item1);
+        }
+
+        private void AllocateSpace(int fileIndex, Tuple<int, int> spaceArea)
+        {
+            freeSpace[fileIndex].Subtract(spaceArea);
+        }
     }
 }

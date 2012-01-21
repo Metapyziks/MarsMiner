@@ -98,5 +98,5 @@ for (pointer count):
 FilePointer (embedded structure, fixed length)
 ----------------------------------------------
 // FilePointers are typeless, the target type is inferred from the original pointer.
-Pointer<String>			filename (relative path) // This pointer must be local!
+int						index of blob file
 int						address in destination file
