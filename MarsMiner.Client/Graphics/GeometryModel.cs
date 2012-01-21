@@ -34,9 +34,24 @@ namespace MarsMiner.Client.Graphics
     public class RGeometryModelManager : RManager
     {
         public RGeometryModelManager()
-            : base( typeof( GeometryModel ), 3, "gml" )
+            : base( typeof( GeometryModel ), 3, "gmdl" )
         {
 
+        }
+
+        public override ResourceItem[] LoadFromFile( string keyPrefix, string fileName, string fileExtension, FileStream stream )
+        {
+            return new ResourceItem[] { new ResourceItem( keyPrefix + fileName, new GeometryModel( stream ) ) };
+        }
+
+        public override object LoadFromArchive( BinaryReader stream )
+        {
+            return new GeometryModel( stream.BaseStream );
+        }
+
+        public override void SaveToArchive( BinaryWriter stream, object item )
+        {
+            ( (GeometryModel) item ).Save( stream.BaseStream );
         }
     }
 
