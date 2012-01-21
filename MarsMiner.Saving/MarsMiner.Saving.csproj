@@ -42,6 +42,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Cache\WriteTransaction.cs" />
+    <Compile Include="GameSave.cs" />
     <Compile Include="Interfaces\IBlockStructure.cs" />
     <Compile Include="SaveManager.cs" />
     <Compile Include="Structures\V0\FilePointer.cs" />
@@ -54,6 +55,7 @@
     <Compile Include="Structures\V0\PointerFileIndex.cs" />
     <Compile Include="Structures\V0\SavedStateIndex.cs" />
     <Compile Include="Structures\V0\Pointer.cs" />
+    <Compile Include="Util\IntRangeList.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Save Format V0 Draft.txt" />
