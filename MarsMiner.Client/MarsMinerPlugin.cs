@@ -48,7 +48,11 @@ namespace MarsMiner.Client
             for ( int i = 0; i < 4; ++i )
             {
                 Face face = faces[ i ];
-                BlockType sandSlope = BlockManager.Get( "MarsMiner_Sand", i + 1 );
+                BlockType sandQuart = BlockManager.Get( "MarsMiner_Sand", i + 1 );
+                sandQuart.SetComponant( new VisibilityBComponant( true, Face.None ) );
+                sandQuart.SetComponant( new ModelBComponant( GeometryModel.QuartSlope( face, "images_blocks_sandtri" ) ) );
+
+                BlockType sandSlope = BlockManager.Get( "MarsMiner_Sand", i + 5 );
                 sandSlope.SetComponant( new VisibilityBComponant( true, Face.Bottom | face.Opposite ) );
                 sandSlope.SetComponant( new ModelBComponant( GeometryModel.Slope( face, "images_blocks_sand", "images_blocks_sandtri" ) ) );
             }
