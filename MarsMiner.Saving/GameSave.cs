@@ -208,8 +208,15 @@ namespace MarsMiner.Saving
                                 (int)blobFiles[fileIndex].Length + blockLength));
 
                         blobFiles[fileIndex].SetLength(blobFiles[fileIndex].Length + blockLength);
+
+                        break;
                     }
                 }
+            }
+
+            if (bestMatch == null)
+            {
+                //TODO: Create new blob file
             }
 
             AllocateSpace(bestMatch.Item1, bestMatch.Item2);
@@ -220,6 +227,32 @@ namespace MarsMiner.Saving
         private void AllocateSpace(int fileIndex, Tuple<int, int> spaceArea)
         {
             freeSpace[fileIndex].Subtract(spaceArea);
+        }
+
+        public static GameSave Create(string path)
+        {
+            if (!Directory.Exists(path))
+            {
+                Directory.CreateDirectory(path);
+            }
+
+            if (Directory.GetFiles(path).Length != 0)
+            {
+                throw new ArgumentException("Directory isn't empty!");
+            }
+
+            var gameSave = new GameSave();
+
+            gameSave.stringFile = File.Open(Path.Combine(path, "strings"), FileMode.CreateNew);
+            gameSave.stringFile.Write(new byte[8], 0, 8);
+
+            gameSave.pointerFile = File.Open(Path.Combine(path, "pointers"), FileMode.CreateNew);
+            gameSave.pointerFile.Write(new byte[8], 0, 8);
+
+            gameSave.blobFiles = new FileStream[] { File.Open(Path.Combine(path, "blob0"), FileMode.CreateNew) };
+            gameSave.blobFiles[0].Write(new byte[8], 0, 8);
+
+            return gameSave;
         }
     }
 }
