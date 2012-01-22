@@ -1,4 +1,4 @@
-MarsMiner.suo
+*.suo
 Content/*.dll
 Content/*.pdb
 Content/*.exe
