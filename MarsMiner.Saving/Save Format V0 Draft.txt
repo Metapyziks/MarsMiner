@@ -1,6 +1,6 @@
 MarsMiner Save Format v0 (draft)
 
-Most block structures can appear anywhere in the file and are either prefixed with their length in bytes as uint32 (excluding the length prefix) or have a fixed size.
+Most block structures can appear anywhere in the file.
 
 Embedded structures are always part of block structures and don't have any prefix.
 
@@ -44,13 +44,13 @@ Pointer<String>				Save name
 Pointer<PointerFileIndex>	pointer to pointer file index local to pointer file
 Pointer<ChunkTable>			Pointer to chunk table
 
-BlockTypeTable (block structure, length prefixed)
+BlockTypeTable (block structure, variable length)
 -------------------------------------------------
 ushort					block type count
 for (block type count):
 	Pointer<String>		block type name
 
-ChunkTable (block structure, length prefixed)
+ChunkTable (block structure, variable length)
 ---------------------------------------------
 uint32				chunk count
 for (chunk count):
@@ -58,7 +58,7 @@ for (chunk count):
 	int				Z location
 	Pointer<Chunk>	pointer to chunk
 
-Chunk (block structure, length prefixed)
+Chunk (block structure, variable length)
 ----------------------------------------
 Pointer<BlockTypeTable>	Pointer to block type table		// This is here so chunks can have different block tables.
 														// It doesn't make much difference with less than 256 ids, but with more its possible to compress block id lists to roughly half the size if the id distribution is uneven.
@@ -67,9 +67,10 @@ byte					octree count
 for (octree count):
 	Pointer<Octree>
 
-Octree (block structure, length prefixed)
+Octree (block structure, variable length)
 -----------------------------------------
 uint32					OctreeFlags length in bytes
+uint32					OctreeValueList length in bytes
 OctreeFlags
 OctreeValueList
 
@@ -93,7 +94,7 @@ for (number of ones in octree bitmap):
 Pointer table file
 ==================
 
-PointerFileIndex (block structure, length prefixed)
+PointerFileIndex (block structure)
 ---------------------------------------------------
 int						Version
 int						file pointer count

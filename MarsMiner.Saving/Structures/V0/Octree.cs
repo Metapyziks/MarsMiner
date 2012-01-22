@@ -40,6 +40,7 @@ namespace MarsMiner.Saving.Structures.V0
             get
             {
                 return 4 // octreeFlags length
+                    + 4 // octreeValueList length
                     + (octreeFlags.Length / 8) + (octreeFlags.Length % 8 == 0 ? 0 : 1) // octreeFlags
                     + octreeValues.Length; // octreeValues
             }
@@ -52,6 +53,8 @@ namespace MarsMiner.Saving.Structures.V0
             int bitArrayLength = (octreeFlags.Length / 8) + (octreeFlags.Length % 8 == 0 ? 0 : 1);
 
             w.Write(bitArrayLength);
+
+            w.Write(octreeValues.Length);
 
             var buffer = new byte[bitArrayLength];
             octreeFlags.CopyTo(buffer, 0);

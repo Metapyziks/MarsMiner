@@ -59,6 +59,9 @@ namespace MarsMiner.Saving
                 WriteBlock(block, addresses);
             }
 
+            UpdatePointerFileHeader();
+            UpdateStringFileHeader();
+
             pointerFile.Flush();
             stringFile.Flush();
             foreach (var blobFile in blobFiles)
@@ -72,6 +75,16 @@ namespace MarsMiner.Saving
                 transaction.Header.Write(blobFiles[0], o => FindAddress(addresses, new Tuple<int, uint>(0, 0), o));
                 blobFiles[0].Flush();
             }
+        }
+
+        private void UpdateStringFileHeader()
+        {
+            throw new NotImplementedException();
+        }
+
+        private void UpdatePointerFileHeader()
+        {
+            throw new NotImplementedException();
         }
 
         private void WriteBlock(IBlockStructure block, Dictionary<IBlockStructure, Tuple<int, uint>> addresses)
