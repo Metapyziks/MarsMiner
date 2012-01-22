@@ -44,8 +44,9 @@ namespace MarsMiner.Saving
         List<Tuple<int, uint>> pointers;
 
         private FileStream stringFile;
-        Dictionary<uint, string> stringsByAddress;
-        Dictionary<string, uint> addressByString;
+        private IntRangeList freeStringSpace;
+        private Dictionary<uint, string> stringsByAddress;
+        private Dictionary<string, uint> addressByString;
 
         private FileStream[] blobFiles;
         private IntRangeList[] freeSpace;
@@ -149,6 +150,7 @@ namespace MarsMiner.Saving
 
 
             //TODO: Put this somewhere else?
+            //TODO: Find unused space
             pointerFile.Seek(pointerFile.Length, SeekOrigin.Begin);
             var w = new BinaryWriter(pointerFile);
 
@@ -243,14 +245,60 @@ namespace MarsMiner.Saving
 
             var gameSave = new GameSave();
 
-            gameSave.stringFile = File.Open(Path.Combine(path, "strings"), FileMode.CreateNew);
+            gameSave.stringFile = File.Open(Path.Combine(path, "strings"), FileMode.CreateNew, FileAccess.ReadWrite, FileShare.None);
             gameSave.stringFile.Write(new byte[8], 0, 8);
+            gameSave.freeStringSpace = new IntRangeList();
 
-            gameSave.pointerFile = File.Open(Path.Combine(path, "pointers"), FileMode.CreateNew);
+            gameSave.pointerFile = File.Open(Path.Combine(path, "pointers"), FileMode.CreateNew, FileAccess.ReadWrite, FileShare.None);
             gameSave.pointerFile.Write(new byte[8], 0, 8);
 
-            gameSave.blobFiles = new FileStream[] { File.Open(Path.Combine(path, "blob0"), FileMode.CreateNew) };
+            gameSave.blobFiles = new FileStream[] { File.Open(Path.Combine(path, "blob0"), FileMode.CreateNew, FileAccess.ReadWrite, FileShare.None) };
+            gameSave.freeSpace = new IntRangeList[] { new IntRangeList() };
             gameSave.blobFiles[0].Write(new byte[8], 0, 8);
+
+            return gameSave;
+        }
+
+        public static GameSave Open(string path)
+        {
+            if (!Directory.Exists(path))
+            {
+                throw new ArgumentException("Directory doesn't exist!");
+            }
+
+            var stringsPath = Path.Combine(path, "strings");
+            var pointersPath = Path.Combine(path, "pointers");
+            var blobsPath = Path.Combine(path, "blob");
+
+            var gameSave = new GameSave();
+
+            gameSave.stringFile = File.Open(stringsPath, FileMode.Open, FileAccess.ReadWrite, FileShare.None);
+            gameSave.pointerFile = File.Open(pointersPath, FileMode.Open, FileAccess.ReadWrite, FileShare.None);
+
+            var blobFiles = new LinkedList<FileStream>();
+
+            for (int i = 0; i < int.MaxValue; i++)
+            {
+                var blobPath = blobsPath + i;
+                if (!File.Exists(blobPath))
+                {
+                    break;
+                }
+
+                blobFiles.AddLast(File.Open(blobPath, FileMode.Open, FileAccess.ReadWrite, FileShare.None));
+            }
+
+            gameSave.blobFiles = blobFiles.ToArray();
+
+            {
+                //TODO: Find free space
+                gameSave.freeStringSpace = new IntRangeList();
+                gameSave.freeSpace = new IntRangeList[gameSave.blobFiles.Length];
+                for (int i = 0; i < gameSave.freeSpace.Length; i++)
+                {
+                    gameSave.freeSpace[i] = new IntRangeList();
+                }
+            }
 
             return gameSave;
         }
