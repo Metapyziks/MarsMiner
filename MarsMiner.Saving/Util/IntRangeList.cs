@@ -97,7 +97,7 @@ namespace MarsMiner.Saving.Util
             }
         }
 
-        public readonly Tuple<int, int>[] Items
+        public Tuple<int, int>[] Items
         {
             get
             {

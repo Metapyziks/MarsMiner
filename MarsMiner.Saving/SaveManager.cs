@@ -44,7 +44,7 @@ namespace MarsMiner.Saving
             throw new NotImplementedException();
         }
 
-        public void IDisposable.Dispose()
+        void IDisposable.Dispose()
         {
             if (disposed) { return; }
 
