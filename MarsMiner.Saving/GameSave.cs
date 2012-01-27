@@ -302,5 +302,22 @@ namespace MarsMiner.Saving
 
             return gameSave;
         }
+
+        public void Close()
+        {
+            Flush();
+
+            pointerFile.Dispose();
+            stringFile.Dispose();
+            foreach (var blob in blobFiles)
+            {
+                blob.Dispose();
+            }
+        }
+
+        private void Flush()
+        {
+            //TODO: Flush save
+        }
     }
 }

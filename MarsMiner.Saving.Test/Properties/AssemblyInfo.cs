@@ -24,11 +24,11 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("MarsMiner.Saving")]
+[assembly: AssemblyTitle("MarsMiner.Saving.Test")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("MarsMiner.Saving")]
+[assembly: AssemblyProduct("MarsMiner.Saving.Test")]
 [assembly: AssemblyCopyright("Copyright ©  2012")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
@@ -39,7 +39,7 @@ using System.Runtime.InteropServices;
 [assembly: ComVisible(false)]
 
 // The following GUID is for the ID of the typelib if this project is exposed to COM
-[assembly: Guid("ea3a92e6-5178-4d8b-bd00-a0cd0db1b1bc")]
+[assembly: Guid("49515b7b-5899-45f1-9e23-0c1cdffc2c6b")]
 
 // Version information for an assembly consists of the following four values:
 //
