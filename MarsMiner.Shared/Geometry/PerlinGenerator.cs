@@ -83,18 +83,21 @@ namespace MarsMiner.Shared.Geometry
 
             UInt16 empty = BlockManager.GetID( "Core_Empty" );
             UInt16[] sand = new UInt16[ 15 ];
+            UInt16[] rock = new UInt16[ 15 ];
 
-            for( int i = 0; i < 15; ++ i )
+            for ( int i = 0; i < 15; ++i )
+            {
                 sand[ i ] = BlockManager.GetID( "MarsMiner_Sand", i );
+                rock[ i ] = BlockManager.GetID( "MarsMiner_Rock", i );
+            }
 
             Face[] slopeFaces = new Face[] { Face.Front, Face.Left, Face.Back, Face.Right };
-            UInt16 rock = BlockManager.GetID( "MarsMiner_Rock" );
             UInt16 boulder = BlockManager.GetID( "MarsMiner_Boulder" );
 
             int min = System.Math.Min( myMinHilly, myMinPlains );
             int gradRange = 2;
 
-            octree.SetCuboid( x, 0, z, size, System.Math.Min( myMinHilly, myMinPlains ), size, rock );
+            octree.SetCuboid( x, 0, z, size, System.Math.Min( myMinHilly, myMinPlains ), size, rock[ 14 ] );
 
             if ( y + size >= min )
             {
@@ -196,7 +199,7 @@ namespace MarsMiner.Shared.Geometry
                             rcuboid.Top = System.Math.Max( height, prevHeight );
 
                             if( height > prevHeight )
-                                octree.SetCuboid( rcuboid, rock );
+                                octree.SetCuboid( rcuboid, rock[ 14 ] );
                             else
                                 octree.SetCuboid( rcuboid, empty );
 
@@ -212,7 +215,7 @@ namespace MarsMiner.Shared.Geometry
                                 if ( res == 1 && rand.NextDouble() < 1.0 / 256.0 )
                                 {
                                     scuboid.Y += 1;
-                                    octree.SetCuboid( scuboid, rock );
+                                    octree.SetCuboid( scuboid, rock[ 14 ] );
                                 }
                             }
                         }
@@ -221,15 +224,15 @@ namespace MarsMiner.Shared.Geometry
                     prev = cur;
                 }
 
-                if ( resolution == 1 )
+                //if ( resolution == 1 )
                 {
-                    List<Tuple<int,int,int,int>> toSlope = new List<Tuple<int, int, int, int>>();
+                    List<Tuple<int,int,int,UInt16>> toSlope = new List<Tuple<int, int, int, UInt16>>();
 
                     var enumer = new OctreeEnumerator<UInt16>( octree );
                     while( enumer.MoveNext() )
                     {
                         OctreeLeaf<UInt16> leaf = enumer.Current;
-                        if ( enumer.Size == 1 && leaf.Value == sand[ 14 ] )
+                        if ( enumer.Size == resolution && ( leaf.Value == sand[ 14 ] || leaf.Value == rock[ 14 ] ) )
                         {
                             OctreeLeaf<UInt16> above = leaf.FindNeighbour( Face.Top )
                                 as OctreeLeaf<UInt16>;
@@ -264,14 +267,16 @@ namespace MarsMiner.Shared.Geometry
                                     index |= 1 << 3;
 
                                 if ( index > 0 )
-                                    toSlope.Add( new Tuple<int, int, int, int>( enumer.X, enumer.Y, enumer.Z, index - 1 ) );
+                                    toSlope.Add( new Tuple<int, int, int, UInt16>(
+                                        enumer.X, enumer.Y, enumer.Z,
+                                        (UInt16)( leaf.Value + index - 15 ) ) );
                             }
                         }
                     }
 
                     foreach ( var item in toSlope )
                         octree.SetCuboid( item.Item1, item.Item2, item.Item3,
-                            1, 1, 1, sand[ item.Item4 ] );
+                            resolution, resolution, resolution, item.Item4 );
                 }
             }
 

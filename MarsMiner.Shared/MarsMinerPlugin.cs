@@ -44,12 +44,15 @@ namespace MarsMiner.Shared
         {
             for ( int i = 1; i < 16; ++i )
             {
-                BlockType blk = BlockManager.RegisterType( "MarsMiner_Sand", i - 1 );
-                blk.SetComponant( new SolidityBComponant( true ) );
+                BlockType sand = BlockManager.RegisterType( "MarsMiner_Sand", i - 1 );
+                sand.SetComponant( new SolidityBComponant( true ) );
             }
 
-            BlockType rock = BlockManager.RegisterType( "MarsMiner_Rock" );
-            rock.SetComponant( new SolidityBComponant( true ) );
+            for ( int i = 1; i < 16; ++i )
+            {
+                BlockType rock = BlockManager.RegisterType( "MarsMiner_Rock", i - 1 );
+                rock.SetComponant( new SolidityBComponant( true ) );
+            }
 
             BlockType boulder = BlockManager.RegisterType( "MarsMiner_Boulder" );
             boulder.SetComponant( new SolidityBComponant( true ) );

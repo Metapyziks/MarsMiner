@@ -114,16 +114,11 @@ namespace MarsMiner.Client.Graphics
 
             Normal = Vector3.Cross( Vertices[ 2 ] - Vertices[ 0 ], Vertices[ 1 ] - Vertices[ 0 ] );
 
-            float absX = Math.Abs( Normal.X );
-            float absY = Math.Abs( Normal.Y );
-            float absZ = Math.Abs( Normal.Z );
+            myNormalIndex = 0;
 
-            if ( absX >= absY && absX >= absZ )
-                myNormalIndex = Normal.X < 0 ? 0 : 3;
-            else if ( absY >= absZ )
-                myNormalIndex = Normal.Y < 0 ? 1 : 4;
-            else
-                myNormalIndex = Normal.Z < 0 ? 2 : 5;
+            myNormalIndex += ( Normal.X < 0 ? 0.0f : Normal.X > 0.0f ? 1.0f : 2.0f ) * 1.0f;
+            myNormalIndex += ( Normal.Y < 0 ? 0.0f : Normal.Y > 0.0f ? 1.0f : 2.0f ) * 3.0f;
+            myNormalIndex += ( Normal.Z < 0 ? 0.0f : Normal.Z > 0.0f ? 1.0f : 2.0f ) * 9.0f;
 
             TextureName = textureName;
             myTextureIndex = 0.0f;
@@ -143,7 +138,7 @@ namespace MarsMiner.Client.Graphics
 
         public float[] GenerateGeometryVertexData( Vector3 offset, float size )
         {
-            float faceInfo = ( size * 6 + myNormalIndex ) * 289;
+            float faceInfo = ( size * 27.0f + myNormalIndex ) * 289.0f;
 
             float[] data = new float[ GeometryDataLength ];
             float[] first = new float[]

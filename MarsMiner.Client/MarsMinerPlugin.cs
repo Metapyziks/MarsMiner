@@ -54,16 +54,18 @@ namespace MarsMiner.Client
                     ( ( corners & TerrainCorner.Right ) == TerrainCorner.Right ? Face.Right : Face.None ) |
                     ( ( corners & TerrainCorner.Back ) == TerrainCorner.Back ? Face.Back : Face.None );
 
-                BlockType sandQuart = BlockManager.Get( "MarsMiner_Sand", i - 1 );
-                sandQuart.SetComponant( new VisibilityBComponant( true, solidFaces ) );
-                sandQuart.SetComponant( new ModelBComponant( GeometryModel.Terrain( corners,
+                BlockType sand = BlockManager.Get( "MarsMiner_Sand", i - 1 );
+                sand.SetComponant( new VisibilityBComponant( true, solidFaces ) );
+                sand.SetComponant( new ModelBComponant( GeometryModel.Terrain( corners,
                     "images_blocks_sand", "images_blocks_sand",
                     "images_blocks_sandtri", "images_blocks_sand" ) ) );
-            }
 
-            BlockType rock = BlockManager.Get( "MarsMiner_Rock" );
-            rock.SetComponant( new VisibilityBComponant( true, Face.All ) );
-            rock.SetComponant( new ModelBComponant( GeometryModel.Cube( "images_blocks_rock" ) ) );
+                BlockType rock = BlockManager.Get( "MarsMiner_Rock", i - 1 );
+                rock.SetComponant( new VisibilityBComponant( true, solidFaces ) );
+                rock.SetComponant( new ModelBComponant( GeometryModel.Terrain( corners,
+                    "images_blocks_rock", "images_blocks_rock",
+                    "images_blocks_rock", "images_blocks_rock" ) ) );
+            }
 
             BlockType boulder = BlockManager.Get( "MarsMiner_Boulder" );
             boulder.SetComponant( new VisibilityBComponant( true, Face.All ) );

@@ -87,29 +87,25 @@ namespace MarsMiner.Client.Graphics
             vert.AddVarying( ShaderVarType.Float, "var_shade" );
             vert.AddVarying( ShaderVarType.Vec3, "var_tex" );
             vert.Logic = @"
+                float roots[ 4 ] = float[](
+                    0.0,
+                    1.0,
+                    0.70710678118654752440084436210485,
+                    0.57735026918962576450914878050196
+                );
+
+                vec3 sun_dir = normalize( vec3( 0.6, -0.7, 0.4 ) );
+
                 void main( void )
                 {
                     int faceData = int( in_tex.x / 289 );
                     int texPosIndex = int( in_tex.x ) % 289;
 
-                    float size = float( faceData / 6 );
-                    int face = faceData % 6;
+                    float size = float( faceData / 27 );
+                    int face = faceData % 27;
 
-                    switch( face )
-                    {
-                        case 0:
-                            var_shade = 0.9; break;
-                        case 1:
-                            var_shade = 1.0; break;
-                        case 2:
-                            var_shade = 0.8; break;
-                        case 3:
-                            var_shade = 0.9; break;
-                        case 4:
-                            var_shade = 0.7; break;
-                        case 5:
-                            var_shade = 0.8; break;
-                    }
+                    vec3 norm = normalize( vec3( face % 3 - 1, ( face / 3 ) % 3 - 1, ( face / 9 ) % 3 - 1 ) );
+                    var_shade = dot( norm, sun_dir ) * 0.25 + 0.75;
 
                     vec2 texPos = vec2( texPosIndex % 17, texPosIndex / 17 );
 
