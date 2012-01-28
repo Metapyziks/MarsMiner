@@ -58,6 +58,7 @@ namespace MarsMiner.Shared.Octree
         }
 
         public readonly byte Bitmap;
+        public readonly int Index;
 
         public bool HasNone
         {
@@ -90,11 +91,6 @@ namespace MarsMiner.Shared.Octree
         public bool HasAll
         {
             get { return Bitmap == 63; }
-        }
-
-        public int Index
-        {
-            get { return Tools.QuickLog2( Bitmap ); }
         }
 
         public Face HorzLeft
@@ -131,6 +127,25 @@ namespace MarsMiner.Shared.Octree
         public Face( byte bitmap )
         {
             Bitmap = bitmap;
+            Index = -1;
+
+            bool found = false;
+            for ( int i = 0; i < 6; ++i )
+            {
+                if ( ( bitmap & ( 1 << i ) ) != 0 )
+                {
+                    if ( !found )
+                    {
+                        Index = i;
+                        found = true;
+                    }
+                    else
+                    {
+                        Index = -1;
+                        break;
+                    }
+                }
+            }
         }
 
         public bool HasFace( Face face )

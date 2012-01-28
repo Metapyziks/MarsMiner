@@ -39,22 +39,26 @@ namespace MarsMiner.Client
 
         public override void OnWorldIntitialize( World world )
         {
-            BlockType sandCube = BlockManager.Get( "MarsMiner_Sand", 0 );
-            sandCube.SetComponant( new VisibilityBComponant( true, Face.All ) );
-            sandCube.SetComponant( new ModelBComponant( GeometryModel.Cube( "images_blocks_sand" ) ) );
-
-            Face[] faces = new Face[] { Face.Front, Face.Left, Face.Back, Face.Right };
-
-            for ( int i = 0; i < 4; ++i )
+            for ( int i = 1; i < 16; ++i )
             {
-                Face face = faces[ i ];
-                BlockType sandQuart = BlockManager.Get( "MarsMiner_Sand", i + 1 );
-                sandQuart.SetComponant( new VisibilityBComponant( true, Face.None ) );
-                sandQuart.SetComponant( new ModelBComponant( GeometryModel.QuartSlope( face, "images_blocks_sandtri" ) ) );
+                TerrainCorner corners =
+                    ( ( i >> 0 ) % 2 == 1 ? TerrainCorner.FrontLeft : TerrainCorner.None ) |
+                    ( ( i >> 1 ) % 2 == 1 ? TerrainCorner.FrontRight : TerrainCorner.None ) |
+                    ( ( i >> 2 ) % 2 == 1 ? TerrainCorner.BackLeft : TerrainCorner.None ) |
+                    ( ( i >> 3 ) % 2 == 1 ? TerrainCorner.BackRight : TerrainCorner.None );
 
-                BlockType sandSlope = BlockManager.Get( "MarsMiner_Sand", i + 5 );
-                sandSlope.SetComponant( new VisibilityBComponant( true, Face.Bottom | face.Opposite ) );
-                sandSlope.SetComponant( new ModelBComponant( GeometryModel.Slope( face, "images_blocks_sand", "images_blocks_sandtri" ) ) );
+                Face solidFaces = Face.Bottom |
+                    ( ( corners & TerrainCorner.All ) == TerrainCorner.All ? Face.Top : Face.None ) |
+                    ( ( corners & TerrainCorner.Left ) == TerrainCorner.Left ? Face.Left : Face.None ) |
+                    ( ( corners & TerrainCorner.Front ) == TerrainCorner.Front ? Face.Front : Face.None ) |
+                    ( ( corners & TerrainCorner.Right ) == TerrainCorner.Right ? Face.Right : Face.None ) |
+                    ( ( corners & TerrainCorner.Back ) == TerrainCorner.Back ? Face.Back : Face.None );
+
+                BlockType sandQuart = BlockManager.Get( "MarsMiner_Sand", i - 1 );
+                sandQuart.SetComponant( new VisibilityBComponant( true, solidFaces ) );
+                sandQuart.SetComponant( new ModelBComponant( GeometryModel.Terrain( corners,
+                    "images_blocks_sand", "images_blocks_sand",
+                    "images_blocks_sandtri", "images_blocks_sand" ) ) );
             }
 
             BlockType rock = BlockManager.Get( "MarsMiner_Rock" );

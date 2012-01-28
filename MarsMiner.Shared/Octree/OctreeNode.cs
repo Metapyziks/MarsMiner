@@ -100,9 +100,24 @@ namespace MarsMiner.Shared.Octree
                     return FindNode( 1, 0, 0, -1, 1 );
                 case Face.BackIndex:
                     return FindNode( 1, 0, 0, 1, 1 );
-            }
+                default:
+                    int x = 0, y = 0, z = 0;
 
-            return null;
+                    if ( face.HasLeft )
+                        --x;
+                    if ( face.HasRight )
+                        ++x;
+                    if ( face.HasBottom )
+                        --y;
+                    if ( face.HasTop )
+                        ++y;
+                    if ( face.HasFront )
+                        --z;
+                    if ( face.HasBack )
+                        ++z;
+
+                    return FindNode( 1, x, y, z, 1 );
+            }
         }
 
         public override string ToString()

@@ -82,7 +82,7 @@ namespace MarsMiner.Shared.Geometry
             Random rand = new Random( Seed );
 
             UInt16 empty = BlockManager.GetID( "Core_Empty" );
-            UInt16 sandCube = BlockManager.GetID( "MarsMiner_Sand", 0 );
+            UInt16 sandCube = BlockManager.GetID( "MarsMiner_Sand", 14 );
             UInt16[] sandSlopes = new UInt16[]
             {
                 BlockManager.GetID( "MarsMiner_Sand", 1 ),

@@ -100,13 +100,13 @@ namespace MarsMiner.Client.Graphics
                         case 0:
                             var_shade = 0.9; break;
                         case 1:
-                            var_shade = 0.7; break;
+                            var_shade = 1.0; break;
                         case 2:
                             var_shade = 0.8; break;
                         case 3:
                             var_shade = 0.9; break;
                         case 4:
-                            var_shade = 1.0; break;
+                            var_shade = 0.7; break;
                         case 5:
                             var_shade = 0.8; break;
                     }
@@ -202,7 +202,7 @@ namespace MarsMiner.Client.Graphics
             GL.Enable( EnableCap.DepthTest );
             GL.Enable( EnableCap.CullFace );
 
-            GL.CullFace( CullFaceMode.Front );
+            GL.CullFace( CullFaceMode.Back );
 
             if ( LineMode )
                 GL.PolygonMode( MaterialFace.Back, PolygonMode.Line );

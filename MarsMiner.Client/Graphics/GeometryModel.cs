@@ -55,11 +55,101 @@ namespace MarsMiner.Client.Graphics
         }
     }
 
+    public enum TerrainCorner : byte
+    {
+        None = 0,
+        FrontLeft = 1,
+        BackLeft = 2,
+        FrontRight = 4,
+        BackRight = 8,
+
+        Left = FrontLeft | BackLeft,
+        Front = FrontLeft | FrontRight,
+        Right = FrontRight | BackRight,
+        Back = BackLeft | BackRight,
+
+        All = Left | Right
+    }
+
     public class GeometryModel
     {
         public const UInt16 FileFormatVersion = 0x0000;
 
         #region Default Models
+        #region Terrain
+        public static GeometryModel Terrain( TerrainCorner highCorners, string texTop, string texWall, string texWallTri,
+            string texBottom )
+        {
+            Vector2 pfl = new Vector2( 0.0f, 0.0f );
+            Vector2 pfr = new Vector2( 1.0f, 0.0f );
+            Vector2 pbl = new Vector2( 0.0f, 1.0f );
+            Vector2 pbr = new Vector2( 1.0f, 1.0f );
+
+            bool bfl = ( highCorners & TerrainCorner.FrontLeft  ) != 0;
+            bool bfr = ( highCorners & TerrainCorner.FrontRight ) != 0;
+            bool bbl = ( highCorners & TerrainCorner.BackLeft   ) != 0;
+            bool bbr = ( highCorners & TerrainCorner.BackRight  ) != 0;
+
+            float hfl = bfl ? 1.0f : 0.0f;
+            float hfr = bfr ? 1.0f : 0.0f;
+            float hbl = bbl ? 1.0f : 0.0f;
+            float hbr = bbr ? 1.0f : 0.0f;
+
+            Tuple<Face,Vector2,Vector2,float,float>[] faces = new Tuple<Face,Vector2,Vector2,float,float>[]
+            {
+                new Tuple<Face,Vector2,Vector2,float,float>
+                ( Face.Left, pbl, pfl, hbl, hfl ),
+                new Tuple<Face,Vector2,Vector2,float,float>
+                ( Face.Front, pfl, pfr, hfl, hfr ),
+                new Tuple<Face,Vector2,Vector2,float,float>
+                ( Face.Right, pfr, pbr, hfr, hbr ),
+                new Tuple<Face,Vector2,Vector2,float,float>
+                ( Face.Back, pbr, pbl, hbr, hbl )
+            };
+
+            GeometryModel mdl = new GeometryModel();
+
+            foreach( Tuple<Face,Vector2,Vector2,float,float> face in faces )
+            {
+                if( face.Item4 == 0.0f && face.Item5 == 0.0f )
+                    continue;
+
+                ModelFace mf;
+                if( face.Item4 == 0.0f || face.Item5 == 0.0f )
+                {
+                    Vector2 corner = face.Item4 == 0.0f ? face.Item3 : face.Item2;
+
+                    mf = new ModelFace( texWallTri, new float[]
+                    {
+                        face.Item2.X, face.Item4, face.Item2.Y, 0.0f, face.Item4,
+                        face.Item3.X, face.Item5, face.Item3.Y, 1.0f, face.Item5,
+                        corner.X, 0.0f, corner.Y, face.Item4 == 0.0f ? 1.0f : 0.0f, 0.0f
+                    } );
+                }
+                else
+                {
+                    mf = new ModelFace( texWallTri, new float[]
+                    {
+                        face.Item2.X, face.Item4, face.Item2.Y, 0.0f, face.Item4,
+                        face.Item3.X, face.Item5, face.Item3.Y, 1.0f, face.Item5,
+                        face.Item3.X, 0.0f, face.Item3.Y, 1.0f, 0.0f,
+                        face.Item2.X, 0.0f, face.Item2.Y, 0.0f, 0.0f
+                    } );
+                }
+                mdl.AddFace( mf, face.Item1 );
+            }
+
+           mdl.AddFace( new ModelFace( texTop, new float[]
+            {
+                pbl.X, hbl, pbl.Y, 0.0f, 0.0f,
+                pbr.X, hbr, pbr.Y, 1.0f, 0.0f,
+                pfr.X, hfr, pfr.Y, 1.0f, 1.0f,
+                pfl.X, hfl, pfl.Y, 0.0f, 1.0f
+            } ), bbl && bbr && bfl && bfr ? Face.Top : Face.All );
+
+            return mdl;
+        }
+        #endregion
         #region Cube
         public static GeometryModel Cube( string tex )
         {
@@ -84,179 +174,47 @@ namespace MarsMiner.Client.Graphics
             cube.AddFace( new ModelFace( texLeft, new float[]
             {
                 0.0f, 0.0f, 1.0f, 0.0f, 0.0f,
-                0.0f, 0.0f, 0.0f, 1.0f, 0.0f,
-                0.0f, 1.0f, 0.0f, 1.0f, 1.0f,
                 0.0f, 1.0f, 1.0f, 0.0f, 1.0f,
+                0.0f, 1.0f, 0.0f, 1.0f, 1.0f,
+                0.0f, 0.0f, 0.0f, 1.0f, 0.0f,
             } ), Face.Left );
             cube.AddFace( new ModelFace( texBottom, new float[]
             {
                 0.0f, 0.0f, 0.0f, 0.0f, 0.0f,
-                0.0f, 0.0f, 1.0f, 1.0f, 0.0f,
-                1.0f, 0.0f, 1.0f, 1.0f, 1.0f,
                 1.0f, 0.0f, 0.0f, 0.0f, 1.0f,
+                1.0f, 0.0f, 1.0f, 1.0f, 1.0f,
+                0.0f, 0.0f, 1.0f, 1.0f, 0.0f,
             } ), Face.Bottom );
             cube.AddFace( new ModelFace( texFront, new float[]
             {
                 0.0f, 0.0f, 0.0f, 0.0f, 0.0f,
-                1.0f, 0.0f, 0.0f, 1.0f, 0.0f,
-                1.0f, 1.0f, 0.0f, 1.0f, 1.0f,
                 0.0f, 1.0f, 0.0f, 0.0f, 1.0f,
+                1.0f, 1.0f, 0.0f, 1.0f, 1.0f,
+                1.0f, 0.0f, 0.0f, 1.0f, 0.0f,
             } ), Face.Front );
             cube.AddFace( new ModelFace( texRight, new float[]
             {
                 1.0f, 0.0f, 0.0f, 0.0f, 0.0f,
-                1.0f, 0.0f, 1.0f, 1.0f, 0.0f,
-                1.0f, 1.0f, 1.0f, 1.0f, 1.0f,
                 1.0f, 1.0f, 0.0f, 0.0f, 1.0f,
+                1.0f, 1.0f, 1.0f, 1.0f, 1.0f,
+                1.0f, 0.0f, 1.0f, 1.0f, 0.0f,
             } ), Face.Right );
             cube.AddFace( new ModelFace( texTop, new float[]
             {
                 0.0f, 1.0f, 0.0f, 0.0f, 0.0f,
-                1.0f, 1.0f, 0.0f, 1.0f, 0.0f,
-                1.0f, 1.0f, 1.0f, 1.0f, 1.0f,
                 0.0f, 1.0f, 1.0f, 0.0f, 1.0f,
+                1.0f, 1.0f, 1.0f, 1.0f, 1.0f,
+                1.0f, 1.0f, 0.0f, 1.0f, 0.0f,
             } ), Face.Top );
             cube.AddFace( new ModelFace( texBack, new float[]
             {
                 1.0f, 0.0f, 1.0f, 0.0f, 0.0f,
-                0.0f, 0.0f, 1.0f, 1.0f, 0.0f,
-                0.0f, 1.0f, 1.0f, 1.0f, 1.0f,
                 1.0f, 1.0f, 1.0f, 0.0f, 1.0f,
+                0.0f, 1.0f, 1.0f, 1.0f, 1.0f,
+                0.0f, 0.0f, 1.0f, 1.0f, 0.0f,
             } ), Face.Back );
 
             return cube;
-        }
-        #endregion
-        #region QuartSlope
-        public static GeometryModel QuartSlope( Face dir, string tex )
-        {
-            return QuartSlope( dir, tex, tex, tex );
-        }
-
-        public static GeometryModel QuartSlope( Face dir, string texSlope,
-            string texSides, string texBottom )
-        {
-            if ( dir.Equals( Face.Top ) || dir.Equals( Face.Bottom ) )
-                throw new Exception( "Slopes can not face up or down" );
-
-            Vector2 fl = new Vector2( 0.0f, 0.0f );
-            Vector2 fr = new Vector2( 1.0f, 0.0f );
-            Vector2 bl = new Vector2( 0.0f, 1.0f );
-            Vector2 br = new Vector2( 1.0f, 1.0f );
-
-            Face f = Face.Front;
-
-            while ( !f.Equals( dir ) )
-            {
-                f = f.HorzLeft;
-
-                Vector2 temp = fl;
-                fl = bl;
-                bl = br;
-                br = fr;
-                fr = temp;
-            }
-
-            GeometryModel slope = new GeometryModel();
-            slope.AddFace( new ModelFace( texSides, new float[]
-            {
-                bl.X, 0.0f, bl.Y, 1.0f, 0.0f,
-                fl.X, 0.0f, fl.Y, 0.0f, 0.0f,
-                bl.X, 1.0f, bl.Y, 1.0f, 1.0f,
-            } ), dir.HorzLeft );
-            slope.AddFace( new ModelFace( texSides, new float[]
-            {
-                br.X, 0.0f, br.Y, 0.0f, 0.0f,
-                bl.X, 0.0f, bl.Y, 1.0f, 0.0f,
-                bl.X, 1.0f, bl.Y, 1.0f, 1.0f,
-            } ), dir.Opposite );
-            slope.AddFace( new ModelFace( texBottom, new float[]
-            {
-                bl.X, 0.0f, bl.Y, 0.0f, 0.0f,
-                br.X, 0.0f, br.Y, 1.0f, 0.0f,
-                fl.X, 0.0f, fl.Y, 1.0f, 1.0f,
-            } ), Face.Bottom );
-            slope.AddFace( new ModelFace( texSlope, new float[]
-            {
-                bl.X, 1.0f, bl.Y, 1.0f, 0.0f,
-                fl.X, 0.0f, fl.Y, 1.0f, 1.0f,
-                br.X, 0.0f, br.Y, 0.0f, 0.0f,
-            } ), Face.All );
-
-            return slope;
-        }
-        #endregion
-        #region Slope
-        public static GeometryModel Slope( Face dir, string tex )
-        {
-            return Slope( dir, tex, tex, tex, tex );
-        }
-
-        public static GeometryModel Slope( Face dir, string texQuads, string texSides )
-        {
-            return Slope( dir, texQuads, texSides, texQuads, texQuads );
-        }
-
-        public static GeometryModel Slope( Face dir, string texSlope, string texSides,
-            string texBack, string texBottom )
-        {
-            if ( dir.Equals( Face.Top ) || dir.Equals( Face.Bottom ) )
-                throw new Exception( "Slopes can not face up or down" );
-
-            Vector2 fl = new Vector2( 0.0f, 0.0f );
-            Vector2 fr = new Vector2( 1.0f, 0.0f );
-            Vector2 bl = new Vector2( 0.0f, 1.0f );
-            Vector2 br = new Vector2( 1.0f, 1.0f );
-
-            Face f = Face.Front;
-
-            while ( !f.Equals( dir ) )
-            {
-                f = f.HorzLeft;
-
-                Vector2 temp = fl;
-                fl = bl;
-                bl = br;
-                br = fr;
-                fr = temp;
-            }
-
-            GeometryModel slope = new GeometryModel();
-            slope.AddFace( new ModelFace( texSides, new float[]
-            {
-                bl.X, 0.0f, bl.Y, 1.0f, 0.0f,
-                fl.X, 0.0f, fl.Y, 0.0f, 0.0f,
-                bl.X, 1.0f, bl.Y, 1.0f, 1.0f,
-            } ), dir.HorzLeft );
-            slope.AddFace( new ModelFace( texBottom, new float[]
-            {
-                fl.X, 0.0f, fl.Y, 0.0f, 0.0f,
-                bl.X, 0.0f, bl.Y, 1.0f, 0.0f,
-                br.X, 0.0f, br.Y, 1.0f, 1.0f,
-                fr.X, 0.0f, fr.Y, 0.0f, 1.0f,
-            } ), Face.Bottom );
-            slope.AddFace( new ModelFace( texSlope, new float[]
-            {
-                fl.X, 0.0f, fl.Y, 0.0f, 0.0f,
-                fr.X, 0.0f, fr.Y, 1.0f, 0.0f,
-                br.X, 1.0f, br.Y, 1.0f, 1.0f,
-                bl.X, 1.0f, bl.Y, 0.0f, 1.0f,
-            } ), dir | dir.HorzLeft | dir.HorzRight | Face.Top );
-            slope.AddFace( new ModelFace( texSides, new float[]
-            {
-                fr.X, 0.0f, fr.Y, 0.0f, 0.0f,
-                br.X, 0.0f, br.Y, 1.0f, 0.0f,
-                br.X, 1.0f, br.Y, 1.0f, 1.0f,
-            } ), dir.HorzRight );
-            slope.AddFace( new ModelFace( texBack, new float[]
-            {
-                br.X, 0.0f, br.Y, 0.0f, 0.0f,
-                bl.X, 0.0f, bl.Y, 1.0f, 0.0f,
-                bl.X, 1.0f, bl.Y, 1.0f, 1.0f,
-                br.X, 1.0f, br.Y, 0.0f, 1.0f,
-            } ), dir.Opposite );
-
-            return slope;
         }
         #endregion
         #endregion
