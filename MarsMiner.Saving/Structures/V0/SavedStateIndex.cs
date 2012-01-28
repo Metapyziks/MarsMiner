@@ -30,11 +30,16 @@ namespace MarsMiner.Saving.Structures.V0
     {
         private long timestamp;
         private string saveName;
-        private string pointerFile;
-        private PointerFileIndex pointerFileIndex;
         private ChunkTable chunkTable;
 
-        //TODO: contructor, accessors
+        //TODO: accessors
+
+        public SavedStateIndex(long timestamp, string saveName, ChunkTable chunkTable)
+        {
+            this.timestamp = timestamp;
+            this.saveName = saveName;
+            this.chunkTable = chunkTable;
+        }
 
         #region IBlockStructure
         public int Length
@@ -43,9 +48,6 @@ namespace MarsMiner.Saving.Structures.V0
             {
                 return 8 // timestamp
                     + 4 // saveName
-                    + 4 // pointerFile
-                    + 4 // pointerFileIndex
-                    + 4 // pointerFileIndex
                     + 4; // chunkTable
             }
         }
@@ -56,8 +58,6 @@ namespace MarsMiner.Saving.Structures.V0
 
             w.Write(timestamp);
             w.Write(getPointerFunc(saveName));
-            w.Write(getPointerFunc(pointerFile));
-            w.Write(getPointerFunc(pointerFileIndex));
             w.Write(getPointerFunc(chunkTable));
         }
         #endregion

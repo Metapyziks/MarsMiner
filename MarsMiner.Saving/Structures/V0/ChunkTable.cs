@@ -32,7 +32,18 @@ namespace MarsMiner.Saving.Structures.V0
         private int[] yLocations;
         private Chunk[] chunks;
 
-        //TODO: contructor, accessors
+        //TODO: accessors
+
+        public ChunkTable(int[] xLocations, int[] yLocations, Chunk[] chunks)
+        {
+            if (xLocations.Length != yLocations.Length || yLocations.Length != chunks.Length)
+            {
+                throw new ArgumentException("Argument arrays must have the same length!");
+            }
+            this.xLocations = xLocations;
+            this.yLocations = yLocations;
+            this.chunks = chunks;
+        }
 
         #region IBlockStructure
         public int Length

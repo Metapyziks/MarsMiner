@@ -51,7 +51,7 @@ namespace MarsMiner.Saving
         private FileStream[] blobFiles;
         private IntRangeList[] freeSpace;
 
-        private void WriteTransaction(WriteTransaction transaction)
+        internal void WriteTransaction(WriteTransaction transaction)
         {
             var addresses = transaction.Blocks.ToDictionary(x => x, AllocateSpace);
 
@@ -80,12 +80,20 @@ namespace MarsMiner.Saving
 
         private void UpdateStringFileHeader()
         {
-            throw new NotImplementedException();
+            stringFile.Seek(0, SeekOrigin.Begin);
+
+            var w = new BinaryWriter(stringFile);
+            w.Write((int)0); //TODO: Move string file version to constant.
+            w.Write((int)stringsByAddress.Count);
         }
 
         private void UpdatePointerFileHeader()
         {
-            throw new NotImplementedException();
+            pointerFile.Seek(0, SeekOrigin.Begin);
+         
+            var w = new BinaryWriter(pointerFile);
+            w.Write((int)0); //TODO: Move pointer file version to constant.
+            w.Write((int)pointers.Count);
         }
 
         private void WriteBlock(IBlockStructure block, Dictionary<IBlockStructure, Tuple<int, uint>> addresses)
@@ -248,9 +256,12 @@ namespace MarsMiner.Saving
             gameSave.stringFile = File.Open(Path.Combine(path, "strings"), FileMode.CreateNew, FileAccess.ReadWrite, FileShare.None);
             gameSave.stringFile.Write(new byte[8], 0, 8);
             gameSave.freeStringSpace = new IntRangeList();
+            gameSave.addressByString = new Dictionary<string, uint>();
+            gameSave.stringsByAddress = new Dictionary<uint, string>();
 
             gameSave.pointerFile = File.Open(Path.Combine(path, "pointers"), FileMode.CreateNew, FileAccess.ReadWrite, FileShare.None);
             gameSave.pointerFile.Write(new byte[8], 0, 8);
+            gameSave.pointers = new List<Tuple<int, uint>>();
 
             gameSave.blobFiles = new FileStream[] { File.Open(Path.Combine(path, "blob0"), FileMode.CreateNew, FileAccess.ReadWrite, FileShare.None) };
             gameSave.freeSpace = new IntRangeList[] { new IntRangeList() };

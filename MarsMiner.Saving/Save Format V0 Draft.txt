@@ -41,7 +41,6 @@ SavedStateIndex (block structure, fixed length)
 -----------------------------------------------
 long						Timestamp in 100ns ticks since 12:00 midnight, January 1, 0001 in the GregorianCalendar calendar (excluding ticks that would be added by leap seconds) in UTC
 Pointer<String>				Save name
-Pointer<PointerFileIndex>	pointer to pointer file index local to pointer file
 Pointer<ChunkTable>			Pointer to chunk table
 
 BlockTypeTable (block structure, variable length)

@@ -55,6 +55,7 @@
     <Compile Include="Structures\V0\PointerFileIndex.cs" />
     <Compile Include="Structures\V0\SavedStateIndex.cs" />
     <Compile Include="Structures\V0\Pointer.cs" />
+    <Compile Include="Test\Tests.cs" />
     <Compile Include="Util\IntRangeList.cs" />
   </ItemGroup>
   <ItemGroup>

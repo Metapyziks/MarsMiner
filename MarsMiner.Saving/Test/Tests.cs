@@ -21,34 +21,23 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.IO;
-
 using MarsMiner.Saving.Structures.V0;
 
 namespace MarsMiner.Saving.Test
 {
-    class Program
+    public static class Tests
     {
-        static void Main(string[] args)
+        public static void TestSaving(GameSave gameSave, string saveName)
         {
-            Console.BufferWidth = 1000;
+            var chunkTable = new ChunkTable(new int[0], new int[0], new Chunk[0]);
+            var mainIndex = new SavedStateIndex(DateTime.UtcNow.Ticks, saveName, chunkTable);
+            var header = new Header(mainIndex);
 
-            var savePath = "." + Path.DirectorySeparatorChar + "TestSave";
-            savePath = Path.GetFullPath(savePath);
-
-            if (Directory.Exists(savePath))
-            {
-                Directory.Delete(savePath, true);
-            }
-
-            var gameSave = GameSave.Create(savePath);
-
-            Tests.TestSaving(gameSave, "Test Save");
-            Tests.TestSaving(gameSave, "Test Save2");
-            Tests.TestSaving(gameSave, "Test Save");
-            Tests.TestSaving(gameSave, "Test Save3");
-
-            gameSave.Close();
+            gameSave.WriteTransaction(
+                new Cache.WriteTransaction(header,
+                new Interfaces.IBlockStructure[] { 
+                    mainIndex,
+                    chunkTable }));
         }
     }
 }
