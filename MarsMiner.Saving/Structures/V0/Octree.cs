@@ -32,7 +32,13 @@ namespace MarsMiner.Saving.Structures.V0
         private BitArray octreeFlags;
         private byte[] octreeValues;
 
-        //TODO: contructor, accessors
+        //TODO: accessors
+
+        public Octree(BitArray octreeFlags, byte[] octreeValues)
+        {
+            this.octreeFlags = octreeFlags;
+            this.octreeValues = octreeValues;
+        }
 
         #region IBlockStructure
         public int Length
