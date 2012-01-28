@@ -128,7 +128,7 @@ namespace MarsMiner.Client.Graphics
                 }
                 else
                 {
-                    mf = new ModelFace( texWallTri, new float[]
+                    mf = new ModelFace( texWall, new float[]
                     {
                         face.Item2.X, face.Item4, face.Item2.Y, 0.0f, face.Item4,
                         face.Item3.X, face.Item5, face.Item3.Y, 1.0f, face.Item5,
@@ -139,13 +139,18 @@ namespace MarsMiner.Client.Graphics
                 mdl.AddFace( mf, face.Item1 );
             }
 
-           mdl.AddFace( new ModelFace( texTop, new float[]
+            mdl.AddFace( new ModelFace( texTop, new float[]
             {
                 pbl.X, hbl, pbl.Y, 0.0f, 0.0f,
                 pbr.X, hbr, pbr.Y, 1.0f, 0.0f,
                 pfr.X, hfr, pfr.Y, 1.0f, 1.0f,
+            } ), bbl && bbr && bfr ? Face.Top : Face.All );
+             mdl.AddFace( new ModelFace( texTop, new float[]
+            {
+                pbl.X, hbl, pbl.Y, 0.0f, 0.0f,
+                pfr.X, hfr, pfr.Y, 1.0f, 1.0f,
                 pfl.X, hfl, pfl.Y, 0.0f, 1.0f
-            } ), bbl && bbr && bfl && bfr ? Face.Top : Face.All );
+            } ), bbl && bfl && bfr ? Face.Top : Face.All );
 
             return mdl;
         }

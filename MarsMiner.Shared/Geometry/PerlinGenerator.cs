@@ -82,14 +82,11 @@ namespace MarsMiner.Shared.Geometry
             Random rand = new Random( Seed );
 
             UInt16 empty = BlockManager.GetID( "Core_Empty" );
-            UInt16 sandCube = BlockManager.GetID( "MarsMiner_Sand", 14 );
-            UInt16[] sandSlopes = new UInt16[]
-            {
-                BlockManager.GetID( "MarsMiner_Sand", 1 ),
-                BlockManager.GetID( "MarsMiner_Sand", 2 ),
-                BlockManager.GetID( "MarsMiner_Sand", 3 ),
-                BlockManager.GetID( "MarsMiner_Sand", 4 )
-            };
+            UInt16[] sand = new UInt16[ 15 ];
+
+            for( int i = 0; i < 15; ++ i )
+                sand[ i ] = BlockManager.GetID( "MarsMiner_Sand", i );
+
             Face[] slopeFaces = new Face[] { Face.Front, Face.Left, Face.Back, Face.Right };
             UInt16 rock = BlockManager.GetID( "MarsMiner_Rock" );
             UInt16 boulder = BlockManager.GetID( "MarsMiner_Boulder" );
@@ -210,7 +207,7 @@ namespace MarsMiner.Shared.Geometry
                                 scuboid.Y = height - res;
                                 scuboid.Z = rz;
 
-                                octree.SetCuboid( scuboid, sandCube );
+                                octree.SetCuboid( scuboid, sand[ 14 ] );
 
                                 if ( res == 1 && rand.NextDouble() < 1.0 / 256.0 )
                                 {
@@ -232,26 +229,49 @@ namespace MarsMiner.Shared.Geometry
                     while( enumer.MoveNext() )
                     {
                         OctreeLeaf<UInt16> leaf = enumer.Current;
-                        if ( enumer.Size == 1 && leaf.Value == sandCube )
+                        if ( enumer.Size == 1 && leaf.Value == sand[ 14 ] )
                         {
-                            int start = rand.Next( 4 );
-                            for ( int i = start; i < start + 4; ++i )
+                            OctreeLeaf<UInt16> above = leaf.FindNeighbour( Face.Top )
+                                as OctreeLeaf<UInt16>;
+                            if ( above != null && above.Value == empty )
                             {
-                                Face face = slopeFaces[ i % 4 ];
-                                var n = leaf.FindNeighbour( face ) as OctreeLeaf<UInt16>;
-                                if ( n != null && n.Value == empty )
+                                OctreeNode<UInt16>[] ns = new OctreeNode<UInt16>[]
                                 {
-                                    toSlope.Add( new Tuple<int, int, int, int>
-                                        ( enumer.X, enumer.Y, enumer.Z, i % 4 ) );
-                                    break;
-                                }
+                                    leaf.FindNeighbour( Face.Back | Face.Left ),
+                                    leaf.FindNeighbour( Face.Back ),
+                                    leaf.FindNeighbour( Face.Back | Face.Right ),
+                                    leaf.FindNeighbour( Face.Left ),
+                                    leaf.FindNeighbour( Face.Right ),
+                                    leaf.FindNeighbour( Face.Front | Face.Left ),
+                                    leaf.FindNeighbour( Face.Front ),
+                                    leaf.FindNeighbour( Face.Front | Face.Right )
+                                };
+
+                                bool[] bs = new bool[ 8 ];
+                                for ( int i = 0; i < 8; ++i )
+                                    bs[ i ] = ( ns[ i ] is OctreeLeaf<UInt16> )
+                                        && ( (OctreeLeaf<UInt16>) ns[ i ] ).Value != empty;
+
+                                int index = 0;
+
+                                if ( bs[ 5 ] && ( bs[ 3 ] && bs[ 6 ] ) )
+                                    index |= 1 << 0;
+                                if ( bs[ 7 ] && ( bs[ 4 ] && bs[ 6 ] ) )
+                                    index |= 1 << 1;
+                                if ( bs[ 0 ] && ( bs[ 1 ] && bs[ 3 ] ) )
+                                    index |= 1 << 2;
+                                if ( bs[ 2 ] && ( bs[ 1 ] && bs[ 4 ] ) )
+                                    index |= 1 << 3;
+
+                                if ( index > 0 )
+                                    toSlope.Add( new Tuple<int, int, int, int>( enumer.X, enumer.Y, enumer.Z, index - 1 ) );
                             }
                         }
                     }
 
                     foreach ( var item in toSlope )
                         octree.SetCuboid( item.Item1, item.Item2, item.Item3,
-                            1, 1, 1, sandSlopes[ item.Item4 ] );
+                            1, 1, 1, sand[ item.Item4 ] );
                 }
             }
 
