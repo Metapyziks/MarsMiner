@@ -139,18 +139,37 @@ namespace MarsMiner.Client.Graphics
                 mdl.AddFace( mf, face.Item1 );
             }
 
-            mdl.AddFace( new ModelFace( texTop, new float[]
+            if ( ( !bfr && !bbl && ( bfl ^ bbr ) )
+                || ( bfr && bbl && ( !bfl || !bbr ) ) )
             {
-                pbl.X, hbl, pbl.Y, 0.0f, 0.0f,
-                pbr.X, hbr, pbr.Y, 1.0f, 0.0f,
-                pfr.X, hfr, pfr.Y, 1.0f, 1.0f,
-            } ), bbl && bbr && bfr ? Face.Top : Face.All );
-             mdl.AddFace( new ModelFace( texTop, new float[]
+                mdl.AddFace( new ModelFace( texTop, new float[]
+                {
+                    pbl.X, hbl, pbl.Y, 0.0f, 0.0f,
+                    pbr.X, hbr, pbr.Y, 1.0f, 0.0f,
+                    pfr.X, hfr, pfr.Y, 1.0f, 1.0f,
+                } ), bbl && bbr && bfr ? Face.Top : Face.All );
+                mdl.AddFace( new ModelFace( texTop, new float[]
+                {
+                    pbl.X, hbl, pbl.Y, 0.0f, 0.0f,
+                    pfr.X, hfr, pfr.Y, 1.0f, 1.0f,
+                    pfl.X, hfl, pfl.Y, 0.0f, 1.0f
+                } ), bbl && bfl && bfr ? Face.Top : Face.All );
+            }
+            else
             {
-                pbl.X, hbl, pbl.Y, 0.0f, 0.0f,
-                pfr.X, hfr, pfr.Y, 1.0f, 1.0f,
-                pfl.X, hfl, pfl.Y, 0.0f, 1.0f
-            } ), bbl && bfl && bfr ? Face.Top : Face.All );
+                mdl.AddFace( new ModelFace( texTop, new float[]
+                {
+                    pbr.X, hbr, pbr.Y, 0.0f, 0.0f,
+                    pfr.X, hfr, pfr.Y, 1.0f, 0.0f,
+                    pfl.X, hfl, pfl.Y, 1.0f, 1.0f,
+                } ), bbr && bfr && bfl ? Face.Top : Face.All );
+                mdl.AddFace( new ModelFace( texTop, new float[]
+                {
+                    pbr.X, hbr, pbr.Y, 0.0f, 0.0f,
+                    pfl.X, hfl, pfl.Y, 1.0f, 1.0f,
+                    pbl.X, hbl, pbl.Y, 0.0f, 1.0f
+                } ), bbr && bfl && bbl ? Face.Top : Face.All );
+            }
 
             return mdl;
         }
