@@ -33,6 +33,9 @@ namespace MarsMiner.Saving
     /// </summary>
     public class GameSave
     {
+        bool closing = false;
+        bool closed = false;
+
         const int MaximumBlockStartAddress = 100000000;
         private const uint NullPointer = 0;
 
@@ -51,6 +54,13 @@ namespace MarsMiner.Saving
 
         private FileStream[] blobFiles;
         private IntRangeList[] freeSpace;
+
+        private GameSave()
+        {
+            freeStringSpace = new IntRangeList();
+            addressByString = new Dictionary<string, uint>();
+            stringsByAddress = new Dictionary<uint, string>();
+        }
 
         internal void WriteTransaction(WriteTransaction transaction)
         {
@@ -295,9 +305,6 @@ namespace MarsMiner.Saving
 
             gameSave.stringFile = File.Open(Path.Combine(path, "strings"), FileMode.CreateNew, FileAccess.ReadWrite, FileShare.None);
             gameSave.stringFile.Write(new byte[8], 0, 8);
-            gameSave.freeStringSpace = new IntRangeList();
-            gameSave.addressByString = new Dictionary<string, uint>();
-            gameSave.stringsByAddress = new Dictionary<uint, string>();
 
             gameSave.pointerFile = File.Open(Path.Combine(path, "pointers"), FileMode.CreateNew, FileAccess.ReadWrite, FileShare.None);
             gameSave.pointerFile.Write(new byte[8], 0, 8);
@@ -324,6 +331,7 @@ namespace MarsMiner.Saving
             var gameSave = new GameSave();
 
             gameSave.stringFile = File.Open(stringsPath, FileMode.Open, FileAccess.ReadWrite, FileShare.None);
+
             gameSave.pointerFile = File.Open(pointersPath, FileMode.Open, FileAccess.ReadWrite, FileShare.None);
 
             var blobFiles = new LinkedList<FileStream>();
@@ -356,6 +364,8 @@ namespace MarsMiner.Saving
 
         public void Close()
         {
+            closing = true;
+
             Flush();
 
             pointerFile.Dispose();
@@ -364,11 +374,21 @@ namespace MarsMiner.Saving
             {
                 blob.Dispose();
             }
+
+            closed = true;
         }
 
         private void Flush()
         {
             //TODO: Flush save
+        }
+
+        ~GameSave()
+        {
+            if (!closed)
+            {
+                new System.Threading.Tasks.Task(() => { throw new InvalidOperationException("GameSave not closed!"); }).Start();
+            }
         }
     }
 }

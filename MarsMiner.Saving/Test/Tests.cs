@@ -30,29 +30,26 @@ namespace MarsMiner.Saving.Test
     {
         public static void TestSaving(GameSave gameSave, string saveName)
         {
-            {
-                //Write test
-                var octree = new Octree(new BitArray(new bool[] { false, false }), new byte[] { 1 });
-                var blockTypeTable = new BlockTypeTable(new string[] { "Block 0", "Block 1", "Block 2" });
-                var chunk = new Chunk(blockTypeTable, new Octree[] { octree });
-                var chunkTable = new ChunkTable(new int[1] { 0 }, new int[1] { 0 }, new Chunk[1] { chunk });
-                var mainIndex = new SavedStateIndex(DateTime.UtcNow.Ticks, saveName, chunkTable);
-                var header = new Header(mainIndex);
+            var octree = new Octree(new BitArray(new bool[] { false, false }), new byte[] { 1 });
+            var blockTypeTable = new BlockTypeTable(new string[] { "Block 0", "Block 1", "Block 2" });
+            var chunk = new Chunk(blockTypeTable, new Octree[] { octree });
+            var chunkTable = new ChunkTable(new int[1] { 0 }, new int[1] { 0 }, new Chunk[1] { chunk });
+            var mainIndex = new SavedStateIndex(DateTime.UtcNow.Ticks, saveName, chunkTable);
+            var header = new Header(mainIndex);
 
-                gameSave.WriteTransaction(
-                    new Cache.WriteTransaction(header,
-                    new Interfaces.IBlockStructure[] { 
+            gameSave.WriteTransaction(
+                new Cache.WriteTransaction(header,
+                new Interfaces.IBlockStructure[] { 
                     mainIndex,
                     chunkTable,
                     chunk,
                     blockTypeTable,
                     octree}));
-            }
+        }
 
-            {
-                //Read test
-                gameSave.Read(Header.Read);
-            }
+        public static void TestReading(GameSave gameSave)
+        {
+            var header = gameSave.Read(Header.Read);
         }
     }
 }

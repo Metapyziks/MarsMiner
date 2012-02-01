@@ -41,12 +41,33 @@ namespace MarsMiner.Saving.Test
                 Directory.Delete(savePath, true);
             }
 
+            CreateWrite(savePath);
+
+            OpenRead(savePath);
+
+            while (true)
+            {
+                GC.Collect();
+            }
+        }
+
+        private static void CreateWrite(string savePath)
+        {
             var gameSave = GameSave.Create(savePath);
 
             Tests.TestSaving(gameSave, "Test Save");
             Tests.TestSaving(gameSave, "Test Save2");
             Tests.TestSaving(gameSave, "Test Save");
             Tests.TestSaving(gameSave, "Test Save3");
+
+            gameSave.Close();
+        }
+
+        private static void OpenRead(string savePath)
+        {
+            var gameSave = GameSave.Open(savePath);
+
+            Tests.TestReading(gameSave);
 
             gameSave.Close();
         }
