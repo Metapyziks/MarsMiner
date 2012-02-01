@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Copyright (c) 2012 James King [metapyziks@gmail.com]
  *
  * This file is part of MarsMiner.
@@ -18,26 +18,29 @@
  */
 
 using System;
-using System.IO;
 
-using ResourceLib;
+using MarsMiner.Shared.Octree;
 
-namespace MarsMiner
+namespace MarsMiner.Shared.Geometry
 {
-    class Program
+    public class WorldGenerator
     {
-        static void Main( string[] args )
+        public int Seed { get; private set; }
+
+        public WorldGenerator( int seed = 0 )
         {
-            Res.RegisterManager( new MarsMiner.Client.Graphics.RTexture2DManager() );
+            if ( seed == 0 )
+            {
+                Random rand = new Random();
+                seed = rand.Next( int.MaxValue );
+            }
 
-            String contentDir = "Data" + Path.DirectorySeparatorChar;
+            Seed = seed;
+        }
 
-            Res.MountArchive( Res.LoadArchive( contentDir + "cl_baseui.rsa" ) );
-            Res.MountArchive( Res.LoadArchive( contentDir + "cl_marsminer.rsa" ) );
-
-            var window = new MarsMinerWindow();
-            window.Run( 60.0f );
-            window.Dispose();
+        public virtual Octree<UInt16> Generate( int x, int y, int z, int size, int resolution = 1 )
+        {
+            return new Octree<UInt16>( x, y, z, size );
         }
     }
 }

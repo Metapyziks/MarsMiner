@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Copyright (c) 2012 James King [metapyziks@gmail.com]
  *
  * This file is part of MarsMiner.
@@ -17,20 +17,10 @@
  * along with MarsMiner. If not, see <http://www.gnu.org/licenses/>.
  */
 
-namespace MarsMiner.Shared
+namespace MarsMiner.Shared.Octree
 {
-    public enum Face : byte
+    public interface IOctreeContainer<T>
     {
-        None = 0,
-        All = 63,
-
-        Front = 1,
-        Right = 2,
-        Back = 4,
-        Left = 8,
-        Top = 16,
-        Bottom = 32
+        OctreeNode<T> FindNode( int x, int y, int z, int size ); 
     }
-
-    public delegate Face FindSolidFacesDelegate<T>( T value );
 }

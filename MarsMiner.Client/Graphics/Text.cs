@@ -51,7 +51,7 @@ namespace MarsMiner.Client.Graphics
             }
         }
 
-        internal readonly Texture Texture;
+        internal readonly Texture2D Texture;
 
         public readonly Vector2 CharSize;
 
@@ -73,7 +73,7 @@ namespace MarsMiner.Client.Graphics
         
         public Font( String charMap )
         {
-            Texture = Res.Get<Texture>( charMap );
+            Texture = Res.Get<Texture2D>( charMap );
 
             CharSize = new Vector2( Texture.Width / 16, Texture.Height / 16 );
         }

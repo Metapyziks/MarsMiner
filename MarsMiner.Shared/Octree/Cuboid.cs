@@ -18,11 +18,8 @@
  */
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
-namespace MarsMiner.Shared
+namespace MarsMiner.Shared.Octree
 {
     public struct Cuboid
     {

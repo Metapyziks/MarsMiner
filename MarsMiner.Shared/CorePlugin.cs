@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Copyright (c) 2012 James King [metapyziks@gmail.com]
  *
  * This file is part of MarsMiner.
@@ -22,24 +22,28 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
+using MarsMiner.Shared.Geometry;
+
 namespace MarsMiner.Shared
 {
-    public class OctreeTest : Octree<OctreeTestBlockType>
+    public class CorePlugin : Plugin
     {
-        public TestChunk Chunk;
-
-        public OctreeTest( int x, int y, int z, int size )
-            : base( x, y, z, size )
+        protected CorePlugin( bool client, bool server )
+            : base( client, server )
         {
 
         }
 
-        protected override OctreeNode<OctreeTestBlockType> FindExternalNode( int x, int y, int z, int size )
+        public override void OnRegister()
         {
-            if( Chunk != null )
-                return Chunk.FindOctree( x, y, z, size );
+            if ( Client )
+                Register( "MarsMiner.Client.CorePlugin", Client, Server );
+        }
 
-            return null;
+        public override void OnWorldIntitialize( World world )
+        {
+            BlockType empty = BlockManager.RegisterType( "Core_Empty" );
+            empty.SetComponant( new SolidityBComponant( false ) );
         }
     }
 }

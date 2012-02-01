@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Copyright (c) 2012 James King [metapyziks@gmail.com]
  *
  * This file is part of MarsMiner.
@@ -19,31 +19,34 @@
 
 using System;
 
-namespace MarsMiner.Shared
+using MarsMiner.Shared.Octree;
+
+namespace MarsMiner.Shared.Geometry
 {
-    public class TestChunk
+    public class Chunk : IOctreeContainer<UInt16>
     {
-        public const int ChunkSize = 256;
-        public const int ChunkHeight = 256;
+        public const int Size = 64;
+        public const int Height = 1024;
 
-        public OctreeTest[] Octrees { get; private set; }
+        public Octree<UInt16>[] Octrees { get; private set; }
 
-        public readonly TestWorld World;
+        public readonly World World;
         public readonly int X;
         public readonly int Z;
 
-        public int CenterX
+        public int DistanceToOrigin
         {
-            get { return X + ChunkSize / 2; }
-        }
-        public int CenterZ
-        {
-            get { return Z + ChunkSize / 2; }
+            get
+            {
+                return Math.Max(
+                    Math.Abs( X ) - ( X < 0 ? Size : 0 ),
+                    Math.Abs( Z ) - ( Z < 0 ? Size : 0 ) );
+            }
         }
 
         public bool Loaded { get; private set; }
 
-        public TestChunk( TestWorld world, int x, int z )
+        public Chunk( World world, int x, int z )
         {
             World = world;
 
@@ -57,35 +60,35 @@ namespace MarsMiner.Shared
         {
             Loaded = false;
 
-            int octrees = ChunkHeight / ChunkSize;
-            Octrees = new OctreeTest[ octrees ];
+            int octrees = Height / Size;
+            Octrees = new Octree<UInt16>[ octrees ];
 
-            int dist = Math.Max( Math.Abs( CenterX ), Math.Abs( CenterZ ) );
+            int dist = DistanceToOrigin;
 
             int res = 
                 dist < 128 ? 1 :
                 dist < 256 ? 2 :
-                dist < 512 ? 4 : 8 ;
+                dist < 512 ? 4 : 8;
 
             for ( int i = 0; i < octrees; ++i )
             {
-                OctreeTest newTree = World.Generator.Generate( X, i * ChunkSize, Z, ChunkSize, res );
-                newTree.Chunk = this;
+                Octree<UInt16> newTree = World.Generator.Generate( X, i * Size, Z, Size, res );
+                newTree.Container = this;
                 Octrees[ i ] = newTree;
             }
 
             Loaded = true;
         }
 
-        public OctreeNode<OctreeTestBlockType> FindOctree( int x, int y, int z, int size )
+        public OctreeNode<UInt16> FindNode( int x, int y, int z, int size )
         {
-            if ( x < X || x >= X + ChunkSize || z < Z || z >= Z + ChunkSize )
-                return World.FindOctree( x, y, z, size );
+            if ( x < X || x >= X + Size || z < Z || z >= Z + Size )
+                return World.FindNode( x, y, z, size );
 
-            if ( y < 0 || y >= ChunkHeight || !Loaded )
+            if ( y < 0 || y >= Height || !Loaded )
                 return null;
 
-            return Octrees[ y / ChunkSize ].FindNode( x, y, z, size );
+            return Octrees[ y / Size ].FindNode( x, y, z, size );
         }
     }
 }

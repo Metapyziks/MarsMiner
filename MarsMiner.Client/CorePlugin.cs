@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Copyright (c) 2012 James King [metapyziks@gmail.com]
  *
  * This file is part of MarsMiner.
@@ -18,26 +18,29 @@
  */
 
 using System;
-using System.IO;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
 
-using ResourceLib;
+using MarsMiner.Shared;
+using MarsMiner.Shared.Geometry;
+using MarsMiner.Shared.Octree;
+using MarsMiner.Client.Graphics;
 
-namespace MarsMiner
+namespace MarsMiner.Client
 {
-    class Program
+    public class CorePlugin : Plugin
     {
-        static void Main( string[] args )
+        protected CorePlugin( bool client, bool server )
+            : base( true, false )
         {
-            Res.RegisterManager( new MarsMiner.Client.Graphics.RTexture2DManager() );
 
-            String contentDir = "Data" + Path.DirectorySeparatorChar;
+        }
 
-            Res.MountArchive( Res.LoadArchive( contentDir + "cl_baseui.rsa" ) );
-            Res.MountArchive( Res.LoadArchive( contentDir + "cl_marsminer.rsa" ) );
-
-            var window = new MarsMinerWindow();
-            window.Run( 60.0f );
-            window.Dispose();
+        public override void OnWorldIntitialize( World world )
+        {
+            BlockType empty = BlockManager.Get( "Core_Empty" );
+            empty.SetComponant( new VisibilityBComponant( false, Face.None ) );
         }
     }
 }

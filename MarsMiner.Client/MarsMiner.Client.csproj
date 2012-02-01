@@ -42,17 +42,25 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="CorePlugin.cs" />
     <Compile Include="Graphics\AnimatedSprite.cs" />
     <Compile Include="Graphics\FrameSprite.cs" />
-    <Compile Include="Graphics\OctreeTestRenderer.cs" />
-    <Compile Include="Graphics\OctreeTestShader.cs" />
+    <Compile Include="Graphics\ChunkRenderer.cs" />
+    <Compile Include="Graphics\GeometryShader.cs" />
+    <Compile Include="Graphics\GeometryModel.cs" />
+    <Compile Include="Graphics\ModelBComponant.cs" />
+    <Compile Include="Graphics\ModelFace.cs" />
     <Compile Include="Graphics\ShaderBuilder.cs" />
     <Compile Include="Graphics\ShaderProgram.cs" />
     <Compile Include="Graphics\Sprite.cs" />
     <Compile Include="Graphics\SpriteShader.cs" />
     <Compile Include="Graphics\Text.cs" />
     <Compile Include="Graphics\Texture.cs" />
+    <Compile Include="Graphics\Texture2D.cs" />
+    <Compile Include="Graphics\Texture2DArray.cs" />
     <Compile Include="Graphics\VertexBuffer.cs" />
+    <Compile Include="Graphics\VisibilityBComponant.cs" />
+    <Compile Include="MarsMinerPlugin.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="UI\UIButton.cs" />
     <Compile Include="UI\UILabel.cs" />

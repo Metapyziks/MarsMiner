@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Copyright (c) 2012 James King [metapyziks@gmail.com]
  *
  * This file is part of MarsMiner.
@@ -22,29 +22,47 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace MarsMiner.Shared
+namespace MarsMiner.Shared.Octree
 {
-    public struct BlockType
+    public class FaceEnumerator : IEnumerator<Face>
     {
-        public String Name;
+        private byte myBitmap;
+        private int myShift;
 
-        public bool Solid;
-
-        public Face SolidFaces;
-    }
-
-    public static class BlockManager
-    {
-        private static UInt16 myNextID = 0;
-        private static List<BlockType> myBlockTypes;
-
-        public static UInt16 RegisterType( BlockType type )
+        public Face Current
         {
-            if ( myBlockTypes.Count == 0xFFFF )
-                throw new Exception( "No more than 65536 block types can be registered." );
+            get { return Face.FromIndex( myShift ); }
+        }
 
-            myBlockTypes.Add( type );
-            return myNextID++;
+        object System.Collections.IEnumerator.Current
+        {
+            get { throw new NotImplementedException(); }
+        }
+
+        public FaceEnumerator( Face face )
+        {
+            myBitmap = (byte) face.GetHashCode();
+
+            Reset();
+        }
+
+        public void Dispose()
+        {
+
+        }
+
+        public bool MoveNext()
+        {
+            while ( ( myBitmap & ( 1 << ++myShift ) ) == 0 )
+                if ( myShift >= 8 )
+                    return false;
+
+            return true;
+        }
+
+        public void Reset()
+        {
+            myShift = -1;
         }
     }
 }

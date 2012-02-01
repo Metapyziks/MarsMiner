@@ -32,6 +32,7 @@ namespace MarsMiner.Client.Graphics
         public int Location { get; private set; }
         public int Size { get; private set; }
         public int Offset { get; private set; }
+        public int Divisor { get; private set; }
         public int InputOffset { get; private set; }
         public VertexAttribPointerType PointerType { get; private set; }
         public bool Normalize { get; private set; }
@@ -70,7 +71,7 @@ namespace MarsMiner.Client.Graphics
         }
 
         public AttributeInfo( ShaderProgram shader, string identifier,
-            int size, int offset, int inputOffset,
+            int size, int offset, int divisor, int inputOffset,
             VertexAttribPointerType pointerType =
                 VertexAttribPointerType.Float,
             bool normalize = false )
@@ -80,6 +81,7 @@ namespace MarsMiner.Client.Graphics
             Location = GL.GetAttribLocation( shader.Program, Identifier );
             Size = size;
             Offset = offset;
+            Divisor = divisor;
             InputOffset = inputOffset;
             PointerType = pointerType;
             Normalize = normalize;
@@ -259,15 +261,15 @@ namespace MarsMiner.Client.Graphics
             }
         }
 
-        public void AddAttribute( string identifier, int size, int inputOffset = -1,
+        public void AddAttribute( string identifier, int size, int divisor = 0, int inputOffset = -1,
             VertexAttribPointerType pointerType = VertexAttribPointerType.Float,
             bool normalize = false )
         {
             if ( inputOffset == -1 )
                 inputOffset = VertexDataSize;
 
-            AttributeInfo info = new AttributeInfo( this, identifier, size,
-                VertexDataStride, inputOffset - VertexDataSize, pointerType, normalize );
+            AttributeInfo info = new AttributeInfo( this, identifier, size, VertexDataStride,
+                divisor, inputOffset - VertexDataSize, pointerType, normalize );
 
             VertexDataStride += info.Length;
             VertexDataSize += info.Size;

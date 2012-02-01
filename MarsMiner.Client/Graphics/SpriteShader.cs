@@ -23,9 +23,9 @@ namespace MarsMiner.Client.Graphics
 {
     public class SpriteShader : ShaderProgram2D
     {
-        private Texture myTexture;
+        private Texture2D myTexture;
 
-        public Texture Texture
+        public Texture2D Texture
         {
             get
             {
@@ -66,7 +66,7 @@ namespace MarsMiner.Client.Graphics
             frag.Logic = @"
                 void main( void )
                 {
-                    vec4 clr = texture( texture0, var_texture ) * var_colour;
+                    vec4 clr = texture2D( texture0, var_texture ) * var_colour;
 
                     if( clr.a != 0.0 )
                         out_frag_colour = vec4( clr.rgba );

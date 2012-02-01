@@ -99,7 +99,7 @@ namespace MarsMiner.Client.Graphics
                     GL.EnableVertexAttribArray( info.Location );
                 }
 
-                GL.DrawArrays( BeginMode.Quads, 0, myLength );
+                GL.DrawArrays( shader.BeginMode, 0, myLength );
 
                 foreach ( AttributeInfo info in shader.Attributes )
                     GL.DisableVertexAttribArray( info.Location );

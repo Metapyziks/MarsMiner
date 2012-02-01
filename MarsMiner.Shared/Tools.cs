@@ -219,25 +219,13 @@ namespace MarsMiner.Shared
             return newText;
         }
 
-        public static Face Opposite( Face face )
+        public static int QuickLog2( int value )
         {
-            switch ( face )
-            {
-                case Face.Left:
-                    return Face.Right;
-                case Face.Right:
-                    return Face.Left;
-                case Face.Bottom:
-                    return Face.Top;
-                case Face.Top:
-                    return Face.Bottom;
-                case Face.Front:
-                    return Face.Back;
-                case Face.Back:
-                    return Face.Front;
-            }
+            int i = 0;
+            while ( ( value >>= 1 ) != 0 )
+                ++i;
 
-            return Face.None;
+            return i;
         }
     }
 }

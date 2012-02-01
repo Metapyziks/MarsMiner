@@ -18,13 +18,20 @@
  */
 
 using System;
+using System.Drawing;
+using System.Collections.Generic;
 
 using OpenTK;
 using OpenTK.Graphics.OpenGL;
 
+using ResourceLib;
+
+using MarsMiner.Shared.Geometry;
+using MarsMiner.Shared.Octree;
+
 namespace MarsMiner.Client.Graphics
 {
-    public class OctreeTestShader : ShaderProgram
+    public class GeometryShader : ShaderProgram
     {
         private Matrix4 myViewMatrix;
         private int myViewMatrixLoc;
@@ -34,6 +41,12 @@ namespace MarsMiner.Client.Graphics
         private Matrix4 myPerspectiveMatrix;
 
         private bool myViewChanged;
+
+        private Texture2DArray myTileMap;
+
+        private Dictionary<String,UInt16> myTileMapPointers;
+
+        public readonly int TileSize;
 
         public Vector3 CameraPosition
         {
@@ -65,40 +78,64 @@ namespace MarsMiner.Client.Graphics
 
         public bool LineMode { get; set; }
 
-        public OctreeTestShader()
+        public GeometryShader()
         {
             ShaderBuilder vert = new ShaderBuilder( ShaderType.VertexShader, false );
             vert.AddUniform( ShaderVarType.Mat4, "view_matrix" );
             vert.AddAttribute( ShaderVarType.Vec3, "in_position" );
-            vert.AddVarying( ShaderVarType.Vec4, "var_colour" );
+            vert.AddAttribute( ShaderVarType.Vec2, "in_tex" );
+            vert.AddVarying( ShaderVarType.Float, "var_shade" );
+            vert.AddVarying( ShaderVarType.Vec3, "var_tex" );
             vert.Logic = @"
+                float roots[ 4 ] = float[](
+                    0.0,
+                    1.0,
+                    0.70710678118654752440084436210485,
+                    0.57735026918962576450914878050196
+                );
+
+                vec3 sun_dir = normalize( vec3( 0.6, -0.7, 0.4 ) );
+
                 void main( void )
                 {
-                    float shade = in_position.y / 256.0;
-                    var_colour = vec4( shade * vec3( 1.0, 1.0, 1.0 ), 1.0 );
+                    int faceData = int( in_tex.x / 289 );
+                    int texPosIndex = int( in_tex.x ) % 289;
+
+                    float size = float( faceData / 27 );
+                    int face = faceData % 27;
+
+                    vec3 norm = normalize( vec3( face % 3 - 1, ( face / 3 ) % 3 - 1, ( face / 9 ) % 3 - 1 ) );
+                    var_shade = dot( norm, sun_dir ) * 0.25 + 0.75;
+
+                    vec2 texPos = vec2( texPosIndex % 17, texPosIndex / 17 );
+
+                    var_tex = vec3( texPos / 16.0 * size, in_tex.y );
+
                     gl_Position = view_matrix * vec4( in_position, 1.0 );
                 }
             ";
 
             ShaderBuilder frag = new ShaderBuilder( ShaderType.FragmentShader, false );
-            frag.AddVarying( ShaderVarType.Vec4, "var_colour" );
+            frag.AddUniform( ShaderVarType.Sampler2DArray, "tilemap" );
+            frag.AddVarying( ShaderVarType.Float, "var_shade" );
+            frag.AddVarying( ShaderVarType.Vec3, "var_tex" );
             frag.Logic = @"
                 void main( void )
                 {
-                    out_frag_colour = var_colour;
+                    out_frag_colour = texture2DArray( tilemap, var_tex ) * vec4( var_shade, var_shade, var_shade, 1.0 );
                 }
             ";
 
             VertexSource = vert.Generate( GL3 );
             FragmentSource = frag.Generate( GL3 );
 
-            BeginMode = BeginMode.Quads;
+            BeginMode = BeginMode.Triangles;
 
             CameraPosition = new Vector3();
             CameraRotation = new Vector2();
         }
 
-        public OctreeTestShader( int width, int height )
+        public GeometryShader( int width, int height )
             : this()
         {
             Create();
@@ -117,8 +154,29 @@ namespace MarsMiner.Client.Graphics
             base.OnCreate();
 
             AddAttribute( "in_position", 3 );
+            AddAttribute( "in_tex", 2 );
 
+            AddTexture( "tilemap", TextureUnit.Texture0 );
+            
             myViewMatrixLoc = GL.GetUniformLocation( Program, "view_matrix" );
+        }
+
+        public void UpdateTileMap( int size )
+        {
+            myTileMap = new Texture2DArray( size, size, GeometryModel.UsedTextures );
+            SetTexture( "tilemap", myTileMap );
+
+            foreach ( BlockType type in BlockManager.GetAll() )
+            {
+                var mdl = type.GetComponant<ModelBComponant>();
+                if ( mdl != null )
+                    mdl.Model.UpdateTextureIndexes( myTileMap );
+            }
+        }
+
+        public int GetTileIndex( String textureName )
+        {
+            return myTileMapPointers[ textureName ];
         }
 
         private void UpdateViewMatrix()
@@ -140,16 +198,16 @@ namespace MarsMiner.Client.Graphics
             GL.Enable( EnableCap.DepthTest );
             GL.Enable( EnableCap.CullFace );
 
-            GL.CullFace( CullFaceMode.Front );
+            GL.CullFace( CullFaceMode.Back );
 
             if ( LineMode )
-                GL.PolygonMode( MaterialFace.Back, PolygonMode.Line );
+                GL.PolygonMode( MaterialFace.Front, PolygonMode.Line );
         }
 
         protected override void OnEndBatch()
         {
             if ( LineMode )
-                GL.PolygonMode( MaterialFace.Back, PolygonMode.Fill );
+                GL.PolygonMode( MaterialFace.Front, PolygonMode.Fill );
 
             GL.Disable( EnableCap.DepthTest );
             GL.Disable( EnableCap.CullFace );

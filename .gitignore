@@ -1,4 +1,4 @@
-MarsMiner.suo
+*.suo
 Content/*.dll
 Content/*.pdb
 Content/*.exe
@@ -14,6 +14,8 @@ MarsMiner.Client/bin
 MarsMiner.Client/obj
 MarsMiner.Server/bin
 MarsMiner.Server/obj
+MarsModeler/bin
+MarsModeler/obj
 MarsMiner.Saving/bin
 MarsMiner.Saving/obj
 MarsMiner.Saving.Test/bin

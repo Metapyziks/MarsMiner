@@ -38,7 +38,7 @@ namespace MarsMiner.Client.UI
         public UIWindowCloseButton( Vector2 position, float scale = 1.0f )
             : base( new Vector2(), position )
         {
-            Texture texture = Res.Get<Texture>( "images_gui_panels" );
+            Texture2D texture = Res.Get<Texture2D>( "images_gui_panels" );
             mySprite = new Sprite( texture, scale )
             {
                 SubrectOffset = new Vector2( 32, 0 ),

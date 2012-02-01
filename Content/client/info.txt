@@ -1,0 +1,7 @@
+"name"				"MarsMiner"
+"author"			"Metapyziks"
+"author email"		"metapyziks@gmail.com"
+"author website"	"https://github.com/Metapyziks/MarsMiner"
+"version"			"0.0.0.1"
+"description"		"Client content for MarsMiner"
+"destination"		"client"

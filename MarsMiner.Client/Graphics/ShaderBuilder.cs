@@ -33,6 +33,7 @@ namespace MarsMiner.Client.Graphics
         Vec3,
         Vec4,
         Sampler2D,
+        Sampler2DArray,
         Mat4
     }
 
@@ -57,6 +58,8 @@ namespace MarsMiner.Client.Graphics
 
         private bool myTwoDimensional;
 
+        private List<String> myExtensions;
+
         private List<ShaderVariable> myUniforms;
         private List<ShaderVariable> myAttribs;
         private List<ShaderVariable> myVaryings;
@@ -71,6 +74,8 @@ namespace MarsMiner.Client.Graphics
             Type = type;
             myTwoDimensional = twoDimensional;
 
+            myExtensions = new List<string>();
+
             myUniforms = new List<ShaderVariable>();
             myAttribs  = new List<ShaderVariable>();
             myVaryings = new List<ShaderVariable>();
@@ -81,6 +86,13 @@ namespace MarsMiner.Client.Graphics
 
         public void AddUniform( ShaderVarType type, String identifier )
         {
+            if ( type == ShaderVarType.Sampler2DArray )
+            {
+                String ext = "GL_EXT_texture_array";
+                if ( !myExtensions.Contains( ext ) )
+                    myExtensions.Add( ext );
+            }
+
             myUniforms.Add( new ShaderVariable { Type = type, Identifier = identifier } );
         }
 
@@ -99,8 +111,17 @@ namespace MarsMiner.Client.Graphics
             String nl = Environment.NewLine;
 
             String output = 
-                "#version 1" + ( gl3 ? "3" : "2" ) + "0" + nl + nl
-                + ( gl3 ? "precision highp float;" + nl + nl : "" )
+                "#version 1" + ( gl3 ? "3" : "2" ) + "0" + nl + nl;
+
+            if ( myExtensions.Count != 0 )
+            {
+                foreach ( String ext in myExtensions )
+                    output += "#extension " + ext + " : enable" + nl;
+                output += nl;
+            }
+
+            output +=
+                  ( gl3 ? "precision highp float;" + nl + nl : "" )
                 + ( Type == ShaderType.VertexShader && myTwoDimensional
                     ? "uniform vec2 screen_resolution;" + nl + nl
                     : "" );
@@ -141,9 +162,10 @@ namespace MarsMiner.Client.Graphics
 
             if ( Type == ShaderType.FragmentShader )
             {
-                if ( !gl3 )
+                if ( gl3 )
                     logic = logic.Replace( FragOutIdentifier, "gl_FragColor" )
-                        .Replace( "texture(", "texture2D(" );
+                        .Replace( "texture2DArray(", "texture(" )
+                        .Replace( "texture2D(", "texture(" );
             }
             else if( myTwoDimensional )
             {

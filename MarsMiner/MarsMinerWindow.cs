@@ -29,6 +29,7 @@ using OpenTK.Graphics.OpenGL;
 using OpenTK.Input;
 
 using MarsMiner.Shared;
+using MarsMiner.Shared.Geometry;
 using MarsMiner.Client.Graphics;
 using MarsMiner.Client.UI;
 
@@ -46,10 +47,10 @@ namespace MarsMiner
 
         private Stopwatch myFrameTimer;
 
-        private TestWorld myTestWorld;
+        private World myTestWorld;
 
-        private OctreeTestShader myTestShader;
-        private List<OctreeTestRenderer> myTestRenderers;
+        private GeometryShader myGeoShader;
+        private List<ChunkRenderer> myGeoRenderers;
 
         private bool myIgnoreMouse;
         private bool myCaptureMouse;
@@ -73,6 +74,9 @@ namespace MarsMiner
 
         protected override void OnLoad( System.EventArgs e )
         {
+            Plugin.Register( "MarsMiner.Shared.CorePlugin", true, true );
+            Plugin.Register( "MarsMiner.Shared.MarsMinerPlugin", true, true );
+
             mySpriteShader = new SpriteShader( Width, Height );
             myUIRoot = new UIObject( new Vector2( Width, Height ) );
 
@@ -84,51 +88,50 @@ namespace MarsMiner
             Mouse.ButtonUp += OnMouseButtonEvent;
             Mouse.ButtonDown += OnMouseButtonEvent;
 
-            myTestWorld = new TestWorld();
+            myTestWorld = new World();
 
-            myTestShader = new OctreeTestShader( Width, Height );
-            myTestRenderers = new List<OctreeTestRenderer>();
+            myGeoShader = new GeometryShader( Width, Height );
+            myGeoShader.UpdateTileMap( 16 );
+            
+            myGeoRenderers = new List<ChunkRenderer>();
 
-            myTestWorld.ChunkLoaded += delegate( object sender, TestChunkLoadEventArgs ea )
-            {
-                if ( myClosing )
-                    return;
+            myTestWorld.ChunkLoaded += OnChunkEvent;
+            myTestWorld.ChunkUnloaded += OnChunkEvent;
+            myTestWorld.ChunkChanged += OnChunkEvent;
 
-                OctreeTestRenderer renderer = new OctreeTestRenderer( ea.Chunk );
+            myTestWorld.Generate( 1024, 1024 );
 
-                Monitor.Enter( myTestRenderers );
-                myTestRenderers.Add( renderer );
-                Monitor.Exit( myTestRenderers );
-            };
-            myTestWorld.ChunkUnloaded += delegate( object sender, TestChunkLoadEventArgs ea )
-            {
-                if ( myClosing )
-                    return;
+            myGeoShader.CameraPosition = new Vector3( 0.0f, 1024.0f, 0.0f );
 
-                Monitor.Enter( myTestRenderers );
-                OctreeTestRenderer renderer = myTestRenderers.Find( x => x.Chunk == ea.Chunk );
-                myTestRenderers.Remove( renderer );
-                Monitor.Exit( myTestRenderers );
-                renderer.Dispose();
-            };
-            myTestWorld.ChunkChanged += delegate( object sender, TestChunkLoadEventArgs ea )
-            {
-                if ( myClosing )
-                    return;
-
-                Monitor.Enter( myTestRenderers );
-                OctreeTestRenderer renderer = myTestRenderers.Find( x => x.Chunk == ea.Chunk );
-                Monitor.Exit( myTestRenderers );
-                renderer.UpdateVertices();
-            };
-
-            myTestWorld.StartGenerator();
-
-            myTestShader.CameraPosition = new Vector3( 0.0f, 256.0f, 0.0f );
-
-            GL.ClearColor( Color4.CornflowerBlue );
+            GL.ClearColor( new Color4( 223, 186, 168, 255 ) );
 
             myFrameTimer.Start();
+        }
+
+        private void OnChunkEvent( object sender, ChunkEventArgs e )
+        {
+            if ( myClosing )
+                return;
+
+            if ( e.EventType == ChunkEventType.Loaded )
+            {
+                ChunkRenderer renderer = new ChunkRenderer( e.Chunk );
+                renderer.UpdateVertices( myGeoShader );
+
+                Monitor.Enter( myGeoRenderers );
+                myGeoRenderers.Add( renderer );
+                Monitor.Exit( myGeoRenderers );
+            }
+            else
+            {
+                Monitor.Enter( myGeoRenderers );
+                ChunkRenderer renderer = myGeoRenderers.Find( x => x.Chunk == e.Chunk );
+                if ( e.EventType == ChunkEventType.Unloaded )
+                    myGeoRenderers.Remove( renderer );
+                Monitor.Exit( myGeoRenderers );
+                if ( e.EventType == ChunkEventType.Changed )
+                    renderer.UpdateVertices( myGeoShader );
+            }
         }
 
         protected override void OnRenderFrame( FrameEventArgs e )
@@ -136,12 +139,12 @@ namespace MarsMiner
             GL.Clear( ClearBufferMask.ColorBufferBit );
             GL.Clear( ClearBufferMask.DepthBufferBit );
             
-            myTestShader.StartBatch();
-            Monitor.Enter( myTestRenderers );
-            foreach( OctreeTestRenderer renderer in myTestRenderers )
-                renderer.Render( myTestShader );
-            Monitor.Exit( myTestRenderers );
-            myTestShader.EndBatch();
+            myGeoShader.StartBatch();
+            Monitor.Enter( myGeoRenderers );
+            foreach( ChunkRenderer renderer in myGeoRenderers )
+                renderer.Render( myGeoShader );
+            Monitor.Exit( myGeoRenderers );
+            myGeoShader.EndBatch();
 
             mySpriteShader.Begin();
             myUIRoot.Render( mySpriteShader );
@@ -168,8 +171,8 @@ namespace MarsMiner
             }
 
             Vector3 movement = new Vector3( 0.0f, 0.0f, 0.0f );
-            float angleY = myTestShader.CameraRotation.Y;
-            float angleX = myTestShader.CameraRotation.X;
+            float angleY = myGeoShader.CameraRotation.Y;
+            float angleX = myGeoShader.CameraRotation.X;
 
             if ( Keyboard[ Key.D ] )
             {
@@ -197,7 +200,7 @@ namespace MarsMiner
             if ( movement.Length != 0 )
             {
                 movement.Normalize();
-                myTestShader.CameraPosition = myTestShader.CameraPosition + movement;
+                myGeoShader.CameraPosition = myGeoShader.CameraPosition + movement;
             }
         }
 
@@ -210,7 +213,7 @@ namespace MarsMiner
                     break;
                 case 'l':
                 case 'L':
-                    myTestShader.LineMode = !myTestShader.LineMode;
+                    myGeoShader.LineMode = !myGeoShader.LineMode;
                     break;
             }
 
@@ -230,13 +233,13 @@ namespace MarsMiner
 
             if ( myCaptureMouse )
             {
-                Vector2 rot = myTestShader.CameraRotation;
+                Vector2 rot = myGeoShader.CameraRotation;
 
                 rot.Y += e.XDelta / 180.0f;
                 rot.X += e.YDelta / 180.0f;
                 rot.X = Tools.Clamp( rot.X, (float) -Math.PI / 2.0f, (float) Math.PI / 2.0f );
 
-                myTestShader.CameraRotation = rot;
+                myGeoShader.CameraRotation = rot;
 
                 myIgnoreMouse = true;
                 System.Windows.Forms.Cursor.Position = new System.Drawing.Point( Bounds.Left + Width / 2, Bounds.Top + Height / 2 );
@@ -258,8 +261,10 @@ namespace MarsMiner
 
             myTestWorld.StopGenerator();
 
-            foreach ( OctreeTestRenderer renderer in myTestRenderers )
+            Monitor.Enter( myGeoRenderers );
+            foreach ( ChunkRenderer renderer in myGeoRenderers )
                 renderer.Dispose();
+            Monitor.Exit( myGeoRenderers );
 
             base.Dispose();
         }

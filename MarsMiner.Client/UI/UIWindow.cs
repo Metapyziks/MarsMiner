@@ -87,7 +87,7 @@ namespace MarsMiner.Client.UI
             PaddingRight = 4.0f * scale;
             PaddingBottom = 4.0f * scale;
 
-            myFrameSprite = new FrameSprite( Res.Get<Texture>( "images_gui_panels" ), scale )
+            myFrameSprite = new FrameSprite( Res.Get<Texture2D>( "images_gui_panels" ), scale )
             {
                 SubrectSize = new Vector2( 32, 32 ),
                 SubrectOffset = new Vector2( 0, 0 ),
