@@ -211,12 +211,6 @@ namespace MarsMiner.Shared.Geometry
                                 scuboid.Z = rz;
 
                                 octree.SetCuboid( scuboid, sand[ 14 ] );
-
-                                if ( res == 1 && rand.NextDouble() < 1.0 / 256.0 )
-                                {
-                                    scuboid.Y += 1;
-                                    octree.SetCuboid( scuboid, rock[ 14 ] );
-                                }
                             }
                         }
                     }
@@ -224,59 +218,56 @@ namespace MarsMiner.Shared.Geometry
                     prev = cur;
                 }
 
-                //if ( resolution == 1 )
+                for ( int colxi = 0; colxi < size / resolution; ++colxi )
                 {
-                    List<Tuple<int,int,int,UInt16>> toSlope = new List<Tuple<int, int, int, UInt16>>();
+                    int colx = colxi * resolution + x;
 
-                    var enumer = new OctreeEnumerator<UInt16>( octree );
-                    while( enumer.MoveNext() )
+                    for ( int colzi = 0; colzi < size / resolution; ++colzi )
                     {
-                        OctreeLeaf<UInt16> leaf = enumer.Current;
-                        if ( enumer.Size == resolution && ( leaf.Value == sand[ 14 ] || leaf.Value == rock[ 14 ] ) )
+                        int colz = colzi * resolution + z;
+
+                        int height = heightmap[ colxi + gradRange, colzi + gradRange ];
+
+                        OctreeLeaf<UInt16> curLeaf =
+                        octree.FindNode( colx, height - resolution, colz, resolution )
+                            as OctreeLeaf<UInt16>;
+
+                        if ( curLeaf != null && curLeaf.Value != empty )
                         {
-                            OctreeLeaf<UInt16> above = leaf.FindNeighbour( Face.Top )
-                                as OctreeLeaf<UInt16>;
-                            if ( above != null && above.Value == empty )
+                            int[] ns = new int[]
                             {
-                                OctreeNode<UInt16>[] ns = new OctreeNode<UInt16>[]
-                                {
-                                    leaf.FindNeighbour( Face.Back | Face.Left ),
-                                    leaf.FindNeighbour( Face.Back ),
-                                    leaf.FindNeighbour( Face.Back | Face.Right ),
-                                    leaf.FindNeighbour( Face.Left ),
-                                    leaf.FindNeighbour( Face.Right ),
-                                    leaf.FindNeighbour( Face.Front | Face.Left ),
-                                    leaf.FindNeighbour( Face.Front ),
-                                    leaf.FindNeighbour( Face.Front | Face.Right )
-                                };
+                                heightmap[ colxi + gradRange - 1, colzi + gradRange + 1 ],
+                                heightmap[ colxi + gradRange + 0, colzi + gradRange + 1 ],
+                                heightmap[ colxi + gradRange + 1, colzi + gradRange + 1 ],
+                                heightmap[ colxi + gradRange - 1, colzi + gradRange + 0 ],
+                                heightmap[ colxi + gradRange + 1, colzi + gradRange + 0 ],
+                                heightmap[ colxi + gradRange - 1, colzi + gradRange - 1 ],
+                                heightmap[ colxi + gradRange + 0, colzi + gradRange - 1 ],
+                                heightmap[ colxi + gradRange + 1, colzi + gradRange - 1 ]
+                            };
 
-                                bool[] bs = new bool[ 8 ];
-                                for ( int i = 0; i < 8; ++i )
-                                    bs[ i ] = ( ns[ i ] is OctreeLeaf<UInt16> )
-                                        && ( (OctreeLeaf<UInt16>) ns[ i ] ).Value != empty;
+                            bool[] bs = new bool[ 8 ];
+                            for ( int i = 0; i < 8; ++i )
+                                bs[ i ] = ns[ i ] >= height;
 
-                                int index = 0;
+                            int index = 0;
 
-                                if ( bs[ 5 ] && ( bs[ 3 ] && bs[ 6 ] ) )
-                                    index |= 1 << 0;
-                                if ( bs[ 7 ] && ( bs[ 4 ] && bs[ 6 ] ) )
-                                    index |= 1 << 1;
-                                if ( bs[ 0 ] && ( bs[ 1 ] && bs[ 3 ] ) )
-                                    index |= 1 << 2;
-                                if ( bs[ 2 ] && ( bs[ 1 ] && bs[ 4 ] ) )
-                                    index |= 1 << 3;
+                            if ( bs[ 5 ] && ( bs[ 3 ] && bs[ 6 ] ) )
+                                index |= 1 << 0;
+                            if ( bs[ 7 ] && ( bs[ 4 ] && bs[ 6 ] ) )
+                                index |= 1 << 1;
+                            if ( bs[ 0 ] && ( bs[ 1 ] && bs[ 3 ] ) )
+                                index |= 1 << 2;
+                            if ( bs[ 2 ] && ( bs[ 1 ] && bs[ 4 ] ) )
+                                index |= 1 << 3;
 
-                                if ( index > 0 )
-                                    toSlope.Add( new Tuple<int, int, int, UInt16>(
-                                        enumer.X, enumer.Y, enumer.Z,
-                                        (UInt16)( leaf.Value + index - 15 ) ) );
-                            }
+                            if ( index > 0 )
+                                octree.SetCuboid(
+                                    colx, height - resolution, colz,
+                                    resolution, resolution, resolution,
+                                    (UInt16) ( curLeaf.Value + index - 15 ) );
                         }
                     }
-
-                    foreach ( var item in toSlope )
-                        octree.SetCuboid( item.Item1, item.Item2, item.Item3,
-                            resolution, resolution, resolution, item.Item4 );
                 }
             }
 

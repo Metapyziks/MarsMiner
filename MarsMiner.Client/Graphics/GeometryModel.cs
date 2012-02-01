@@ -60,8 +60,8 @@ namespace MarsMiner.Client.Graphics
         None = 0,
         FrontLeft = 1,
         BackLeft = 2,
-        FrontRight = 4,
-        BackRight = 8,
+        BackRight = 4,
+        FrontRight = 8,
 
         Left = FrontLeft | BackLeft,
         Front = FrontLeft | FrontRight,
@@ -77,7 +77,7 @@ namespace MarsMiner.Client.Graphics
 
         #region Default Models
         #region Terrain
-        public static GeometryModel Terrain( TerrainCorner highCorners, string texTop, string texWall, string texWallTri,
+        public static GeometryModel Terrain( TerrainCorner highCorners, string texTop, string texTopTri, string texWall, string texWallTri,
             string texBottom )
         {
             Vector2 pfl = new Vector2( 0.0f, 0.0f );
@@ -139,16 +139,18 @@ namespace MarsMiner.Client.Graphics
                 mdl.AddFace( mf, face.Item1 );
             }
 
+            bool tri = (int) highCorners % 3 > 0;
+
             if ( ( !bfr && !bbl && ( bfl ^ bbr ) )
                 || ( bfr && bbl && ( !bfl || !bbr ) ) )
             {
-                mdl.AddFace( new ModelFace( texTop, new float[]
+                mdl.AddFace( new ModelFace( tri ? texTopTri : texTop, new float[]
                 {
                     pbl.X, hbl, pbl.Y, 0.0f, 0.0f,
                     pbr.X, hbr, pbr.Y, 1.0f, 0.0f,
                     pfr.X, hfr, pfr.Y, 1.0f, 1.0f,
                 } ), bbl && bbr && bfr ? Face.Top : Face.All );
-                mdl.AddFace( new ModelFace( texTop, new float[]
+                mdl.AddFace( new ModelFace( tri ? texTopTri : texTop, new float[]
                 {
                     pbl.X, hbl, pbl.Y, 0.0f, 0.0f,
                     pfr.X, hfr, pfr.Y, 1.0f, 1.0f,
@@ -157,13 +159,13 @@ namespace MarsMiner.Client.Graphics
             }
             else
             {
-                mdl.AddFace( new ModelFace( texTop, new float[]
+                mdl.AddFace( new ModelFace( tri ? texTopTri : texTop, new float[]
                 {
                     pbr.X, hbr, pbr.Y, 0.0f, 0.0f,
                     pfr.X, hfr, pfr.Y, 1.0f, 0.0f,
                     pfl.X, hfl, pfl.Y, 1.0f, 1.0f,
                 } ), bbr && bfr && bfl ? Face.Top : Face.All );
-                mdl.AddFace( new ModelFace( texTop, new float[]
+                mdl.AddFace( new ModelFace( tri ? texTopTri : texTop, new float[]
                 {
                     pbr.X, hbr, pbr.Y, 0.0f, 0.0f,
                     pfl.X, hfl, pfl.Y, 1.0f, 1.0f,
