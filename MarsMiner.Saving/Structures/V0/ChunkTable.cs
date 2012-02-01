@@ -50,7 +50,9 @@ namespace MarsMiner.Saving.Structures.V0
         {
             get
             {
-                return chunks.Length *
+                return 4 //chunk count
+
+                    + chunks.Length *
                     (4 // xLocation
                     + 4 // yLocation
                     + 4); // chunk
@@ -59,6 +61,10 @@ namespace MarsMiner.Saving.Structures.V0
 
         public void Write(Stream stream, Func<object, uint> getPointerFunc)
         {
+            {
+                //DEBUG
+                Console.WriteLine("Write chunk table at " + stream.Position);
+            }
             var w = new BinaryWriter(stream);
 
             w.Write((uint)chunks.LongLength);
@@ -66,13 +72,18 @@ namespace MarsMiner.Saving.Structures.V0
             {
                 w.Write(xLocations[i]);
                 w.Write(yLocations[i]);
-                w.Write(getPointerFunc(chunks[i]));
+                var chunkPointer = getPointerFunc(chunks[i]);
+                w.Write(chunkPointer);
             }
         }
         #endregion
 
-        public static ChunkTable Read(Tuple<Stream, int> source, Func<uint, Tuple<Stream, int>> resolvePointerFunc, Func<uint, string> resolveStringFunc)
+        public static ChunkTable Read(Tuple<Stream, int> source, Func<Stream, uint, Tuple<Stream, int>> resolvePointerFunc, Func<uint, string> resolveStringFunc)
         {
+            {
+                //DEBUG
+                Console.WriteLine("Read chunk table at " + source.Item2);
+            }
             source.Item1.Seek(source.Item2, SeekOrigin.Begin);
             var r = new BinaryReader(source.Item1);
 
@@ -93,7 +104,7 @@ namespace MarsMiner.Saving.Structures.V0
 
             for (int i = 0; i < chunkCount; i++)
             {
-                chunks[i] = Chunk.Read(resolvePointerFunc(chunkPointers[i]), resolvePointerFunc, resolveStringFunc);
+                chunks[i] = Chunk.Read(resolvePointerFunc(source.Item1, chunkPointers[i]), resolvePointerFunc, resolveStringFunc);
             }
 
             return new ChunkTable(xLocations, yLocations, chunks);

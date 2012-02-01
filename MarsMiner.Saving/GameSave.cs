@@ -37,6 +37,7 @@ namespace MarsMiner.Saving
         private const uint NullPointer = 0;
 
         private const uint GlobalPointerFlag = 0x80000000;
+        private const uint PointerDataMask = uint.MaxValue ^ GlobalPointerFlag;
 
         private Queue<WriteTransaction> writeQueue;
 
@@ -78,6 +79,45 @@ namespace MarsMiner.Saving
             }
         }
 
+        internal T Read<T>(Func<Tuple<Stream, int>, Func<Stream, uint, Tuple<Stream, int>>, Func<uint, string>, T> readFunc)
+        {
+            return readFunc(new Tuple<Stream, int>(blobFiles[0], 0), ResolvePointer, ResolveString);
+        }
+
+        private Tuple<Stream, int> ResolvePointer(Stream stream, uint pointer)
+        {
+            if ((pointer & GlobalPointerFlag) == 0)
+            {
+                return new Tuple<Stream, int>(stream, (int)pointer);
+            }
+            else
+            {
+                var globalPointer = pointers[(int)(pointer & PointerDataMask)];
+                return new Tuple<Stream, int>(blobFiles[globalPointer.Item1], (int)globalPointer.Item2);
+            }
+        }
+
+        private string ResolveString(uint address)
+        {
+            string s;
+            if (stringsByAddress.TryGetValue(address, out s))
+            {
+                return s;
+            }
+            else
+            {
+                stringFile.Seek(address, SeekOrigin.Begin);
+                var r = new BinaryReader(stringFile);
+
+                s = r.ReadString();
+
+                addressByString.Add(s, address);
+                stringsByAddress.Add(address, s);
+
+                return s;
+            }
+        }
+
         private void UpdateStringFileHeader()
         {
             stringFile.Seek(0, SeekOrigin.Begin);
@@ -90,7 +130,7 @@ namespace MarsMiner.Saving
         private void UpdatePointerFileHeader()
         {
             pointerFile.Seek(0, SeekOrigin.Begin);
-         
+
             var w = new BinaryWriter(pointerFile);
             w.Write((int)0); //TODO: Move pointer file version to constant.
             w.Write((int)pointers.Count);

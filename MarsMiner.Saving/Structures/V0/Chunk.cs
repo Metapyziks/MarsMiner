@@ -52,6 +52,10 @@ namespace MarsMiner.Saving.Structures.V0
 
         public void Write(Stream stream, Func<object, uint> getPointerFunc)
         {
+            {
+                //DEBUG
+                Console.WriteLine("Write chunk at " + stream.Position);
+            }
             var w = new BinaryWriter(stream);
 
             w.Write(getPointerFunc(blockTypeTable));
@@ -63,8 +67,12 @@ namespace MarsMiner.Saving.Structures.V0
         }
         #endregion
 
-        public static Chunk Read(Tuple<Stream, int> source, Func<uint, Tuple<Stream, int>> resolvePointerFunc, Func<uint, string> resolveStringFunc)
+        public static Chunk Read(Tuple<Stream, int> source, Func<Stream, uint, Tuple<Stream, int>> resolvePointerFunc, Func<uint, string> resolveStringFunc)
         {
+            {
+                //DEBUG
+                Console.WriteLine("Read chunk at " + source.Item2);
+            }
             source.Item1.Seek(source.Item2, SeekOrigin.Begin);
             var r = new BinaryReader(source.Item1);
 
@@ -78,12 +86,12 @@ namespace MarsMiner.Saving.Structures.V0
                 octreePointers[i] = r.ReadUInt32();
             }
 
-            var blockTypeTable = BlockTypeTable.Read(resolvePointerFunc(blockTypeTablePointer), resolvePointerFunc, resolveStringFunc);
+            var blockTypeTable = BlockTypeTable.Read(resolvePointerFunc(source.Item1, blockTypeTablePointer), resolvePointerFunc, resolveStringFunc);
             var octrees = new Octree[octreeCount];
 
             for (int i = 0; i < octreeCount; i++)
             {
-                octrees[i] = Octree.Read(resolvePointerFunc(octreePointers[i]), resolvePointerFunc, resolveStringFunc);
+                octrees[i] = Octree.Read(resolvePointerFunc(source.Item1, octreePointers[i]), resolvePointerFunc, resolveStringFunc);
             }
 
             return new Chunk(blockTypeTable, octrees);

@@ -52,6 +52,10 @@ namespace MarsMiner.Saving.Structures.V0
 
         public void Write(Stream stream, Func<object, uint> getPointerFunc)
         {
+            {
+                //DEBUG
+                Console.WriteLine("Write block type table at " + stream.Position);
+            }
             var w = new BinaryWriter(stream);
 
             w.Write((ushort)blockTypeNames.Length);
@@ -62,8 +66,12 @@ namespace MarsMiner.Saving.Structures.V0
         }
         #endregion
 
-        public static BlockTypeTable Read(Tuple<Stream, int> source, Func<uint, Tuple<Stream, int>> resolvePointerFunc, Func<uint, string> resolveStringFunc)
+        public static BlockTypeTable Read(Tuple<Stream, int> source, Func<Stream, uint, Tuple<Stream, int>> resolvePointerFunc, Func<uint, string> resolveStringFunc)
         {
+            {
+                //DEBUG
+                Console.WriteLine("Read block type table at " + source.Item2);
+            }
             source.Item1.Seek(source.Item2, SeekOrigin.Begin);
             var r = new BinaryReader(source.Item1);
 

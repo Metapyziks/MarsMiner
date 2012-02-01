@@ -54,6 +54,10 @@ namespace MarsMiner.Saving.Structures.V0
 
         public void Write(Stream stream, Func<object, uint> getPointerFunc)
         {
+            {
+                //DEBUG
+                Console.WriteLine("Write octree at " + stream.Position);
+            }
             var w = new BinaryWriter(stream);
 
             int octreeFlagsLength = (octreeFlags.Length / 8) + (octreeFlags.Length % 8 == 0 ? 0 : 1);
@@ -70,8 +74,12 @@ namespace MarsMiner.Saving.Structures.V0
         }
         #endregion
 
-        public static Octree Read(Tuple<Stream, int> source, Func<uint, Tuple<Stream, int>> resolvePointerFunc, Func<uint, string> resolveStringFunc)
+        public static Octree Read(Tuple<Stream, int> source, Func<Stream, uint, Tuple<Stream, int>> resolvePointerFunc, Func<uint, string> resolveStringFunc)
         {
+            {
+                //DEBUG
+                Console.WriteLine("Read octree at " + source.Item2);
+            }
             source.Item1.Seek(source.Item2, SeekOrigin.Begin);
             var r = new BinaryReader(source.Item1);
 
