@@ -28,7 +28,7 @@ namespace MarsMiner.Saving.Structures.V0
 {
     internal class Header : IBlockStructure
     {
-        private const int version = 0;
+        public const int Version = 0;
         private SavedStateIndex mainIndex;
 
         public Header(SavedStateIndex mainIndex)
@@ -36,7 +36,6 @@ namespace MarsMiner.Saving.Structures.V0
             this.mainIndex = mainIndex;
         }
 
-        public int Version { get { return version; } }
         public SavedStateIndex MainVersion { get { return mainIndex; } }
 
         #region IBlockStructure
@@ -49,9 +48,27 @@ namespace MarsMiner.Saving.Structures.V0
         {
             var w = new BinaryWriter(stream);
 
-            w.Write(version);
+            w.Write(Version);
             w.Write(getPointerFunc(mainIndex));
         }
         #endregion
+
+        public static Header Read(Tuple<Stream, int> source, Func<uint, Tuple<Stream, int>> resolvePointerFunc, Func<uint, string> resolveStringFunc)
+        {
+            source.Item1.Seek(source.Item2, SeekOrigin.Begin);
+            var r = new BinaryReader(source.Item1);
+
+            var version = r.ReadInt32();
+            if (version != Version)
+            {
+                throw new InvalidDataException("Expected file version " + Version + ", was " + version + ".");
+            }
+
+            var mainIndexPointer = r.ReadUInt32();
+
+            var mainIndex = SavedStateIndex.Read(resolvePointerFunc(mainIndexPointer), resolvePointerFunc, resolveStringFunc);
+
+            return new Header(mainIndex);
+        }
     }
 }

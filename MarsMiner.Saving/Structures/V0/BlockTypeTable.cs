@@ -61,5 +61,27 @@ namespace MarsMiner.Saving.Structures.V0
             }
         }
         #endregion
+
+        public static BlockTypeTable Read(Tuple<Stream, int> source, Func<uint, Tuple<Stream, int>> resolvePointerFunc, Func<uint, string> resolveStringFunc)
+        {
+            source.Item1.Seek(source.Item2, SeekOrigin.Begin);
+            var r = new BinaryReader(source.Item1);
+
+            var blockTypeNameCount = r.ReadUInt16();
+            var blockTypeNameAddresses = new uint[blockTypeNameCount];
+            for (int i = 0; i < blockTypeNameCount; i++)
+            {
+                blockTypeNameAddresses[i] = r.ReadUInt32();
+            }
+
+            var blockTypeNames = new string[blockTypeNameCount];
+
+            for (int i = 0; i < blockTypeNameCount; i++)
+            {
+                blockTypeNames[i] = resolveStringFunc(blockTypeNameAddresses[i]);
+            }
+
+            return new BlockTypeTable(blockTypeNames);
+        }
     }
 }

@@ -61,5 +61,20 @@ namespace MarsMiner.Saving.Structures.V0
             w.Write(getPointerFunc(chunkTable));
         }
         #endregion
+
+        public static SavedStateIndex Read(Tuple<Stream, int> source, Func<uint, Tuple<Stream, int>> resolvePointerFunc, Func<uint, string> resolveStringFunc)
+        {
+            source.Item1.Seek(source.Item2, SeekOrigin.Begin);
+            var r = new BinaryReader(source.Item1);
+
+            var timestamp = r.ReadInt64();
+            var saveNameAddress = r.ReadUInt32();
+            var chunkTablePointer = r.ReadUInt32();
+
+            return new SavedStateIndex(
+                timestamp,
+                resolveStringFunc(saveNameAddress),
+                ChunkTable.Read(resolvePointerFunc(chunkTablePointer), resolvePointerFunc, resolveStringFunc));
+        }
     }
 }

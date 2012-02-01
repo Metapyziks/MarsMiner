@@ -56,18 +56,32 @@ namespace MarsMiner.Saving.Structures.V0
         {
             var w = new BinaryWriter(stream);
 
-            int bitArrayLength = (octreeFlags.Length / 8) + (octreeFlags.Length % 8 == 0 ? 0 : 1);
+            int octreeFlagsLength = (octreeFlags.Length / 8) + (octreeFlags.Length % 8 == 0 ? 0 : 1);
 
-            w.Write(bitArrayLength);
+            w.Write(octreeFlagsLength);
 
             w.Write(octreeValues.Length);
 
-            var buffer = new byte[bitArrayLength];
+            var buffer = new byte[octreeFlagsLength];
             octreeFlags.CopyTo(buffer, 0);
             w.Write(buffer);
 
             w.Write(octreeValues);
         }
         #endregion
+
+        public static Octree Read(Tuple<Stream, int> source, Func<uint, Tuple<Stream, int>> resolvePointerFunc, Func<uint, string> resolveStringFunc)
+        {
+            source.Item1.Seek(source.Item2, SeekOrigin.Begin);
+            var r = new BinaryReader(source.Item1);
+
+            var octreeFlagsLength = r.ReadInt32();
+            var octreeValuesLength = r.ReadInt32();
+
+            var octreeFlags = new BitArray(r.ReadBytes(octreeFlagsLength));
+            var octreeValues = r.ReadBytes(octreeValuesLength);
+
+            return new Octree(octreeFlags, octreeValues);
+        }
     }
 }

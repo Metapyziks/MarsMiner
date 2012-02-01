@@ -70,5 +70,33 @@ namespace MarsMiner.Saving.Structures.V0
             }
         }
         #endregion
+
+        public static ChunkTable Read(Tuple<Stream, int> source, Func<uint, Tuple<Stream, int>> resolvePointerFunc, Func<uint, string> resolveStringFunc)
+        {
+            source.Item1.Seek(source.Item2, SeekOrigin.Begin);
+            var r = new BinaryReader(source.Item1);
+
+            var chunkCount = r.ReadUInt32();
+
+            var xLocations = new int[chunkCount];
+            var yLocations = new int[chunkCount];
+            var chunkPointers = new uint[chunkCount];
+
+            for (int i = 0; i < chunkCount; i++)
+            {
+                xLocations[i] = r.ReadInt32();
+                yLocations[i] = r.ReadInt32();
+                chunkPointers[i] = r.ReadUInt32();
+            }
+
+            var chunks = new Chunk[chunkCount];
+
+            for (int i = 0; i < chunkCount; i++)
+            {
+                chunks[i] = Chunk.Read(resolvePointerFunc(chunkPointers[i]), resolvePointerFunc, resolveStringFunc);
+            }
+
+            return new ChunkTable(xLocations, yLocations, chunks);
+        }
     }
 }
