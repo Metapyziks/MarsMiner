@@ -52,6 +52,9 @@ namespace MarsMiner.Saving.Structures.V0
 
         public void Write(Stream stream, Func<object, uint> getPointerFunc)
         {
+#if AssertBlockLength
+            var start = stream.Position;
+#endif
             var w = new BinaryWriter(stream);
 
             w.Write(getPointerFunc(blockTypeTable));
@@ -60,6 +63,12 @@ namespace MarsMiner.Saving.Structures.V0
             {
                 w.Write(getPointerFunc(octree));
             }
+#if AssertBlockLength
+            if (stream.Position - start != Length)
+            {
+                throw new Exception("Length mismatch in Chunk!");
+            }
+#endif
         }
         #endregion
 

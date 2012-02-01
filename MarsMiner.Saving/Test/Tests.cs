@@ -51,7 +51,7 @@ namespace MarsMiner.Saving.Test
 
             {
                 //Read test
-                gameSave.Read<Header>(Header.Read);
+                gameSave.Read(Header.Read);
             }
         }
     }

@@ -54,11 +54,20 @@ namespace MarsMiner.Saving.Structures.V0
 
         public void Write(Stream stream, Func<object, uint> getPointerFunc)
         {
+#if AssertBlockLength
+            var start = stream.Position;
+#endif
             var w = new BinaryWriter(stream);
 
             w.Write(timestamp);
             w.Write(getPointerFunc(saveName));
             w.Write(getPointerFunc(chunkTable));
+#if AssertBlockLength
+            if (stream.Position - start != Length)
+            {
+                throw new Exception("Length mismatch in SavedStateIndex!");
+            }
+#endif
         }
         #endregion
 

@@ -54,6 +54,9 @@ namespace MarsMiner.Saving.Structures.V0
 
         public void Write(Stream stream, Func<object, uint> getPointerFunc)
         {
+#if AssertBlockLength
+            var start = stream.Position;
+#endif
             var w = new BinaryWriter(stream);
 
             int octreeFlagsLength = (octreeFlags.Length / 8) + (octreeFlags.Length % 8 == 0 ? 0 : 1);
@@ -67,6 +70,12 @@ namespace MarsMiner.Saving.Structures.V0
             w.Write(buffer);
 
             w.Write(octreeValues);
+#if AssertBlockLength
+            if (stream.Position - start != Length)
+            {
+                throw new Exception("Length mismatch in Octree!");
+            }
+#endif
         }
         #endregion
 
