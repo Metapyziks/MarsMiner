@@ -29,16 +29,28 @@ namespace MarsMiner.Saving.Structures.V0
     internal class BlockTypeTable : IBlockStructure
     {
         private string[] blockTypeNames;
+        private int[] blockSubTypes;
 
-        public string this[int index]
+        public Tuple<string, int> this[int index]
         {
-            get { return blockTypeNames[index]; }
+            get { return new Tuple<string, int>(blockTypeNames[index], blockSubTypes[index]); }
         }
 
-        public BlockTypeTable(string[] blockTypeNames)
+        public BlockTypeTable(string[] blockTypeNames, int[] blockSubTypes)
         {
+            if (blockTypeNames.Length != blockSubTypes.Length)
+            {
+                throw new ArgumentException("blockTypeNames and blockSubTypes must have the same length.");
+            }
+
             this.blockTypeNames = blockTypeNames;
+            this.blockSubTypes = blockSubTypes;
         }
+
+        public BlockTypeTable(IEnumerable<Tuple<string, int>> blockTypes)
+            : this(
+                blockTypes.Select(x => x.Item1).ToArray(),
+                blockTypes.Select(x => x.Item2).ToArray()) { }
 
         #region IBlockStructure
         public int Length
@@ -46,7 +58,7 @@ namespace MarsMiner.Saving.Structures.V0
             get
             {
                 return 2 // block type count
-                    + 4 * blockTypeNames.Length; // block type names
+                    + (4 + 4) * blockTypeNames.Length; // block type names and subtypes
             }
         }
 
@@ -58,9 +70,10 @@ namespace MarsMiner.Saving.Structures.V0
             var w = new BinaryWriter(stream);
 
             w.Write((ushort)blockTypeNames.Length);
-            foreach (var blockTypeName in blockTypeNames)
+            for (int i = 0; i < blockTypeNames.Length; i++)
             {
-                w.Write(getPointerFunc(blockTypeName));
+                w.Write(getPointerFunc(blockTypeNames[i]));
+                w.Write(blockSubTypes[i]);
             }
 #if AssertBlockLength
             if (stream.Position - start != Length)
@@ -78,9 +91,11 @@ namespace MarsMiner.Saving.Structures.V0
 
             var blockTypeNameCount = r.ReadUInt16();
             var blockTypeNameAddresses = new uint[blockTypeNameCount];
+            var blockSubtypes = new int[blockTypeNameCount];
             for (int i = 0; i < blockTypeNameCount; i++)
             {
                 blockTypeNameAddresses[i] = r.ReadUInt32();
+                blockSubtypes[i] = r.ReadInt32();
             }
 
             var blockTypeNames = new string[blockTypeNameCount];
@@ -90,7 +105,7 @@ namespace MarsMiner.Saving.Structures.V0
                 blockTypeNames[i] = resolveStringFunc(blockTypeNameAddresses[i]);
             }
 
-            return new BlockTypeTable(blockTypeNames);
+            return new BlockTypeTable(blockTypeNames, blockSubtypes);
         }
     }
 }

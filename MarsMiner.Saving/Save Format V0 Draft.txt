@@ -96,8 +96,8 @@ Pointer table file
 PointerFileIndex (block structure)
 ---------------------------------------------------
 int						Version
-int						file pointer count
-for (pointer count):
+int						reserved
+while (!EOF):
 	FilePointer
 
 FilePointer (embedded structure, fixed length)

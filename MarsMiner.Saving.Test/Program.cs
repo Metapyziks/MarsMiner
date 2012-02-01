@@ -44,32 +44,42 @@ namespace MarsMiner.Saving.Test
             CreateWrite(savePath);
 
             OpenRead(savePath);
-
-            while (true)
-            {
-                GC.Collect();
-            }
         }
 
         private static void CreateWrite(string savePath)
         {
+            Console.Write("Creating");
             var gameSave = GameSave.Create(savePath);
+            Console.WriteLine("...OK");
 
+            Console.Write("Writing");
             Tests.TestSaving(gameSave, "Test Save");
+            Console.Write(".");
             Tests.TestSaving(gameSave, "Test Save2");
+            Console.Write(".");
             Tests.TestSaving(gameSave, "Test Save");
+            Console.Write(".");
             Tests.TestSaving(gameSave, "Test Save3");
+            Console.WriteLine("OK");
 
+            Console.Write("Closing");
             gameSave.Close();
+            Console.WriteLine("...OK");
         }
 
         private static void OpenRead(string savePath)
         {
+            Console.Write("Opening");
             var gameSave = GameSave.Open(savePath);
+            Console.WriteLine("...OK");
 
+            Console.Write("Reading");
             Tests.TestReading(gameSave);
+            Console.WriteLine("...OK");
 
+            Console.Write("Closing");
             gameSave.Close();
+            Console.WriteLine("...OK");
         }
     }
 }

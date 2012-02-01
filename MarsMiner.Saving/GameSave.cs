@@ -33,10 +33,13 @@ namespace MarsMiner.Saving
     /// </summary>
     public class GameSave
     {
-        bool closing = false;
-        bool closed = false;
+        private string path;
+
+        private bool closing = false;
+        private bool closed = false;
 
         const int MaximumBlockStartAddress = 100000000;
+        //const int MaximumBlockStartAddress = 100; // for testing blob creation
         private const uint NullPointer = 0;
 
         private const uint GlobalPointerFlag = 0x80000000;
@@ -102,7 +105,8 @@ namespace MarsMiner.Saving
             }
             else
             {
-                var globalPointer = pointers[(int)(pointer & PointerDataMask)];
+                var pointerIndex = (int)(pointer & PointerDataMask);
+                var globalPointer = pointers[pointerIndex];
                 return new Tuple<Stream, int>(blobFiles[globalPointer.Item1], (int)globalPointer.Item2);
             }
         }
@@ -143,7 +147,7 @@ namespace MarsMiner.Saving
 
             var w = new BinaryWriter(pointerFile);
             w.Write((int)0); //TODO: Move pointer file version to constant.
-            w.Write((int)pointers.Count);
+            w.Write((int)0); //Reserved
         }
 
         private void WriteBlock(IBlockStructure block, Dictionary<IBlockStructure, Tuple<int, uint>> addresses)
@@ -276,7 +280,26 @@ namespace MarsMiner.Saving
 
             if (bestMatch == null)
             {
-                //TODO: Create new blob file
+                int newBlobIndex = blobFiles.Length;
+
+                var newBlobFiles = new FileStream[blobFiles.Length + 1];
+                blobFiles.CopyTo(newBlobFiles, 0);
+
+                var newFreeSpace = new IntRangeList[freeSpace.Length + 1];
+                freeSpace.CopyTo(newFreeSpace, 0);
+
+                newBlobFiles[newBlobIndex] = File.Open(Path.Combine(path, "blob" + newBlobIndex), FileMode.CreateNew, FileAccess.ReadWrite, FileShare.None);
+                newFreeSpace[newBlobIndex] = new IntRangeList();
+
+                newBlobFiles[newBlobIndex].Write(new byte[8], 0, 8);
+
+                blobFiles = newBlobFiles;
+                freeSpace = newFreeSpace;
+
+                bestMatch = new Tuple<int, Tuple<int, int>>(newBlobIndex,
+                    new Tuple<int, int>(
+                        (int)blobFiles[newBlobIndex].Length,
+                        (int)blobFiles[newBlobIndex].Length + blockLength));
             }
 
             AllocateSpace(bestMatch.Item1, bestMatch.Item2);
@@ -302,6 +325,8 @@ namespace MarsMiner.Saving
             }
 
             var gameSave = new GameSave();
+
+            gameSave.path = path;
 
             gameSave.stringFile = File.Open(Path.Combine(path, "strings"), FileMode.CreateNew, FileAccess.ReadWrite, FileShare.None);
             gameSave.stringFile.Write(new byte[8], 0, 8);
@@ -330,9 +355,12 @@ namespace MarsMiner.Saving
 
             var gameSave = new GameSave();
 
+            gameSave.path = path;
+
             gameSave.stringFile = File.Open(stringsPath, FileMode.Open, FileAccess.ReadWrite, FileShare.None);
 
             gameSave.pointerFile = File.Open(pointersPath, FileMode.Open, FileAccess.ReadWrite, FileShare.None);
+            gameSave.ReadPointers();
 
             var blobFiles = new LinkedList<FileStream>();
 
@@ -360,6 +388,27 @@ namespace MarsMiner.Saving
             }
 
             return gameSave;
+        }
+
+        private void ReadPointers()
+        {
+            pointerFile.Seek(0, SeekOrigin.Begin);
+            var r = new BinaryReader(pointerFile);
+
+            var version = r.ReadInt32();
+            if (version != 0)
+            {
+                throw new InvalidDataException("Invalid pointer file version!");
+            }
+            var reserved = r.ReadInt32();
+
+            pointers = new List<Tuple<int, uint>>();
+            while (pointerFile.Position < pointerFile.Length)
+            {
+                pointers.Add(new Tuple<int, uint>(
+                    r.ReadInt32(),
+                    r.ReadUInt32()));
+            }
         }
 
         public void Close()
