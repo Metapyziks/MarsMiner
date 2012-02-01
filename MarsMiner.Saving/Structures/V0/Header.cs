@@ -46,10 +46,6 @@ namespace MarsMiner.Saving.Structures.V0
 
         public void Write(Stream stream, Func<object, uint> getPointerFunc)
         {
-            {
-                //DEBUG
-                Console.WriteLine("Write header at " + stream.Position);
-            }
             var w = new BinaryWriter(stream);
 
             w.Write(Version);
@@ -60,10 +56,6 @@ namespace MarsMiner.Saving.Structures.V0
         public static Func<Tuple<Stream, int>, Func<Stream, uint, Tuple<Stream, int>>, Func<uint, string>, Header> ReadFunc { get { return Read; } }
         public static Header Read(Tuple<Stream, int> source, Func<Stream, uint, Tuple<Stream, int>> resolvePointerFunc, Func<uint, string> resolveStringFunc)
         {
-            {
-                //DEBUG
-                Console.WriteLine("Read header at " + source.Item2);
-            }
             source.Item1.Seek(source.Item2, SeekOrigin.Begin);
             var r = new BinaryReader(source.Item1);
 

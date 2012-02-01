@@ -61,10 +61,6 @@ namespace MarsMiner.Saving.Structures.V0
 
         public void Write(Stream stream, Func<object, uint> getPointerFunc)
         {
-            {
-                //DEBUG
-                Console.WriteLine("Write chunk table at " + stream.Position);
-            }
             var w = new BinaryWriter(stream);
 
             w.Write((uint)chunks.LongLength);
@@ -80,10 +76,6 @@ namespace MarsMiner.Saving.Structures.V0
 
         public static ChunkTable Read(Tuple<Stream, int> source, Func<Stream, uint, Tuple<Stream, int>> resolvePointerFunc, Func<uint, string> resolveStringFunc)
         {
-            {
-                //DEBUG
-                Console.WriteLine("Read chunk table at " + source.Item2);
-            }
             source.Item1.Seek(source.Item2, SeekOrigin.Begin);
             var r = new BinaryReader(source.Item1);
 

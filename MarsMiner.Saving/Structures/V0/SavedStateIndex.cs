@@ -54,10 +54,6 @@ namespace MarsMiner.Saving.Structures.V0
 
         public void Write(Stream stream, Func<object, uint> getPointerFunc)
         {
-            {
-                //DEBUG
-                Console.WriteLine("Write index at " + stream.Position);
-            }
             var w = new BinaryWriter(stream);
 
             w.Write(timestamp);
@@ -68,10 +64,6 @@ namespace MarsMiner.Saving.Structures.V0
 
         public static SavedStateIndex Read(Tuple<Stream, int> source, Func<Stream, uint, Tuple<Stream, int>> resolvePointerFunc, Func<uint, string> resolveStringFunc)
         {
-            {
-                //DEBUG
-                Console.WriteLine("Read index at " + source.Item2);
-            }
             source.Item1.Seek(source.Item2, SeekOrigin.Begin);
             var r = new BinaryReader(source.Item1);
 
