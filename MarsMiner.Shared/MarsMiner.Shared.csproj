@@ -48,6 +48,8 @@
     <Compile Include="Geometry\BlockType.cs" />
     <Compile Include="Geometry\Chunk.cs" />
     <Compile Include="MarsMinerPlugin.cs" />
+    <Compile Include="Networking\LocalConnection.cs" />
+    <Compile Include="Networking\Networking.cs" />
     <Compile Include="Octree\Face.cs" />
     <Compile Include="Geometry\PerlinGenerator.cs" />
     <Compile Include="Geometry\WorldGenerator.cs" />
@@ -65,6 +67,7 @@
     <Compile Include="Octree\Cuboid.cs" />
     <Compile Include="Geometry\World.cs" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
