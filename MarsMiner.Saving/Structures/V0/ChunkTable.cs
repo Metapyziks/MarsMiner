@@ -32,6 +32,8 @@ namespace MarsMiner.Saving.Structures.V0
         private int[] zLocations;
         private Chunk[] chunks;
 
+        public Tuple<int, uint> Address { get; set; }
+
         //TODO: accessors
 
         public ChunkTable(int[] xLocations, int[] zLocations, Chunk[] chunks)
@@ -59,7 +61,7 @@ namespace MarsMiner.Saving.Structures.V0
             }
         }
 
-        public void Write(Stream stream, Func<object, uint> getPointerFunc)
+        public void Write(Stream stream, Func<IBlockStructure, IBlockStructure, uint> getBlockPointerFunc, Func<string, uint> getStringPointerFunc)
         {
 #if AssertBlockLength
             var start = stream.Position;
@@ -71,7 +73,7 @@ namespace MarsMiner.Saving.Structures.V0
             {
                 w.Write(xLocations[i]);
                 w.Write(zLocations[i]);
-                var chunkPointer = getPointerFunc(chunks[i]);
+                var chunkPointer = getBlockPointerFunc(this, chunks[i]);
                 w.Write(chunkPointer);
             }
 #if AssertBlockLength

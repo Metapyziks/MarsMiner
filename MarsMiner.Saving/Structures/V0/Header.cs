@@ -31,6 +31,12 @@ namespace MarsMiner.Saving.Structures.V0
         public const int Version = 0;
         private SavedStateIndex mainIndex;
 
+        public Tuple<int, uint> Address
+        {
+            get { return new Tuple<int, uint>(0, 0); }
+            set { throw new InvalidOperationException("Can't set address on Header!"); }
+        }
+
         public Header(SavedStateIndex mainIndex)
         {
             this.mainIndex = mainIndex;
@@ -44,7 +50,7 @@ namespace MarsMiner.Saving.Structures.V0
             get { return 8; }
         }
 
-        public void Write(Stream stream, Func<object, uint> getPointerFunc)
+        public void Write(Stream stream, Func<IBlockStructure, IBlockStructure, uint> getBlockPointerFunc, Func<string, uint> getStringPointerFunc)
         {
 #if AssertBlockLength
             var start = stream.Position;
@@ -52,7 +58,7 @@ namespace MarsMiner.Saving.Structures.V0
             var w = new BinaryWriter(stream);
 
             w.Write(Version);
-            w.Write(getPointerFunc(mainIndex));
+            w.Write(getBlockPointerFunc(this, mainIndex));
 #if AssertBlockLength
             if (stream.Position - start != Length)
             {

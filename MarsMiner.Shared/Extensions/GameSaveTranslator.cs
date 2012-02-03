@@ -36,6 +36,13 @@ namespace MarsMiner.Shared.Extensions
     {
         public static void WriteChunk(this GameSave gameSave, Chunk chunk)
         {
+            var saveChunk = TranslateChunk(chunk);
+
+            throw new NotImplementedException("TODO: Enqueue saveChunk save");
+        }
+
+        private static SaveChunk TranslateChunk(Chunk chunk)
+        {
             if (!chunk.Loaded)
             {
                 throw new ArgumentException("Chunk isn't loaded.", "chunk");
@@ -52,7 +59,7 @@ namespace MarsMiner.Shared.Extensions
 
             var saveChunk = new SaveChunk(saveBlockTypeTable, saveOctrees);
 
-            throw new NotImplementedException("TODO: Enqueue saveChunk save");
+            return saveChunk;
         }
 
         private static SaveBlockTypeTable TranslateBlockTypeTable(BlockType[] blockTypes)

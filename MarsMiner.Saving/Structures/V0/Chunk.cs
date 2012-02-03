@@ -31,6 +31,8 @@ namespace MarsMiner.Saving.Structures.V0
         private BlockTypeTable blockTypeTable;
         private Octree[] octrees;
 
+        public Tuple<int, uint> Address { get; set; }
+
         //TODO: accessors
 
         public Chunk(BlockTypeTable blockTypeTable, Octree[] octrees)
@@ -39,7 +41,6 @@ namespace MarsMiner.Saving.Structures.V0
             this.octrees = octrees;
         }
 
-        #region IBlockStructure
         public int Length
         {
             get
@@ -50,18 +51,18 @@ namespace MarsMiner.Saving.Structures.V0
             }
         }
 
-        public void Write(Stream stream, Func<object, uint> getPointerFunc)
+        public void Write(Stream stream, Func<IBlockStructure, IBlockStructure, uint> getBlockPointerFunc, Func<string, uint> getStringPointerFunc)
         {
 #if AssertBlockLength
             var start = stream.Position;
 #endif
             var w = new BinaryWriter(stream);
 
-            w.Write(getPointerFunc(blockTypeTable));
+            w.Write(getBlockPointerFunc(this, blockTypeTable));
             w.Write((byte)octrees.Length);
             foreach (var octree in octrees)
             {
-                w.Write(getPointerFunc(octree));
+                w.Write(getBlockPointerFunc(this, octree));
             }
 #if AssertBlockLength
             if (stream.Position - start != Length)
@@ -70,7 +71,6 @@ namespace MarsMiner.Saving.Structures.V0
             }
 #endif
         }
-        #endregion
 
         public static Chunk Read(Tuple<Stream, int> source, Func<Stream, uint, Tuple<Stream, int>> resolvePointerFunc, Func<uint, string> resolveStringFunc)
         {

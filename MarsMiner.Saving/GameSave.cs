@@ -67,11 +67,14 @@ namespace MarsMiner.Saving
 
         internal void WriteTransaction(WriteTransaction transaction)
         {
-            var addresses = transaction.Blocks.ToDictionary(x => x, AllocateSpace);
+            foreach (var block in transaction.Blocks.Where(b => b.Address == null))
+            {
+                AllocateSpace(block);
+            }
 
             foreach (var block in transaction.Blocks)
             {
-                WriteBlock(block, addresses);
+                WriteBlock(block);
             }
 
             UpdatePointerFileHeader();
@@ -87,7 +90,7 @@ namespace MarsMiner.Saving
             {
                 //Write header
                 blobFiles[0].Seek(0, SeekOrigin.Begin);
-                transaction.Header.Write(blobFiles[0], o => FindAddress(addresses, new Tuple<int, uint>(0, 0), o));
+                transaction.Header.Write(blobFiles[0], FindBlockPointer, FindStringAddress);
                 blobFiles[0].Flush();
             }
         }
@@ -150,55 +153,46 @@ namespace MarsMiner.Saving
             w.Write((int)0); //Reserved
         }
 
-        private void WriteBlock(IBlockStructure block, Dictionary<IBlockStructure, Tuple<int, uint>> addresses)
+        private void WriteBlock(IBlockStructure block)
         {
-            var blockAddress = addresses[block];
+            var blockBlob = blobFiles[block.Address.Item1];
 
-            var blockBlob = blobFiles[blockAddress.Item1];
+            blockBlob.Seek(block.Address.Item2, SeekOrigin.Begin);
 
-            blockBlob.Seek(blockAddress.Item2, SeekOrigin.Begin);
-
-            block.Write(blockBlob, o => FindAddress(addresses, blockAddress, o));
+            block.Write(blockBlob, FindBlockPointer, FindStringAddress);
         }
 
-        private uint FindAddress(Dictionary<IBlockStructure, Tuple<int, uint>> addresses, Tuple<int, uint> blockAddress, object o)
+        private uint FindBlockPointer(IBlockStructure source, IBlockStructure target)
         {
+            if (source.Address.Item1 == target.Address.Item1)
             {
-                var s = o as string;
-                if (s != null)
-                {
-                    uint address;
-                    if (!addressByString.TryGetValue(s, out address))
-                    {
-                        address = AddString(s);
-                    }
-                    return address;
-                }
+                return target.Address.Item2;
             }
-            {
-                var b = o as IBlockStructure;
-                if (b != null)
-                {
-                    var bAddress = addresses[b];
 
-                    if (blockAddress.Item1 == bAddress.Item1)
-                    {
-                        //Same file
-                        return bAddress.Item2;
-                    }
-                    else
-                    {
-                        return GetPointerTo(bAddress);
-                    }
+            for (int i = 0; i < pointers.Count; i++)
+            {
+                if (pointers[i] == target.Address)
+                {
+                    return GlobalPointerFlag | (uint)i;
                 }
             }
 
-            if (o == null)
+            pointers.Add(target.Address);
+            return GlobalPointerFlag | (uint)(pointers.Count - 1);
+        }
+
+        private uint FindStringAddress(string s)
+        {
+            if (s == null)
             {
                 return NullPointer;
             }
 
-            throw new ArgumentException("Tried to find address for object that was neither a string nor an IBlockStructure!");
+            uint address;
+            if (addressByString.TryGetValue(s, out address))
+                return address;
+
+            return AddString(s);
         }
 
         private uint GetPointerTo(Tuple<int, uint> target)
@@ -239,8 +233,14 @@ namespace MarsMiner.Saving
             return address;
         }
 
-        private Tuple<int, uint> AllocateSpace(IBlockStructure blockStructure)
+        private void AllocateSpace(IBlockStructure blockStructure)
         {
+            if (blockStructure.Address != null)
+            {
+                throw new ArgumentException("blockStructure.Address already set!");
+            }
+
+
             var blockLength = blockStructure.Length;
 
             Tuple<int, Tuple<int, int>> bestMatch = null;
@@ -304,7 +304,7 @@ namespace MarsMiner.Saving
 
             AllocateSpace(bestMatch.Item1, bestMatch.Item2);
 
-            return new Tuple<int, uint>(bestMatch.Item1, (uint)bestMatch.Item2.Item1);
+            blockStructure.Address = new Tuple<int, uint>(bestMatch.Item1, (uint)bestMatch.Item2.Item1);
         }
 
         private void AllocateSpace(int fileIndex, Tuple<int, int> spaceArea)

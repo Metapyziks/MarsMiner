@@ -31,6 +31,8 @@ namespace MarsMiner.Saving.Structures.V0
         private string[] blockTypeNames;
         private int[] blockSubTypes;
 
+        public Tuple<int, uint> Address { get; set; }
+
         public Tuple<string, int> this[int index]
         {
             get { return new Tuple<string, int>(blockTypeNames[index], blockSubTypes[index]); }
@@ -52,7 +54,6 @@ namespace MarsMiner.Saving.Structures.V0
                 blockTypes.Select(x => x.Item1).ToArray(),
                 blockTypes.Select(x => x.Item2).ToArray()) { }
 
-        #region IBlockStructure
         public int Length
         {
             get
@@ -62,7 +63,7 @@ namespace MarsMiner.Saving.Structures.V0
             }
         }
 
-        public void Write(Stream stream, Func<object, uint> getPointerFunc)
+        public void Write(Stream stream, Func<IBlockStructure, IBlockStructure, uint> getBlockPointerFunc, Func<string, uint> getStringPointerFunc)
         {
 #if AssertBlockLength
             var start = stream.Position;
@@ -72,7 +73,7 @@ namespace MarsMiner.Saving.Structures.V0
             w.Write((ushort)blockTypeNames.Length);
             for (int i = 0; i < blockTypeNames.Length; i++)
             {
-                w.Write(getPointerFunc(blockTypeNames[i]));
+                w.Write(getStringPointerFunc(blockTypeNames[i]));
                 w.Write(blockSubTypes[i]);
             }
 #if AssertBlockLength
@@ -82,7 +83,6 @@ namespace MarsMiner.Saving.Structures.V0
             }
 #endif
         }
-        #endregion
 
         public static BlockTypeTable Read(Tuple<Stream, int> source, Func<Stream, uint, Tuple<Stream, int>> resolvePointerFunc, Func<uint, string> resolveStringFunc)
         {

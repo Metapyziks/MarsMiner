@@ -23,6 +23,7 @@ using System.Linq;
 using System.Text;
 using MarsMiner.Saving.Interfaces;
 using System.IO;
+using MarsMiner.Saving.Cache;
 
 namespace MarsMiner.Saving.Structures.V0
 {
@@ -31,6 +32,8 @@ namespace MarsMiner.Saving.Structures.V0
         private long timestamp;
         private string saveName;
         private ChunkTable chunkTable;
+
+        public Tuple<int, uint> Address { get; set; }
 
         //TODO: accessors
 
@@ -41,7 +44,6 @@ namespace MarsMiner.Saving.Structures.V0
             this.chunkTable = chunkTable;
         }
 
-        #region IBlockStructure
         public int Length
         {
             get
@@ -52,7 +54,7 @@ namespace MarsMiner.Saving.Structures.V0
             }
         }
 
-        public void Write(Stream stream, Func<object, uint> getPointerFunc)
+        public void Write(Stream stream, Func<IBlockStructure, IBlockStructure, uint> getBlockPointerFunc, Func<string, uint> getStringPointerFunc)
         {
 #if AssertBlockLength
             var start = stream.Position;
@@ -60,8 +62,8 @@ namespace MarsMiner.Saving.Structures.V0
             var w = new BinaryWriter(stream);
 
             w.Write(timestamp);
-            w.Write(getPointerFunc(saveName));
-            w.Write(getPointerFunc(chunkTable));
+            w.Write(getStringPointerFunc(saveName));
+            w.Write(getBlockPointerFunc(this, chunkTable));
 #if AssertBlockLength
             if (stream.Position - start != Length)
             {
@@ -69,7 +71,6 @@ namespace MarsMiner.Saving.Structures.V0
             }
 #endif
         }
-        #endregion
 
         public static SavedStateIndex Read(Tuple<Stream, int> source, Func<Stream, uint, Tuple<Stream, int>> resolvePointerFunc, Func<uint, string> resolveStringFunc)
         {

@@ -25,9 +25,11 @@ using System.IO;
 
 namespace MarsMiner.Saving.Interfaces
 {
-    internal interface IBlockStructure
+    public interface IBlockStructure
     {
         int Length { get; }
-        void Write(Stream stream, Func<object, uint> getPointerFunc);
+        void Write(Stream stream, Func<IBlockStructure, IBlockStructure, uint> getBlockPointerFunc, Func<string, uint> getStringPointerFunc);
+
+        Tuple<int, uint> Address { get; set; }
     }
 }

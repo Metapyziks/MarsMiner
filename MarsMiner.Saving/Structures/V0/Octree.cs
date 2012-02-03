@@ -32,6 +32,8 @@ namespace MarsMiner.Saving.Structures.V0
         private BitArray octreeFlags;
         private byte[] octreeValues;
 
+        public Tuple<int, uint> Address { get; set; }
+
         //TODO: accessors
 
         public Octree(BitArray octreeFlags, byte[] octreeValues)
@@ -52,7 +54,7 @@ namespace MarsMiner.Saving.Structures.V0
             }
         }
 
-        public void Write(Stream stream, Func<object, uint> getPointerFunc)
+        public void Write(Stream stream, Func<IBlockStructure, IBlockStructure, uint> getBlockPointerFunc, Func<string, uint> getStringPointerFunc)
         {
 #if AssertBlockLength
             var start = stream.Position;
