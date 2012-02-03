@@ -27,7 +27,7 @@ using System.IO;
 
 namespace MarsMiner.Saving.Structures.V0
 {
-    internal class Octree : IBlockStructure
+    public class Octree : IBlockStructure
     {
         private BitArray octreeFlags;
         private byte[] octreeValues;

@@ -29,19 +29,19 @@ namespace MarsMiner.Saving.Structures.V0
     internal class ChunkTable : IBlockStructure
     {
         private int[] xLocations;
-        private int[] yLocations;
+        private int[] zLocations;
         private Chunk[] chunks;
 
         //TODO: accessors
 
-        public ChunkTable(int[] xLocations, int[] yLocations, Chunk[] chunks)
+        public ChunkTable(int[] xLocations, int[] zLocations, Chunk[] chunks)
         {
-            if (xLocations.Length != yLocations.Length || yLocations.Length != chunks.Length)
+            if (xLocations.Length != zLocations.Length || zLocations.Length != chunks.Length)
             {
                 throw new ArgumentException("Argument arrays must have the same length!");
             }
             this.xLocations = xLocations;
-            this.yLocations = yLocations;
+            this.zLocations = zLocations;
             this.chunks = chunks;
         }
 
@@ -70,7 +70,7 @@ namespace MarsMiner.Saving.Structures.V0
             for (long i = 0; i < chunks.LongLength; i++)
             {
                 w.Write(xLocations[i]);
-                w.Write(yLocations[i]);
+                w.Write(zLocations[i]);
                 var chunkPointer = getPointerFunc(chunks[i]);
                 w.Write(chunkPointer);
             }

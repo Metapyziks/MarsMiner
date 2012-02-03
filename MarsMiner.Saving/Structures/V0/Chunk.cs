@@ -26,7 +26,7 @@ using System.IO;
 
 namespace MarsMiner.Saving.Structures.V0
 {
-    internal class Chunk : IBlockStructure
+    public class Chunk : IBlockStructure
     {
         private BlockTypeTable blockTypeTable;
         private Octree[] octrees;

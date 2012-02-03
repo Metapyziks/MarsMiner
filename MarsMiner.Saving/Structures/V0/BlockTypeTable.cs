@@ -26,7 +26,7 @@ using System.IO;
 
 namespace MarsMiner.Saving.Structures.V0
 {
-    internal class BlockTypeTable : IBlockStructure
+    public class BlockTypeTable : IBlockStructure
     {
         private string[] blockTypeNames;
         private int[] blockSubTypes;
