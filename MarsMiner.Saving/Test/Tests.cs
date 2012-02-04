@@ -68,5 +68,10 @@ namespace MarsMiner.Saving.Test
 
             gameSave.WriteTransaction(transaction);
         }
+
+        public static void TestResave(GameSave gameSave)
+        {
+            gameSave.WriteTransaction(new Cache.WriteTransaction(gameSave.Read(Header.Read), new Interfaces.IBlockStructure[0]));
+        }
     }
 }

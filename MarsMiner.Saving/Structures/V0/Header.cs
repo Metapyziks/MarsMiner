@@ -68,11 +68,11 @@ namespace MarsMiner.Saving.Structures.V0
         }
         #endregion
 
-        public static Func<Tuple<Stream, int>, Func<Stream, uint, Tuple<Stream, int>>, Func<uint, string>, Header> ReadFunc { get { return Read; } }
-        public static Header Read(Tuple<Stream, int> source, Func<Stream, uint, Tuple<Stream, int>> resolvePointerFunc, Func<uint, string> resolveStringFunc)
+        public static Header Read(Tuple<int, uint> source, Func<int, uint, Tuple<int, uint>> resolvePointerFunc, Func<uint, string> resolveStringFunc, Func<int, Stream> getStreamFunc)
         {
-            source.Item1.Seek(source.Item2, SeekOrigin.Begin);
-            var r = new BinaryReader(source.Item1);
+            var stream = getStreamFunc(source.Item1);
+            stream.Seek(source.Item2, SeekOrigin.Begin);
+            var r = new BinaryReader(stream);
 
             var version = r.ReadInt32();
             if (version != Version)
@@ -82,7 +82,7 @@ namespace MarsMiner.Saving.Structures.V0
 
             var mainIndexPointer = r.ReadUInt32();
 
-            var mainIndex = SavedStateIndex.Read(resolvePointerFunc(source.Item1, mainIndexPointer), resolvePointerFunc, resolveStringFunc);
+            var mainIndex = SavedStateIndex.Read(resolvePointerFunc(source.Item1, mainIndexPointer), resolvePointerFunc, resolveStringFunc, getStreamFunc);
 
             return new Header(mainIndex);
         }

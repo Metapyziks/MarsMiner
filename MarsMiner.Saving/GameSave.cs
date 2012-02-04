@@ -96,22 +96,22 @@ namespace MarsMiner.Saving
             }
         }
 
-        internal T Read<T>(Func<Tuple<Stream, int>, Func<Stream, uint, Tuple<Stream, int>>, Func<uint, string>, T> readFunc)
+        internal T Read<T>(Func<Tuple<int, uint>, Func<int, uint, Tuple<int, uint>>, Func<uint, string>, Func<int, Stream>, T> readFunc)
         {
-            return readFunc(new Tuple<Stream, int>(blobFiles[0], 0), ResolvePointer, ResolveString);
+            return readFunc(new Tuple<int, uint>(0, 0), ResolvePointer, ResolveString, x => blobFiles[x]);
         }
 
-        private Tuple<Stream, int> ResolvePointer(Stream stream, uint pointer)
+        private Tuple<int, uint> ResolvePointer(int sourceBlob, uint pointer)
         {
             if ((pointer & GlobalPointerFlag) == 0)
             {
-                return new Tuple<Stream, int>(stream, (int)pointer);
+                return new Tuple<int, uint>(sourceBlob, pointer);
             }
             else
             {
                 var pointerIndex = (int)(pointer & PointerDataMask);
                 var globalPointer = pointers[pointerIndex];
-                return new Tuple<Stream, int>(blobFiles[globalPointer.Item1], (int)globalPointer.Item2);
+                return globalPointer;
             }
         }
 

@@ -51,6 +51,22 @@ namespace MarsMiner.Saving.Test
                 OpenReadWrite(savePath);
                 Thread.Sleep(100);
             }
+            OpenReadRewrite(savePath);
+        }
+
+        private static void OpenReadRewrite(string savePath)
+        {
+            Console.Write("Opening");
+            var gameSave = GameSave.Open(savePath);
+            Console.WriteLine("...OK");
+
+            Console.Write("Rewriting");
+            Tests.TestResave(gameSave);
+            Console.WriteLine("...OK");
+
+            Console.Write("Closing");
+            gameSave.Close();
+            Console.WriteLine("...OK");
         }
 
         private static void OpenReadWrite(string savePath)

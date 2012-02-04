@@ -57,6 +57,12 @@ namespace MarsMiner.Saving.Structures.V0
             this.octreeValues = octreeValues;
         }
 
+        private Octree(BitArray octreeFlags, byte[] octreeValues, Tuple<int, uint> address)
+            : this(octreeFlags, octreeValues)
+        {
+            Address = address;
+        }
+
         #region IBlockStructure
         public int Length
         {
@@ -96,10 +102,11 @@ namespace MarsMiner.Saving.Structures.V0
         }
         #endregion
 
-        public static Octree Read(Tuple<Stream, int> source, Func<Stream, uint, Tuple<Stream, int>> resolvePointerFunc, Func<uint, string> resolveStringFunc)
+        public static Octree Read(Tuple<int, uint> source, Func<int, uint, Tuple<int, uint>> resolvePointerFunc, Func<uint, string> resolveStringFunc, Func<int, Stream> getStreamFunc)
         {
-            source.Item1.Seek(source.Item2, SeekOrigin.Begin);
-            var r = new BinaryReader(source.Item1);
+            var stream = getStreamFunc(source.Item1);
+            stream.Seek(source.Item2, SeekOrigin.Begin);
+            var r = new BinaryReader(stream);
 
             var octreeFlagsLength = r.ReadInt32();
             var octreeValuesLength = r.ReadInt32();
@@ -107,7 +114,7 @@ namespace MarsMiner.Saving.Structures.V0
             var octreeFlags = new BitArray(r.ReadBytes(octreeFlagsLength));
             var octreeValues = r.ReadBytes(octreeValuesLength);
 
-            return new Octree(octreeFlags, octreeValues);
+            return new Octree(octreeFlags, octreeValues, source);
         }
     }
 }

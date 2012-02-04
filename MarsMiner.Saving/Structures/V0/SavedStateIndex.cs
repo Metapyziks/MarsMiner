@@ -65,6 +65,11 @@ namespace MarsMiner.Saving.Structures.V0
             this.chunkTable = chunkTable;
         }
 
+        private SavedStateIndex(long timestamp, string saveName, ChunkTable chunkTable, Tuple<int,uint> address)
+            : this(timestamp, saveName, chunkTable)
+        {
+            Address = address;
+        }
         public int Length
         {
             get
@@ -94,10 +99,11 @@ namespace MarsMiner.Saving.Structures.V0
 #endif
         }
 
-        public static SavedStateIndex Read(Tuple<Stream, int> source, Func<Stream, uint, Tuple<Stream, int>> resolvePointerFunc, Func<uint, string> resolveStringFunc)
+        public static SavedStateIndex Read(Tuple<int, uint> source, Func<int, uint, Tuple<int, uint>> resolvePointerFunc, Func<uint, string> resolveStringFunc, Func<int, Stream> getStreamFunc)
         {
-            source.Item1.Seek(source.Item2, SeekOrigin.Begin);
-            var r = new BinaryReader(source.Item1);
+            var stream = getStreamFunc(source.Item1);
+            stream.Seek(source.Item2, SeekOrigin.Begin);
+            var r = new BinaryReader(stream);
 
             var timestamp = r.ReadInt64();
             var saveNameAddress = r.ReadUInt32();
@@ -106,7 +112,8 @@ namespace MarsMiner.Saving.Structures.V0
             return new SavedStateIndex(
                 timestamp,
                 resolveStringFunc(saveNameAddress),
-                ChunkTable.Read(resolvePointerFunc(source.Item1, chunkTablePointer), resolvePointerFunc, resolveStringFunc));
+                ChunkTable.Read(resolvePointerFunc(source.Item1, chunkTablePointer), resolvePointerFunc, resolveStringFunc, getStreamFunc),
+                source);
         }
     }
 }

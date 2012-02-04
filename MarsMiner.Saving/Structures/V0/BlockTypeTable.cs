@@ -64,6 +64,12 @@ namespace MarsMiner.Saving.Structures.V0
             this.blockSubTypes = blockSubTypes;
         }
 
+        private BlockTypeTable(string[] blockTypeNames, int[] blockSubTypes, Tuple<int, uint> address)
+            : this(blockTypeNames, blockSubTypes)
+        {
+            Address = address;
+        }
+
         public BlockTypeTable(IEnumerable<Tuple<string, int>> blockTypes)
             : this(
                 blockTypes.Select(x => x.Item1).ToArray(),
@@ -99,10 +105,11 @@ namespace MarsMiner.Saving.Structures.V0
 #endif
         }
 
-        public static BlockTypeTable Read(Tuple<Stream, int> source, Func<Stream, uint, Tuple<Stream, int>> resolvePointerFunc, Func<uint, string> resolveStringFunc)
+        public static BlockTypeTable Read(Tuple<int, uint> source, Func<int, uint, Tuple<int, uint>> resolvePointerFunc, Func<uint, string> resolveStringFunc, Func<int, Stream> getStreamFunc)
         {
-            source.Item1.Seek(source.Item2, SeekOrigin.Begin);
-            var r = new BinaryReader(source.Item1);
+            var stream = getStreamFunc(source.Item1);
+            stream.Seek(source.Item2, SeekOrigin.Begin);
+            var r = new BinaryReader(stream);
 
             var blockTypeNameCount = r.ReadUInt16();
             var blockTypeNameAddresses = new uint[blockTypeNameCount];
@@ -120,7 +127,7 @@ namespace MarsMiner.Saving.Structures.V0
                 blockTypeNames[i] = resolveStringFunc(blockTypeNameAddresses[i]);
             }
 
-            return new BlockTypeTable(blockTypeNames, blockSubtypes);
+            return new BlockTypeTable(blockTypeNames, blockSubtypes, source);
         }
     }
 }

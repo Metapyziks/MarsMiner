@@ -57,6 +57,12 @@ namespace MarsMiner.Saving.Structures.V0
             this.octrees = octrees;
         }
 
+        private Chunk(BlockTypeTable blockTypeTable, Octree[] octrees, Tuple<int, uint> address)
+            : this(blockTypeTable, octrees)
+        {
+            Address = address;
+        }
+
         public int Length
         {
             get
@@ -88,10 +94,11 @@ namespace MarsMiner.Saving.Structures.V0
 #endif
         }
 
-        public static Chunk Read(Tuple<Stream, int> source, Func<Stream, uint, Tuple<Stream, int>> resolvePointerFunc, Func<uint, string> resolveStringFunc)
+        public static Chunk Read(Tuple<int, uint> source, Func<int, uint, Tuple<int, uint>> resolvePointerFunc, Func<uint, string> resolveStringFunc, Func<int, Stream> getStreamFunc)
         {
-            source.Item1.Seek(source.Item2, SeekOrigin.Begin);
-            var r = new BinaryReader(source.Item1);
+            var stream = getStreamFunc(source.Item1);
+            stream.Seek(source.Item2, SeekOrigin.Begin);
+            var r = new BinaryReader(stream);
 
             var blockTypeTablePointer = r.ReadUInt32();
             var octreeCount = r.ReadByte();
@@ -103,15 +110,15 @@ namespace MarsMiner.Saving.Structures.V0
                 octreePointers[i] = r.ReadUInt32();
             }
 
-            var blockTypeTable = BlockTypeTable.Read(resolvePointerFunc(source.Item1, blockTypeTablePointer), resolvePointerFunc, resolveStringFunc);
+            var blockTypeTable = BlockTypeTable.Read(resolvePointerFunc(source.Item1, blockTypeTablePointer), resolvePointerFunc, resolveStringFunc, getStreamFunc);
             var octrees = new Octree[octreeCount];
 
             for (int i = 0; i < octreeCount; i++)
             {
-                octrees[i] = Octree.Read(resolvePointerFunc(source.Item1, octreePointers[i]), resolvePointerFunc, resolveStringFunc);
+                octrees[i] = Octree.Read(resolvePointerFunc(source.Item1, octreePointers[i]), resolvePointerFunc, resolveStringFunc, getStreamFunc);
             }
 
-            return new Chunk(blockTypeTable, octrees);
+            return new Chunk(blockTypeTable, octrees, source);
         }
     }
 }
