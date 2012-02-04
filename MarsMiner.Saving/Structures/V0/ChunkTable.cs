@@ -32,9 +32,37 @@ namespace MarsMiner.Saving.Structures.V0
         private int[] zLocations;
         private Chunk[] chunks;
 
-        public Tuple<int, uint> Address { get; set; }
+        private Tuple<int, uint> address;
+        public Tuple<int, uint> Address
+        {
+            get
+            {
+                return address;
+            }
+            set
+            {
+                if (address != null)
+                {
+                    throw new InvalidOperationException("Address can't be reassigned!");
+                }
+                address = value;
+            }
+        }
 
-        //TODO: accessors
+        public IEnumerable<Tuple<int, int, Chunk>> GetChunks()
+        {
+            for (int i = 0; i < chunks.Length; i++)
+            {
+                yield return new Tuple<int, int, Chunk>(xLocations[i], zLocations[i], chunks[i]);
+            }
+        }
+
+        public ChunkTable(IEnumerable<Tuple<int, int, Chunk>> chunks)
+            : this(
+                chunks.Select(x => x.Item1).ToArray(),
+                chunks.Select(x => x.Item2).ToArray(),
+                chunks.Select(x => x.Item3).ToArray())
+        { }
 
         public ChunkTable(int[] xLocations, int[] zLocations, Chunk[] chunks)
         {

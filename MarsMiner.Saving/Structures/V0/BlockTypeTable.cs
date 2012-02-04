@@ -31,7 +31,22 @@ namespace MarsMiner.Saving.Structures.V0
         private string[] blockTypeNames;
         private int[] blockSubTypes;
 
-        public Tuple<int, uint> Address { get; set; }
+        private Tuple<int, uint> address;
+        public Tuple<int, uint> Address
+        {
+            get
+            {
+                return address;
+            }
+            set
+            {
+                if (address != null)
+                {
+                    throw new InvalidOperationException("Address can't be reassigned!");
+                }
+                address = value;
+            }
+        }
 
         public Tuple<string, int> this[int index]
         {

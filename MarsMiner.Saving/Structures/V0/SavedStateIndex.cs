@@ -33,9 +33,30 @@ namespace MarsMiner.Saving.Structures.V0
         private string saveName;
         private ChunkTable chunkTable;
 
-        public Tuple<int, uint> Address { get; set; }
+        private Tuple<int, uint> address;
+        public Tuple<int, uint> Address
+        {
+            get
+            {
+                return address;
+            }
+            set
+            {
+                if (address != null)
+                {
+                    throw new InvalidOperationException("Address can't be reassigned!");
+                }
+                address = value;
+            }
+        }
 
-        //TODO: accessors
+        public ChunkTable ChunkTable
+        {
+            get
+            {
+                return chunkTable;
+            }
+        }
 
         public SavedStateIndex(long timestamp, string saveName, ChunkTable chunkTable)
         {
@@ -63,7 +84,8 @@ namespace MarsMiner.Saving.Structures.V0
 
             w.Write(timestamp);
             w.Write(getStringPointerFunc(saveName));
-            w.Write(getBlockPointerFunc(this, chunkTable));
+            uint getBlockPointerFunc1 = getBlockPointerFunc(this, ChunkTable);
+            w.Write(getBlockPointerFunc1);
 #if AssertBlockLength
             if (stream.Position - start != Length)
             {

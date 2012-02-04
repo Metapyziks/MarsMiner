@@ -31,9 +31,25 @@ namespace MarsMiner.Saving.Structures.V0
         private BlockTypeTable blockTypeTable;
         private Octree[] octrees;
 
-        public Tuple<int, uint> Address { get; set; }
+        private Tuple<int, uint> address;
+        public Tuple<int, uint> Address
+        {
+            get
+            {
+                return address;
+            }
+            set
+            {
+                if (address!=null)
+                {
+                    throw new InvalidOperationException("Address can't be reassigned!");
+                }
+                address = value;
+            }
+        }
 
-        //TODO: accessors
+        public Octree[] Octrees { get { return octrees; } }
+        public BlockTypeTable BlockTypeTable { get { return blockTypeTable; } }
 
         public Chunk(BlockTypeTable blockTypeTable, Octree[] octrees)
         {
@@ -47,7 +63,7 @@ namespace MarsMiner.Saving.Structures.V0
             {
                 return 4 // blockTypeTable
                     + 1 // octreeCount
-                    + 4 * octrees.Length; // octrees
+                    + 4 * Octrees.Length; // octrees
             }
         }
 
@@ -58,9 +74,9 @@ namespace MarsMiner.Saving.Structures.V0
 #endif
             var w = new BinaryWriter(stream);
 
-            w.Write(getBlockPointerFunc(this, blockTypeTable));
-            w.Write((byte)octrees.Length);
-            foreach (var octree in octrees)
+            w.Write(getBlockPointerFunc(this, BlockTypeTable));
+            w.Write((byte)Octrees.Length);
+            foreach (var octree in Octrees)
             {
                 w.Write(getBlockPointerFunc(this, octree));
             }

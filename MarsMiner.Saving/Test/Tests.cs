@@ -41,17 +41,32 @@ namespace MarsMiner.Saving.Test
 
             gameSave.WriteTransaction(
                 new Cache.WriteTransaction(header,
-                new Interfaces.IBlockStructure[] { 
+                new Interfaces.IBlockStructure[] 
+                { 
                     mainIndex,
                     chunkTable,
                     chunk,
                     blockTypeTable,
-                    octree}));
+                    octree
+                }));
         }
 
         public static void TestReading(GameSave gameSave)
         {
             var header = gameSave.Read(Header.Read);
+        }
+
+        public static void TestModify(GameSave gameSave)
+        {
+            var header = gameSave.Read(Header.Read);
+
+            var newChunkTable = new ChunkTable(header.SaveIndex.ChunkTable.GetChunks().Concat(header.SaveIndex.ChunkTable.GetChunks().Take(1).Select(x => new Tuple<int, int, Chunk>(x.Item1 + 1, x.Item2 - 1, x.Item3))));
+
+            var newHeader = new Header(new SavedStateIndex(DateTime.UtcNow.Ticks, "Modified Save", newChunkTable));
+
+            var transaction = new Cache.WriteTransaction(newHeader, new Interfaces.IBlockStructure[] { newHeader.SaveIndex, newHeader.SaveIndex.ChunkTable });
+
+            gameSave.WriteTransaction(transaction);
         }
     }
 }

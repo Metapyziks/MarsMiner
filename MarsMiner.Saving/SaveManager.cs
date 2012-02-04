@@ -44,7 +44,7 @@ namespace MarsMiner.Saving
             throw new NotImplementedException();
         }
 
-        void IDisposable.Dispose()
+        public void Dispose()
         {
             if (disposed) { return; }
 
@@ -57,13 +57,13 @@ namespace MarsMiner.Saving
 
         ~SaveManager()
         {
-            if (!disposed)
-            {
-                // It's not good if an instance of this class isn't disposed properly.
-                Debug.Fail("SaveManager not disposed!", "SaveManager must be closed to ensure that all data is written to the save file!");
+            if (disposed)
+                return;
 
-                Console.Beep(); // Beeps only if the error message doesn't work.
-            }
+            // It's not good if an instance of this class isn't disposed properly.
+            Debug.Fail("SaveManager not disposed!", "SaveManager must be closed to ensure that all data is written to the save file!");
+
+            Console.Beep(); // Beeps only if the error message doesn't work.
         }
     }
 }

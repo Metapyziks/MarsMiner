@@ -24,6 +24,7 @@ using System.Text;
 using System.IO;
 
 using MarsMiner.Saving.Structures.V0;
+using System.Threading;
 
 namespace MarsMiner.Saving.Test
 {
@@ -42,8 +43,29 @@ namespace MarsMiner.Saving.Test
             }
 
             CreateWrite(savePath);
-
+            Thread.Sleep(100);
             OpenRead(savePath);
+            Thread.Sleep(100);
+            for (int i = 0; i < 30; i++)
+            {
+                OpenReadWrite(savePath);
+                Thread.Sleep(100);
+            }
+        }
+
+        private static void OpenReadWrite(string savePath)
+        {
+            Console.Write("Opening");
+            var gameSave = GameSave.Open(savePath);
+            Console.WriteLine("...OK");
+
+            Console.Write("Modifying");
+            Tests.TestModify(gameSave);
+            Console.WriteLine("...OK");
+
+            Console.Write("Closing");
+            gameSave.Close();
+            Console.WriteLine("...OK");
         }
 
         private static void CreateWrite(string savePath)

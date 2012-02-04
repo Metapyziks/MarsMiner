@@ -67,12 +67,13 @@ namespace MarsMiner.Saving
 
         internal void WriteTransaction(WriteTransaction transaction)
         {
-            foreach (var block in transaction.Blocks.Where(b => b.Address == null))
+            var blocksToWrite = transaction.Blocks.Where(b => b.Address == null).ToArray();
+            foreach (var block in blocksToWrite)
             {
                 AllocateSpace(block);
             }
 
-            foreach (var block in transaction.Blocks)
+            foreach (var block in blocksToWrite)
             {
                 WriteBlock(block);
             }

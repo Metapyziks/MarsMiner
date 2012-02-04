@@ -42,7 +42,7 @@ namespace MarsMiner.Saving.Structures.V0
             this.mainIndex = mainIndex;
         }
 
-        public SavedStateIndex MainVersion { get { return mainIndex; } }
+        public SavedStateIndex SaveIndex { get { return mainIndex; } }
 
         #region IBlockStructure
         public int Length
