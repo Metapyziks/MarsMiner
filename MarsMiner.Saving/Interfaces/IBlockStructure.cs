@@ -32,6 +32,8 @@ namespace MarsMiner.Saving.Interfaces
 
         Tuple<int, uint> Address { get; set; }
 
-        IBlockStructure[] ReferencedBlocks { get; }
+        IBlockStructure[] UnboundBlocks { get; }
+
+        void Unload();
     }
 }

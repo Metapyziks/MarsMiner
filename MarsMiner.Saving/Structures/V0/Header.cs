@@ -27,16 +27,22 @@ using MarsMiner.Saving.Cache;
 
 namespace MarsMiner.Saving.Structures.V0
 {
-    internal class Header : IBlockStructure
+    public class Header : IBlockStructure
     {
         public const int Version = 0;
         private SavedStateIndex mainIndex;
 
-        public IBlockStructure[] ReferencedBlocks
+        public IBlockStructure[] UnboundBlocks
         {
             get
             {
-                return new IBlockStructure[]{mainIndex};
+                if (Address != null)
+                {
+                    //Bound
+                    return new IBlockStructure[0];
+                }
+
+                return mainIndex.Address == null ? new IBlockStructure[] { mainIndex } : new IBlockStructure[0];
             }
         }
 
@@ -53,7 +59,6 @@ namespace MarsMiner.Saving.Structures.V0
 
         public SavedStateIndex SaveIndex { get { return mainIndex; } }
 
-        #region IBlockStructure
         public int Length
         {
             get { return 8; }
@@ -75,9 +80,8 @@ namespace MarsMiner.Saving.Structures.V0
             }
 #endif
         }
-        #endregion
 
-        public static Header Read(Tuple<int, uint> source, Func<int, uint, Tuple<int, uint>> resolvePointerFunc, Func<uint, string> resolveStringFunc, Func<int, Stream> getStreamFunc)
+        public static Header Read(Tuple<int, uint> source, Func<int, uint, Tuple<int, uint>> resolvePointerFunc, Func<uint, string> resolveStringFunc, Func<int, Stream> getStreamFunc, ReadOptions readOptions)
         {
             var stream = getStreamFunc(source.Item1);
             stream.Seek(source.Item2, SeekOrigin.Begin);
@@ -91,7 +95,7 @@ namespace MarsMiner.Saving.Structures.V0
 
             var mainIndexPointer = r.ReadUInt32();
 
-            var mainIndex = SavedStateIndex.Read(resolvePointerFunc(source.Item1, mainIndexPointer), resolvePointerFunc, resolveStringFunc, getStreamFunc);
+            var mainIndex = SavedStateIndex.Read(resolvePointerFunc(source.Item1, mainIndexPointer), resolvePointerFunc, resolveStringFunc, getStreamFunc, readOptions);
 
             return new Header(mainIndex);
         }
@@ -108,13 +112,18 @@ namespace MarsMiner.Saving.Structures.V0
                 var block = blockStack.Pop();
 
                 blocks.Add(block);
-                foreach (var b in block.ReferencedBlocks)
+                foreach (var b in block.UnboundBlocks)
                 {
                     blockStack.Push(b);
                 }
             }
 
             return new WriteTransaction(this, blocks.ToArray());
+        }
+
+        public void Unload()
+        {
+            throw new InvalidOperationException("Can't unload the header!");
         }
     }
 }

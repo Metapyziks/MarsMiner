@@ -27,17 +27,23 @@ using MarsMiner.Saving.Cache;
 
 namespace MarsMiner.Saving.Structures.V0
 {
-    internal class SavedStateIndex : IBlockStructure
+    public class SavedStateIndex : IBlockStructure
     {
-        private long timestamp;
-        private string saveName;
-        private ChunkTable chunkTable;
+        public long Timestamp { get; private set; }
+        public string SaveName { get; private set; }
+        public ChunkTable ChunkTable { get; private set; }
 
-        public IBlockStructure[] ReferencedBlocks
+        public IBlockStructure[] UnboundBlocks
         {
             get
             {
-                return new IBlockStructure[] { ChunkTable };
+                if (ChunkTable == null)
+                {
+                    //Unloaded
+                    return new IBlockStructure[0];
+                }
+
+                return ChunkTable.Address == null ? new IBlockStructure[] { ChunkTable } : new IBlockStructure[0];
             }
         }
 
@@ -58,19 +64,11 @@ namespace MarsMiner.Saving.Structures.V0
             }
         }
 
-        public ChunkTable ChunkTable
-        {
-            get
-            {
-                return chunkTable;
-            }
-        }
-
         public SavedStateIndex(long timestamp, string saveName, ChunkTable chunkTable)
         {
-            this.timestamp = timestamp;
-            this.saveName = saveName;
-            this.chunkTable = chunkTable;
+            Timestamp = timestamp;
+            SaveName = saveName;
+            ChunkTable = chunkTable;
         }
 
         private SavedStateIndex(long timestamp, string saveName, ChunkTable chunkTable, Tuple<int, uint> address)
@@ -78,6 +76,7 @@ namespace MarsMiner.Saving.Structures.V0
         {
             Address = address;
         }
+
         public int Length
         {
             get
@@ -95,10 +94,9 @@ namespace MarsMiner.Saving.Structures.V0
 #endif
             var w = new BinaryWriter(stream);
 
-            w.Write(timestamp);
-            w.Write(getStringPointerFunc(saveName));
-            uint getBlockPointerFunc1 = getBlockPointerFunc(this, ChunkTable);
-            w.Write(getBlockPointerFunc1);
+            w.Write(Timestamp);
+            w.Write(getStringPointerFunc(SaveName));
+            w.Write((uint)getBlockPointerFunc(this, ChunkTable));
 #if AssertBlockLength
             if (stream.Position - start != Length)
             {
@@ -107,7 +105,7 @@ namespace MarsMiner.Saving.Structures.V0
 #endif
         }
 
-        public static SavedStateIndex Read(Tuple<int, uint> source, Func<int, uint, Tuple<int, uint>> resolvePointerFunc, Func<uint, string> resolveStringFunc, Func<int, Stream> getStreamFunc)
+        public static SavedStateIndex Read(Tuple<int, uint> source, Func<int, uint, Tuple<int, uint>> resolvePointerFunc, Func<uint, string> resolveStringFunc, Func<int, Stream> getStreamFunc, ReadOptions readOptions)
         {
             var stream = getStreamFunc(source.Item1);
             stream.Seek(source.Item2, SeekOrigin.Begin);
@@ -120,8 +118,18 @@ namespace MarsMiner.Saving.Structures.V0
             return new SavedStateIndex(
                 timestamp,
                 resolveStringFunc(saveNameAddress),
-                ChunkTable.Read(resolvePointerFunc(source.Item1, chunkTablePointer), resolvePointerFunc, resolveStringFunc, getStreamFunc),
+                ChunkTable.Read(resolvePointerFunc(source.Item1, chunkTablePointer), resolvePointerFunc, resolveStringFunc, getStreamFunc, readOptions),
                 source);
+        }
+
+        public void Unload()
+        {
+            if (Address == null)
+            {
+                throw new InvalidOperationException("Can't unload unbound blocks!");
+            }
+
+            ChunkTable = null;
         }
     }
 }

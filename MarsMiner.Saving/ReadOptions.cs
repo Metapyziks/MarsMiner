@@ -21,19 +21,11 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using MarsMiner.Saving.Interfaces;
 
-namespace MarsMiner.Saving.Cache
+namespace MarsMiner.Saving
 {
-    public class WriteTransaction
+    public class ReadOptions
     {
-        public IBlockStructure Header { get; private set; }
-        public IBlockStructure[] Blocks { get; private set; }
-
-        public WriteTransaction(IBlockStructure header, IBlockStructure[] blocks)
-        {
-            Header = header;
-            Blocks = blocks;
-        }
+        public Action<MarsMiner.Saving.Structures.V0.Chunk> ChunkCallback { get; set; }
     }
 }

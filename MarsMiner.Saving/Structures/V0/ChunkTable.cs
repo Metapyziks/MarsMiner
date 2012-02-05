@@ -26,17 +26,22 @@ using System.IO;
 
 namespace MarsMiner.Saving.Structures.V0
 {
-    internal class ChunkTable : IBlockStructure
+    public class ChunkTable : IBlockStructure
     {
         private int[] xLocations;
         private int[] zLocations;
         private Chunk[] chunks;
 
-        public IBlockStructure[] ReferencedBlocks
+        public IBlockStructure[] UnboundBlocks
         {
             get
             {
-                return chunks.ToArray();
+                if (Address != null)
+                {
+                    //Bound
+                    return new IBlockStructure[0];
+                }
+                return chunks.Where(c => c.Address == null).ToArray();
             }
         }
 
@@ -65,7 +70,7 @@ namespace MarsMiner.Saving.Structures.V0
             }
         }
 
-        public ChunkTable(IEnumerable<Tuple<int, int, Chunk>> chunks)
+        public ChunkTable(Tuple<int, int, Chunk>[] chunks)
             : this(
                 chunks.Select(x => x.Item1).ToArray(),
                 chunks.Select(x => x.Item2).ToArray(),
@@ -81,6 +86,13 @@ namespace MarsMiner.Saving.Structures.V0
             this.xLocations = xLocations;
             this.zLocations = zLocations;
             this.chunks = chunks;
+
+            Length = 4 //chunk count
+
+                    + chunks.Length *
+                    (4 // xLocation
+                    + 4 // yLocation
+                    + 4); // chunk
         }
 
         private ChunkTable(int[] xLocations, int[] zLocations, Chunk[] chunks, Tuple<int, uint> address)
@@ -88,19 +100,8 @@ namespace MarsMiner.Saving.Structures.V0
         {
             Address = address;
         }
-        #region IBlockStructure
-        public int Length
-        {
-            get
-            {
-                return 4 //chunk count
 
-                    + chunks.Length *
-                    (4 // xLocation
-                    + 4 // yLocation
-                    + 4); // chunk
-            }
-        }
+        public int Length { get; private set; }
 
         public void Write(Stream stream, Func<IBlockStructure, IBlockStructure, uint> getBlockPointerFunc, Func<string, uint> getStringPointerFunc)
         {
@@ -124,9 +125,8 @@ namespace MarsMiner.Saving.Structures.V0
             }
 #endif
         }
-        #endregion
 
-        public static ChunkTable Read(Tuple<int, uint> source, Func<int, uint, Tuple<int, uint>> resolvePointerFunc, Func<uint, string> resolveStringFunc, Func<int, Stream> getStreamFunc)
+        public static ChunkTable Read(Tuple<int, uint> source, Func<int, uint, Tuple<int, uint>> resolvePointerFunc, Func<uint, string> resolveStringFunc, Func<int, Stream> getStreamFunc, ReadOptions readOptions)
         {
             var stream = getStreamFunc(source.Item1);
             stream.Seek(source.Item2, SeekOrigin.Begin);
@@ -149,10 +149,22 @@ namespace MarsMiner.Saving.Structures.V0
 
             for (int i = 0; i < chunkCount; i++)
             {
-                chunks[i] = Chunk.Read(resolvePointerFunc(source.Item1, chunkPointers[i]), resolvePointerFunc, resolveStringFunc, getStreamFunc);
+                chunks[i] = Chunk.Read(resolvePointerFunc(source.Item1, chunkPointers[i]), resolvePointerFunc, resolveStringFunc, getStreamFunc, readOptions);
             }
 
             return new ChunkTable(xLocations, yLocations, chunks, source);
+        }
+
+        public void Unload()
+        {
+            if (Address == null)
+            {
+                throw new InvalidOperationException("Can't unload unbound blocks!");
+            }
+
+            xLocations = null;
+            zLocations = null;
+            chunks = null;
         }
     }
 }

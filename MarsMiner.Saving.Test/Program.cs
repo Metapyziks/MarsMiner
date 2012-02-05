@@ -48,7 +48,7 @@ namespace MarsMiner.Saving.Test
             Thread.Sleep(100);
             for (int i = 0; i < 30; i++)
             {
-                OpenReadMarkWrite(savePath);
+                OpenReadUnloadModifyWrite(savePath);
                 Thread.Sleep(100);
             }
             OpenReadRewrite(savePath);
@@ -77,6 +77,21 @@ namespace MarsMiner.Saving.Test
 
             Console.Write("Marking and modifying");
             Tests.TestMarkModify(gameSave);
+            Console.WriteLine("...OK");
+
+            Console.Write("Closing");
+            gameSave.Close();
+            Console.WriteLine("...OK");
+        }
+
+        private static void OpenReadUnloadModifyWrite(string savePath)
+        {
+            Console.Write("Opening");
+            var gameSave = GameSave.Open(savePath);
+            Console.WriteLine("...OK");
+
+            Console.Write("Unloading and modifying...");
+            Tests.TestAddChunkToUnloadedChunks(gameSave);
             Console.WriteLine("...OK");
 
             Console.Write("Closing");

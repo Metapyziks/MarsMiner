@@ -31,14 +31,22 @@ namespace MarsMiner.Saving.Structures.V0
         private BlockTypeTable blockTypeTable;
         private Octree[] octrees;
 
-        public IBlockStructure[] ReferencedBlocks
+        public IBlockStructure[] UnboundBlocks
         {
             get
             {
-                var blocks = new IBlockStructure[octrees.Length + 1];
-                blocks[0] = blockTypeTable;
-                octrees.CopyTo(blocks, 1);
-                return blocks;
+                if (Address != null)
+                {
+                    //Bound
+                    return new IBlockStructure[0];
+                }
+
+                var blocks = octrees.Where(o => o.Address == null).ToList<IBlockStructure>();
+                if (blockTypeTable.Address == null)
+                {
+                    blocks.Add(blockTypeTable);
+                }
+                return blocks.ToArray();
             }
         }
 
@@ -59,13 +67,17 @@ namespace MarsMiner.Saving.Structures.V0
             }
         }
 
-        public Octree[] Octrees { get { return octrees; } }
+        public Octree[] Octrees { get { return octrees.ToArray(); } }
         public BlockTypeTable BlockTypeTable { get { return blockTypeTable; } }
 
         public Chunk(BlockTypeTable blockTypeTable, Octree[] octrees)
         {
             this.blockTypeTable = blockTypeTable;
             this.octrees = octrees;
+
+            Length = 4 // blockTypeTable
+                + 1 // octreeCount
+                + 4 * Octrees.Length; // octrees
         }
 
         private Chunk(BlockTypeTable blockTypeTable, Octree[] octrees, Tuple<int, uint> address)
@@ -74,15 +86,7 @@ namespace MarsMiner.Saving.Structures.V0
             Address = address;
         }
 
-        public int Length
-        {
-            get
-            {
-                return 4 // blockTypeTable
-                    + 1 // octreeCount
-                    + 4 * Octrees.Length; // octrees
-            }
-        }
+        public int Length { get; private set; }
 
         public void Write(Stream stream, Func<IBlockStructure, IBlockStructure, uint> getBlockPointerFunc, Func<string, uint> getStringPointerFunc)
         {
@@ -105,7 +109,7 @@ namespace MarsMiner.Saving.Structures.V0
 #endif
         }
 
-        public static Chunk Read(Tuple<int, uint> source, Func<int, uint, Tuple<int, uint>> resolvePointerFunc, Func<uint, string> resolveStringFunc, Func<int, Stream> getStreamFunc)
+        public static Chunk Read(Tuple<int, uint> source, Func<int, uint, Tuple<int, uint>> resolvePointerFunc, Func<uint, string> resolveStringFunc, Func<int, Stream> getStreamFunc, ReadOptions readOptions)
         {
             var stream = getStreamFunc(source.Item1);
             stream.Seek(source.Item2, SeekOrigin.Begin);
@@ -121,15 +125,33 @@ namespace MarsMiner.Saving.Structures.V0
                 octreePointers[i] = r.ReadUInt32();
             }
 
-            var blockTypeTable = BlockTypeTable.Read(resolvePointerFunc(source.Item1, blockTypeTablePointer), resolvePointerFunc, resolveStringFunc, getStreamFunc);
+            var blockTypeTable = BlockTypeTable.Read(resolvePointerFunc(source.Item1, blockTypeTablePointer), resolvePointerFunc, resolveStringFunc, getStreamFunc, readOptions);
             var octrees = new Octree[octreeCount];
 
             for (int i = 0; i < octreeCount; i++)
             {
-                octrees[i] = Octree.Read(resolvePointerFunc(source.Item1, octreePointers[i]), resolvePointerFunc, resolveStringFunc, getStreamFunc);
+                octrees[i] = Octree.Read(resolvePointerFunc(source.Item1, octreePointers[i]), resolvePointerFunc, resolveStringFunc, getStreamFunc, readOptions);
             }
 
-            return new Chunk(blockTypeTable, octrees, source);
+            Chunk chunk = new Chunk(blockTypeTable, octrees, source);
+
+            if (readOptions.ChunkCallback != null)
+            {
+                readOptions.ChunkCallback(chunk);
+            }
+
+            return chunk;
+        }
+
+        public void Unload()
+        {
+            if (Address == null)
+            {
+                throw new InvalidOperationException("Can't unload unbound blocks!");
+            }
+
+            blockTypeTable = null;
+            octrees = null;
         }
     }
 }

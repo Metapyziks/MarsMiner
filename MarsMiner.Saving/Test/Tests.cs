@@ -39,56 +39,74 @@ namespace MarsMiner.Saving.Test
             var mainIndex = new SavedStateIndex(DateTime.UtcNow.Ticks, saveName, chunkTable);
             var header = new Header(mainIndex);
 
-            gameSave.WriteTransaction(
-                new Cache.WriteTransaction(header,
-                new Interfaces.IBlockStructure[] 
-                { 
-                    mainIndex,
-                    chunkTable,
-                    chunk,
-                    blockTypeTable,
-                    octree
-                }));
+            gameSave.WriteTransaction(header.GetTransaction());
+        }
+
+        public static void TestAddChunkToUnloadedChunks(GameSave gameSave)
+        {
+            var oldHeader = gameSave.Read(Header.Read, new ReadOptions()
+            {
+                ChunkCallback = (c) =>
+                {
+                    Console.WriteLine("Loaded chunk at {0}", c.Address);
+                    c.Unload();
+                }
+            });
+
+            var oldChunkTable = oldHeader.SaveIndex.ChunkTable;
+
+            var octree = new Octree(new BitArray(new bool[] { false, false }), new byte[] { 1 });
+            var blockTypeTable = new BlockTypeTable(
+                new string[] { "Block 0", "Block 1", "Block 2", "Block 2" },
+                new int[] { 0, 0, 0, 1 });
+            var chunk = new Chunk(blockTypeTable, new Octree[] { octree });
+
+            var r = new Random();
+
+            var x = r.Next();
+            var z = r.Next();
+
+            var chunks = oldChunkTable.GetChunks().Where(c => c.Item1 != x || c.Item2 != z).ToList();
+            chunks.Add(new Tuple<int, int, Chunk>(x, z, chunk));
+
+            var chunkTable = new ChunkTable(chunks.ToArray());
+            var mainIndex = new SavedStateIndex(DateTime.UtcNow.Ticks, "ChunkTable Length: " + chunkTable.Length, chunkTable);
+            var header = new Header(mainIndex);
+
+            gameSave.WriteTransaction(header.GetTransaction());
         }
 
         public static void TestReading(GameSave gameSave)
         {
-            var header = gameSave.Read(Header.Read);
+            var header = gameSave.Read(Header.Read, new ReadOptions());
         }
 
         public static void TestModify(GameSave gameSave)
         {
-            var header = gameSave.Read(Header.Read);
+            var header = gameSave.Read(Header.Read, new ReadOptions());
 
-            var newChunkTable = new ChunkTable(header.SaveIndex.ChunkTable.GetChunks().Concat(header.SaveIndex.ChunkTable.GetChunks().Take(1).Select(x => new Tuple<int, int, Chunk>(x.Item1 + 1, x.Item2 - 1, x.Item3))));
+            var newChunkTable = new ChunkTable(header.SaveIndex.ChunkTable.GetChunks().Concat(header.SaveIndex.ChunkTable.GetChunks().Take(1).Select(x => new Tuple<int, int, Chunk>(x.Item1 + 1, x.Item2 - 1, x.Item3))).ToArray());
 
             var newHeader = new Header(new SavedStateIndex(DateTime.UtcNow.Ticks, "Modified Save", newChunkTable));
 
-            var transaction = new Cache.WriteTransaction(newHeader, new Interfaces.IBlockStructure[] { newHeader.SaveIndex, newHeader.SaveIndex.ChunkTable });
-
-            gameSave.WriteTransaction(transaction);
+            gameSave.WriteTransaction(newHeader.GetTransaction());
         }
 
         public static void TestResave(GameSave gameSave)
         {
-            Header header = gameSave.Read(Header.Read);
-            MarsMiner.Saving.Cache.WriteTransaction transaction = header.GetTransaction();
-            gameSave.WriteTransaction(transaction);
+            Header header = gameSave.Read(Header.Read, new ReadOptions());
+            gameSave.WriteTransaction((MarsMiner.Saving.Cache.WriteTransaction)header.GetTransaction());
         }
 
         public static void TestMarkModify(GameSave gameSave)
         {
-            var header = gameSave.Read(Header.Read);
+            var header = gameSave.Read(Header.Read, new ReadOptions());
 
-            gameSave.MarkFreeSpace(header);
-
-            var newChunkTable = new ChunkTable(header.SaveIndex.ChunkTable.GetChunks().Concat(header.SaveIndex.ChunkTable.GetChunks().Take(1).Select(x => new Tuple<int, int, Chunk>(x.Item1 + 1, x.Item2 - 1, x.Item3))));
+            var newChunkTable = new ChunkTable(header.SaveIndex.ChunkTable.GetChunks().Concat(header.SaveIndex.ChunkTable.GetChunks().Take(1).Select(x => new Tuple<int, int, Chunk>(x.Item1 + 1, x.Item2 - 1, x.Item3))).ToArray());
 
             var newHeader = new Header(new SavedStateIndex(DateTime.UtcNow.Ticks, "Modified Save", newChunkTable));
 
-            var transaction = new Cache.WriteTransaction(newHeader, new Interfaces.IBlockStructure[] { newHeader.SaveIndex, newHeader.SaveIndex.ChunkTable });
-
-            gameSave.WriteTransaction(transaction);
+            gameSave.WriteTransaction(header.GetTransaction());
         }
     }
 }

@@ -21,14 +21,18 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Collections;
+
 using MarsMiner.Saving;
 using MarsMiner.Shared.Geometry;
+using MarsMiner.Shared.Octree;
 
 using SaveChunk = MarsMiner.Saving.Structures.V0.Chunk;
 using SaveOctree = MarsMiner.Saving.Structures.V0.Octree;
 using SaveBlockTypeTable = MarsMiner.Saving.Structures.V0.BlockTypeTable;
-using MarsMiner.Shared.Octree;
-using System.Collections;
+using SaveHeader = MarsMiner.Saving.Structures.V0.Header;
+using SaveIndex = MarsMiner.Saving.Structures.V0.SavedStateIndex;
+using SaveChunkTable = MarsMiner.Saving.Structures.V0.ChunkTable;
 
 namespace MarsMiner.Shared.Extensions
 {
@@ -38,10 +42,18 @@ namespace MarsMiner.Shared.Extensions
         {
             var saveChunk = TranslateChunk(chunk);
 
-            throw new NotImplementedException("TODO: Enqueue saveChunk save");
+            var header = gameSave.Read(SaveHeader.Read, new ReadOptions());
+
+            var newChunks = header.SaveIndex.ChunkTable.GetChunks().Where(c => c.Item1 != chunk.X || c.Item2 != chunk.Z).ToList();
+
+            newChunks.Add(saveChunk);
+
+            var newHeader = new SaveHeader(new SaveIndex(DateTime.UtcNow.Ticks, header.SaveIndex.SaveName, new SaveChunkTable(newChunks.ToArray())));
+
+            gameSave.WriteTransaction(newHeader.GetTransaction());
         }
 
-        private static SaveChunk TranslateChunk(Chunk chunk)
+        private static Tuple<int, int, SaveChunk> TranslateChunk(Chunk chunk)
         {
             if (!chunk.Loaded)
             {
@@ -59,7 +71,7 @@ namespace MarsMiner.Shared.Extensions
 
             var saveChunk = new SaveChunk(saveBlockTypeTable, saveOctrees);
 
-            return saveChunk;
+            return new Tuple<int, int, SaveChunk>(chunk.X, chunk.Z, saveChunk);
         }
 
         private static SaveBlockTypeTable TranslateBlockTypeTable(BlockType[] blockTypes)

@@ -65,7 +65,7 @@ namespace MarsMiner.Saving
             stringsByAddress = new Dictionary<uint, string>();
         }
 
-        internal void WriteTransaction(WriteTransaction transaction)
+        public void WriteTransaction(WriteTransaction transaction)
         {
             var blocksToWrite = transaction.Blocks.Where(b => b.Address == null).OrderByDescending(b => b.Length).ToArray();
             foreach (var block in blocksToWrite)
@@ -88,19 +88,16 @@ namespace MarsMiner.Saving
                 blobFile.Flush();
             }
 
-            {
-                //Write header
-                blobFiles[0].Seek(0, SeekOrigin.Begin);
-                transaction.Header.Write(blobFiles[0], FindBlockPointer, FindStringAddress);
-                blobFiles[0].Flush();
-            }
+            WriteBlock(transaction.Header);
 
-            MarkFreeSpace(transaction.Header);
+            blobFiles[0].Flush();
+
+            //MarkFreeSpace(transaction.Header); //TODO: Uncomment when MarkFreeSpace works with unloaded blocks
         }
 
-        internal T Read<T>(Func<Tuple<int, uint>, Func<int, uint, Tuple<int, uint>>, Func<uint, string>, Func<int, Stream>, T> readFunc)
+        public T Read<T>(Func<Tuple<int, uint>, Func<int, uint, Tuple<int, uint>>, Func<uint, string>, Func<int, Stream>, ReadOptions, T> readFunc, ReadOptions readOptions)
         {
-            return readFunc(new Tuple<int, uint>(0, 0), ResolvePointer, ResolveString, x => blobFiles[x]);
+            return readFunc(new Tuple<int, uint>(0, 0), ResolvePointer, ResolveString, x => blobFiles[x], readOptions);
         }
 
         public void MarkFreeSpace<T>(T header) where T : IBlockStructure
@@ -108,7 +105,7 @@ namespace MarsMiner.Saving
             for (int i = 0; i < freeSpace.Length; i++)
             {
                 freeSpace[i] = new IntRangeList();
-                freeSpace[i].Add(new Tuple<int, int>(0, (int)blobFiles[i].Length));
+                freeSpace[i].Add(new Tuple<int, int>(8, (int)blobFiles[i].Length));
             }
 
             var blockStack = new Stack<IBlockStructure>();
@@ -118,7 +115,9 @@ namespace MarsMiner.Saving
             while (blockStack.Count > 0)
             {
                 var block = blockStack.Pop();
-                foreach (var b in block.ReferencedBlocks)
+
+                throw new NotImplementedException("MarkFreeSpace must get used space instead.");
+                foreach (var b in block.UnboundBlocks)
                 {
                     blockStack.Push(b);
                 }
@@ -182,6 +181,8 @@ namespace MarsMiner.Saving
 
         private void WriteBlock(IBlockStructure block)
         {
+            Console.WriteLine("Writing {0} from {1} to {2}", block.GetType(), block.Address, block.Address.Item2 + block.Length);
+
             var blockBlob = blobFiles[block.Address.Item1];
 
             blockBlob.Seek(block.Address.Item2, SeekOrigin.Begin);
@@ -193,6 +194,7 @@ namespace MarsMiner.Saving
         {
             if (source.Address.Item1 == target.Address.Item1)
             {
+                Console.WriteLine("Local: {0} → {1}", source.Address, target.Address);
                 return target.Address.Item2;
             }
 
@@ -200,11 +202,24 @@ namespace MarsMiner.Saving
             {
                 if (pointers[i] == target.Address)
                 {
+                    Console.WriteLine("Global {2}: {0} → {1}", source.Address, target.Address, i);
                     return GlobalPointerFlag | (uint)i;
                 }
             }
 
-            pointers.Add(target.Address);
+            Console.WriteLine("New global {2}: {0} → {1}", source.Address, target.Address, pointers.Count - 1);
+            return GlobalPointerFlag | AddGlobalPointer(target.Address);
+        }
+
+        private uint AddGlobalPointer(Tuple<int, uint> target)
+        {
+            pointers.Add(target);
+            pointerFile.Seek(pointerFile.Length, SeekOrigin.Begin);
+            var w = new BinaryWriter(pointerFile);
+
+            w.Write(target.Item1);
+            w.Write(target.Item2);
+
             return GlobalPointerFlag | (uint)(pointers.Count - 1);
         }
 
@@ -220,29 +235,6 @@ namespace MarsMiner.Saving
                 return address;
 
             return AddString(s);
-        }
-
-        private uint GetPointerTo(Tuple<int, uint> target)
-        {
-            var pointerIds = pointers.Where(x => x.Item1 == target.Item1 && x.Item2 == target.Item2).Select(x => (uint)pointers.IndexOf(x)).ToArray();
-
-            if (pointerIds.Length > 0)
-            {
-                return GlobalPointerFlag | pointerIds[0];
-            }
-
-
-            //TODO: Put this somewhere else?
-            //TODO: Find unused space
-            pointerFile.Seek(pointerFile.Length, SeekOrigin.Begin);
-            var w = new BinaryWriter(pointerFile);
-
-            w.Write(target.Item1);
-            w.Write(target.Item2);
-
-            pointers.Add(target);
-
-            return GlobalPointerFlag | (uint)(pointers.Count - 1);
         }
 
         private uint AddString(string s)
@@ -307,21 +299,7 @@ namespace MarsMiner.Saving
 
             if (bestMatch == null)
             {
-                int newBlobIndex = blobFiles.Length;
-
-                var newBlobFiles = new FileStream[blobFiles.Length + 1];
-                blobFiles.CopyTo(newBlobFiles, 0);
-
-                var newFreeSpace = new IntRangeList[freeSpace.Length + 1];
-                freeSpace.CopyTo(newFreeSpace, 0);
-
-                newBlobFiles[newBlobIndex] = File.Open(Path.Combine(path, "blob" + newBlobIndex), FileMode.CreateNew, FileAccess.ReadWrite, FileShare.None);
-                newFreeSpace[newBlobIndex] = new IntRangeList();
-
-                newBlobFiles[newBlobIndex].Write(new byte[8], 0, 8);
-
-                blobFiles = newBlobFiles;
-                freeSpace = newFreeSpace;
+                int newBlobIndex = AddNewBlob();
 
                 bestMatch = new Tuple<int, Tuple<int, int>>(newBlobIndex,
                     new Tuple<int, int>(
@@ -334,8 +312,34 @@ namespace MarsMiner.Saving
             blockStructure.Address = new Tuple<int, uint>(bestMatch.Item1, (uint)bestMatch.Item2.Item1);
         }
 
+        private int AddNewBlob()
+        {
+            int newBlobIndex = blobFiles.Length;
+
+            var newBlobFiles = new FileStream[blobFiles.Length + 1];
+            blobFiles.CopyTo(newBlobFiles, 0);
+
+            var newFreeSpace = new IntRangeList[freeSpace.Length + 1];
+            freeSpace.CopyTo(newFreeSpace, 0);
+
+            newBlobFiles[newBlobIndex] = File.Open(Path.Combine(path, "blob" + newBlobIndex), FileMode.CreateNew, FileAccess.ReadWrite, FileShare.None);
+            newFreeSpace[newBlobIndex] = new IntRangeList();
+
+            newBlobFiles[newBlobIndex].Write(new byte[8], 0, 8);
+
+            blobFiles = newBlobFiles;
+            freeSpace = newFreeSpace;
+            return newBlobIndex;
+        }
+
         private void AllocateSpace(int fileIndex, Tuple<int, int> spaceArea)
         {
+            while (blobFiles[fileIndex].Length < spaceArea.Item2)
+            {
+                var oldlength = blobFiles[fileIndex].Length;
+                blobFiles[fileIndex].SetLength(oldlength + spaceArea.Item2 - 1);
+                freeSpace[fileIndex].Add(new Tuple<int, int>((int)oldlength, (int)blobFiles[fileIndex].Length));
+            }
             freeSpace[fileIndex].Subtract(spaceArea);
         }
 

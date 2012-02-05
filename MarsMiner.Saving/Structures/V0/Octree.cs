@@ -32,7 +32,7 @@ namespace MarsMiner.Saving.Structures.V0
         private BitArray octreeFlags;
         private byte[] octreeValues;
 
-        public IBlockStructure[] ReferencedBlocks
+        public IBlockStructure[] UnboundBlocks
         {
             get
             {
@@ -63,6 +63,11 @@ namespace MarsMiner.Saving.Structures.V0
         {
             this.octreeFlags = octreeFlags;
             this.octreeValues = octreeValues;
+
+            Length = 4 // octreeFlags length
+                    + 4 // octreeValueList length
+                    + (octreeFlags.Length / 8) + (octreeFlags.Length % 8 == 0 ? 0 : 1) // octreeFlags
+                    + octreeValues.Length; // octreeValues
         }
 
         private Octree(BitArray octreeFlags, byte[] octreeValues, Tuple<int, uint> address)
@@ -71,17 +76,7 @@ namespace MarsMiner.Saving.Structures.V0
             Address = address;
         }
 
-        #region IBlockStructure
-        public int Length
-        {
-            get
-            {
-                return 4 // octreeFlags length
-                    + 4 // octreeValueList length
-                    + (octreeFlags.Length / 8) + (octreeFlags.Length % 8 == 0 ? 0 : 1) // octreeFlags
-                    + octreeValues.Length; // octreeValues
-            }
-        }
+        public int Length { get; private set; }
 
         public void Write(Stream stream, Func<IBlockStructure, IBlockStructure, uint> getBlockPointerFunc, Func<string, uint> getStringPointerFunc)
         {
@@ -108,9 +103,8 @@ namespace MarsMiner.Saving.Structures.V0
             }
 #endif
         }
-        #endregion
 
-        public static Octree Read(Tuple<int, uint> source, Func<int, uint, Tuple<int, uint>> resolvePointerFunc, Func<uint, string> resolveStringFunc, Func<int, Stream> getStreamFunc)
+        public static Octree Read(Tuple<int, uint> source, Func<int, uint, Tuple<int, uint>> resolvePointerFunc, Func<uint, string> resolveStringFunc, Func<int, Stream> getStreamFunc, ReadOptions readOptions)
         {
             var stream = getStreamFunc(source.Item1);
             stream.Seek(source.Item2, SeekOrigin.Begin);
@@ -123,6 +117,17 @@ namespace MarsMiner.Saving.Structures.V0
             var octreeValues = r.ReadBytes(octreeValuesLength);
 
             return new Octree(octreeFlags, octreeValues, source);
+        }
+
+        public void Unload()
+        {
+            if (Address == null)
+            {
+                throw new InvalidOperationException("Can't unload unbound blocks!");
+            }
+
+            octreeFlags = null;
+            octreeValues = null;
         }
     }
 }

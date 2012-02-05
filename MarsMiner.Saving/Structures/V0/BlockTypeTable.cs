@@ -31,7 +31,7 @@ namespace MarsMiner.Saving.Structures.V0
         private string[] blockTypeNames;
         private int[] blockSubTypes;
 
-        public IBlockStructure[] ReferencedBlocks
+        public IBlockStructure[] UnboundBlocks
         {
             get
             {
@@ -70,6 +70,9 @@ namespace MarsMiner.Saving.Structures.V0
 
             this.blockTypeNames = blockTypeNames;
             this.blockSubTypes = blockSubTypes;
+
+            Length = 2 // block type count
+                    + (4 + 4) * blockTypeNames.Length; // block type names and subtypes
         }
 
         private BlockTypeTable(string[] blockTypeNames, int[] blockSubTypes, Tuple<int, uint> address)
@@ -83,14 +86,7 @@ namespace MarsMiner.Saving.Structures.V0
                 blockTypes.Select(x => x.Item1).ToArray(),
                 blockTypes.Select(x => x.Item2).ToArray()) { }
 
-        public int Length
-        {
-            get
-            {
-                return 2 // block type count
-                    + (4 + 4) * blockTypeNames.Length; // block type names and subtypes
-            }
-        }
+        public int Length { get; private set; }
 
         public void Write(Stream stream, Func<IBlockStructure, IBlockStructure, uint> getBlockPointerFunc, Func<string, uint> getStringPointerFunc)
         {
@@ -113,7 +109,7 @@ namespace MarsMiner.Saving.Structures.V0
 #endif
         }
 
-        public static BlockTypeTable Read(Tuple<int, uint> source, Func<int, uint, Tuple<int, uint>> resolvePointerFunc, Func<uint, string> resolveStringFunc, Func<int, Stream> getStreamFunc)
+        public static BlockTypeTable Read(Tuple<int, uint> source, Func<int, uint, Tuple<int, uint>> resolvePointerFunc, Func<uint, string> resolveStringFunc, Func<int, Stream> getStreamFunc, ReadOptions readOptions)
         {
             var stream = getStreamFunc(source.Item1);
             stream.Seek(source.Item2, SeekOrigin.Begin);
@@ -136,6 +132,17 @@ namespace MarsMiner.Saving.Structures.V0
             }
 
             return new BlockTypeTable(blockTypeNames, blockSubtypes, source);
+        }
+
+        public void Unload()
+        {
+            if (Address == null)
+            {
+                throw new InvalidOperationException("Can't unload unbound blocks!");
+            }
+
+            blockTypeNames = null;
+            blockSubTypes = null;
         }
     }
 }
