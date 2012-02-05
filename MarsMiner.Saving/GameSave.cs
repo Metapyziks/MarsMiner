@@ -101,6 +101,30 @@ namespace MarsMiner.Saving
             return readFunc(new Tuple<int, uint>(0, 0), ResolvePointer, ResolveString, x => blobFiles[x]);
         }
 
+        public void MarkFreeSpace<T>(T header) where T : IBlockStructure
+        {
+            for (int i = 0; i < freeSpace.Length; i++)
+            {
+                freeSpace[i] = new IntRangeList();
+                freeSpace[i].Add(new Tuple<int, int>(0, (int)blobFiles[i].Length));
+            }
+
+            var blockStack = new Stack<IBlockStructure>();
+
+            blockStack.Push(header);
+
+            while (blockStack.Count > 0)
+            {
+                var block = blockStack.Pop();
+                foreach (var b in block.ReferencedBlocks)
+                {
+                    blockStack.Push(b);
+                }
+
+                freeSpace[block.Address.Item1].Subtract(new Tuple<int, int>((int)block.Address.Item2, (int)block.Address.Item2 + block.Length));
+            }
+        }
+
         private Tuple<int, uint> ResolvePointer(int sourceBlob, uint pointer)
         {
             if ((pointer & GlobalPointerFlag) == 0)
