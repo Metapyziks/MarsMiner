@@ -27,6 +27,8 @@ using MarsMiner.Saving;
 using MarsMiner.Shared.Geometry;
 using MarsMiner.Shared.Octree;
 
+using MarsMiner.Saving.Interface.V0;
+
 using SaveChunk = MarsMiner.Saving.Structures.V0.Chunk;
 using SaveOctree = MarsMiner.Saving.Structures.V0.Octree;
 using SaveBlockTypeTable = MarsMiner.Saving.Structures.V0.BlockTypeTable;

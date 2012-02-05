@@ -44,7 +44,7 @@
     <Compile Include="Cache\WriteTransaction.cs" />
     <Compile Include="GameSave.cs" />
     <Compile Include="Interfaces\IBlockStructure.cs" />
-    <Compile Include="ReadOptions.cs" />
+    <Compile Include="Interface\V0\ReadOptions.cs" />
     <Compile Include="SaveManager.cs" />
     <Compile Include="Structures\V0\Octree.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -59,6 +59,7 @@
   <ItemGroup>
     <None Include="Save Format V0 Draft.txt" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

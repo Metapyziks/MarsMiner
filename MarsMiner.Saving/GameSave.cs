@@ -95,7 +95,7 @@ namespace MarsMiner.Saving
             //MarkFreeSpace(transaction.Header); //TODO: Uncomment when MarkFreeSpace works with unloaded blocks
         }
 
-        public T Read<T>(Func<Tuple<int, uint>, Func<int, uint, Tuple<int, uint>>, Func<uint, string>, Func<int, Stream>, ReadOptions, T> readFunc, ReadOptions readOptions)
+        public T Read<T, RO>(Func<Tuple<int, uint>, Func<int, uint, Tuple<int, uint>>, Func<uint, string>, Func<int, Stream>, RO, T> readFunc, RO readOptions)
         {
             return readFunc(new Tuple<int, uint>(0, 0), ResolvePointer, ResolveString, x => blobFiles[x], readOptions);
         }

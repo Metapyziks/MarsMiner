@@ -23,6 +23,7 @@ using System.Linq;
 using System.Text;
 using MarsMiner.Saving.Structures.V0;
 using System.Collections;
+using MarsMiner.Saving.Interface.V0;
 
 namespace MarsMiner.Saving.Test
 {
