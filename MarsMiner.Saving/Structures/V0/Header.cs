@@ -25,6 +25,7 @@ using MarsMiner.Saving.Interfaces;
 using System.IO;
 using MarsMiner.Saving.Cache;
 using MarsMiner.Saving.Interface.V0;
+using MarsMiner.Saving.Util;
 
 namespace MarsMiner.Saving.Structures.V0
 {
@@ -51,6 +52,21 @@ namespace MarsMiner.Saving.Structures.V0
         {
             get { return new Tuple<int, uint>(0, 0); }
             set { throw new InvalidOperationException("Can't set address on Header!"); }
+        }
+
+        public Dictionary<int, IntRangeList> RecursiveUsedSpace
+        {
+            get
+            {
+                var usedSpace = new Dictionary<int, IntRangeList>();
+
+                if (!usedSpace.ContainsKey(Address.Item1))
+                {
+                    usedSpace[Address.Item1] = new IntRangeList();
+                }
+                usedSpace[Address.Item1].Add((int)Address.Item2, (int)Address.Item2 + Length);
+                return usedSpace;
+            }
         }
 
         public Header(SavedStateIndex mainIndex)
@@ -125,6 +141,12 @@ namespace MarsMiner.Saving.Structures.V0
         public void Unload()
         {
             throw new InvalidOperationException("Can't unload the header!");
+        }
+
+
+        public void CalculateRecursiveUsedSpace()
+        {
+            //Do nothing.
         }
     }
 }

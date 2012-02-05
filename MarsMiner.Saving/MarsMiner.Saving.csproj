@@ -54,6 +54,7 @@
     <Compile Include="Structures\V0\Header.cs" />
     <Compile Include="Structures\V0\SavedStateIndex.cs" />
     <Compile Include="Test\Tests.cs" />
+    <Compile Include="Util\Extensions.cs" />
     <Compile Include="Util\IntRangeList.cs" />
   </ItemGroup>
   <ItemGroup>

@@ -22,6 +22,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.IO;
+using MarsMiner.Saving.Util;
 
 namespace MarsMiner.Saving.Interfaces
 {
@@ -35,5 +36,8 @@ namespace MarsMiner.Saving.Interfaces
         IBlockStructure[] UnboundBlocks { get; }
 
         void Unload();
+
+        Dictionary<int, IntRangeList> RecursiveUsedSpace { get; }
+        void CalculateRecursiveUsedSpace();
     }
 }

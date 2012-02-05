@@ -25,6 +25,7 @@ using System.Collections;
 using MarsMiner.Saving.Interfaces;
 using System.IO;
 using MarsMiner.Saving.Interface.V0;
+using MarsMiner.Saving.Util;
 
 namespace MarsMiner.Saving.Structures.V0
 {
@@ -58,6 +59,38 @@ namespace MarsMiner.Saving.Structures.V0
             }
         }
 
+        public void CalculateRecursiveUsedSpace()
+        {
+            recursiveUsedSpace = new Dictionary<int, IntRangeList>();
+
+            if (!recursiveUsedSpace.ContainsKey(Address.Item1))
+            {
+                recursiveUsedSpace[Address.Item1] = new IntRangeList();
+            }
+            recursiveUsedSpace[Address.Item1].Add(new Tuple<int, int>((int)Address.Item2, (int)Address.Item2 + Length));
+        }
+
+        private Dictionary<int, IntRangeList> recursiveUsedSpace;
+        public Dictionary<int, IntRangeList> RecursiveUsedSpace
+        {
+            get
+            {
+                if (Address == null)
+                {
+                    throw new InvalidOperationException("Can't get used space from unbound block!");
+                }
+                if (recursiveUsedSpace == null)
+                {
+                    CalculateRecursiveUsedSpace();
+                }
+                return recursiveUsedSpace;
+            }
+            private set
+            {
+                recursiveUsedSpace = value;
+            }
+        }
+
         //TODO: accessors
 
         public Octree(BitArray octreeFlags, byte[] octreeValues)
@@ -75,6 +108,7 @@ namespace MarsMiner.Saving.Structures.V0
             : this(octreeFlags, octreeValues)
         {
             Address = address;
+            CalculateRecursiveUsedSpace();
         }
 
         public int Length { get; private set; }

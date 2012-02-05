@@ -24,11 +24,16 @@ using System.Text;
 
 namespace MarsMiner.Saving.Util
 {
-    internal class IntRangeList
+    public class IntRangeList
     {
         //TODO: This can be made much faster with a sorted set.
 
         private List<Tuple<int, int>> ranges = new List<Tuple<int, int>>();
+
+        public void Add(int start, int end)
+        {
+            Add((Tuple<int, int>)new Tuple<int, int>(start, end));
+        }
 
         public void Add(Tuple<int, int> range)
         {

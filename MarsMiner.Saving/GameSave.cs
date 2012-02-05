@@ -92,12 +92,14 @@ namespace MarsMiner.Saving
 
             blobFiles[0].Flush();
 
-            //MarkFreeSpace(transaction.Header); //TODO: Uncomment when MarkFreeSpace works with unloaded blocks
+            MarkFreeSpace(transaction.Header);
         }
 
-        public T Read<T, RO>(Func<Tuple<int, uint>, Func<int, uint, Tuple<int, uint>>, Func<uint, string>, Func<int, Stream>, RO, T> readFunc, RO readOptions)
+        public T Read<T, RO>(Func<Tuple<int, uint>, Func<int, uint, Tuple<int, uint>>, Func<uint, string>, Func<int, Stream>, RO, T> readFunc, RO readOptions) where T : IBlockStructure
         {
-            return readFunc(new Tuple<int, uint>(0, 0), ResolvePointer, ResolveString, x => blobFiles[x], readOptions);
+            T header = readFunc(new Tuple<int, uint>(0, 0), ResolvePointer, ResolveString, x => blobFiles[x], readOptions);
+            //MarkFreeSpace(header);
+            return header;
         }
 
         public void MarkFreeSpace<T>(T header) where T : IBlockStructure
@@ -108,21 +110,9 @@ namespace MarsMiner.Saving
                 freeSpace[i].Add(new Tuple<int, int>(8, (int)blobFiles[i].Length));
             }
 
-            var blockStack = new Stack<IBlockStructure>();
-
-            blockStack.Push(header);
-
-            while (blockStack.Count > 0)
+            foreach (var kv in header.RecursiveUsedSpace)
             {
-                var block = blockStack.Pop();
-
-                throw new NotImplementedException("MarkFreeSpace must get used space instead.");
-                foreach (var b in block.UnboundBlocks)
-                {
-                    blockStack.Push(b);
-                }
-
-                freeSpace[block.Address.Item1].Subtract(new Tuple<int, int>((int)block.Address.Item2, (int)block.Address.Item2 + block.Length));
+                freeSpace[kv.Key].Subtract(kv.Value);
             }
         }
 
