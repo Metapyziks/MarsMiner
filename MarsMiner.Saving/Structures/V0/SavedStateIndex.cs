@@ -33,6 +33,14 @@ namespace MarsMiner.Saving.Structures.V0
         private string saveName;
         private ChunkTable chunkTable;
 
+        public IBlockStructure[] ReferencedBlocks
+        {
+            get
+            {
+                return new IBlockStructure[] { ChunkTable };
+            }
+        }
+
         private Tuple<int, uint> address;
         public Tuple<int, uint> Address
         {
@@ -65,7 +73,7 @@ namespace MarsMiner.Saving.Structures.V0
             this.chunkTable = chunkTable;
         }
 
-        private SavedStateIndex(long timestamp, string saveName, ChunkTable chunkTable, Tuple<int,uint> address)
+        private SavedStateIndex(long timestamp, string saveName, ChunkTable chunkTable, Tuple<int, uint> address)
             : this(timestamp, saveName, chunkTable)
         {
             Address = address;

@@ -31,5 +31,7 @@ namespace MarsMiner.Saving.Interfaces
         void Write(Stream stream, Func<IBlockStructure, IBlockStructure, uint> getBlockPointerFunc, Func<string, uint> getStringPointerFunc);
 
         Tuple<int, uint> Address { get; set; }
+
+        IBlockStructure[] ReferencedBlocks { get; }
     }
 }

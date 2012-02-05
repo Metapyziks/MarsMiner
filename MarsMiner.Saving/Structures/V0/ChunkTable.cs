@@ -32,6 +32,14 @@ namespace MarsMiner.Saving.Structures.V0
         private int[] zLocations;
         private Chunk[] chunks;
 
+        public IBlockStructure[] ReferencedBlocks
+        {
+            get
+            {
+                return chunks.ToArray();
+            }
+        }
+
         private Tuple<int, uint> address;
         public Tuple<int, uint> Address
         {

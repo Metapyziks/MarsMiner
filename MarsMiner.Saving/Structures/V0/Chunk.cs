@@ -31,6 +31,17 @@ namespace MarsMiner.Saving.Structures.V0
         private BlockTypeTable blockTypeTable;
         private Octree[] octrees;
 
+        public IBlockStructure[] ReferencedBlocks
+        {
+            get
+            {
+                var blocks = new IBlockStructure[octrees.Length + 1];
+                blocks[0] = blockTypeTable;
+                octrees.CopyTo(blocks, 1);
+                return blocks;
+            }
+        }
+
         private Tuple<int, uint> address;
         public Tuple<int, uint> Address
         {
@@ -40,7 +51,7 @@ namespace MarsMiner.Saving.Structures.V0
             }
             set
             {
-                if (address!=null)
+                if (address != null)
                 {
                     throw new InvalidOperationException("Address can't be reassigned!");
                 }

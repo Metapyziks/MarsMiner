@@ -31,6 +31,14 @@ namespace MarsMiner.Saving.Structures.V0
         private string[] blockTypeNames;
         private int[] blockSubTypes;
 
+        public IBlockStructure[] ReferencedBlocks
+        {
+            get
+            {
+                return new IBlockStructure[0];
+            }
+        }
+
         private Tuple<int, uint> address;
         public Tuple<int, uint> Address
         {
