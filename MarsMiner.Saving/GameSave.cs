@@ -94,6 +94,8 @@ namespace MarsMiner.Saving
                 transaction.Header.Write(blobFiles[0], FindBlockPointer, FindStringAddress);
                 blobFiles[0].Flush();
             }
+
+            MarkFreeSpace(transaction.Header);
         }
 
         internal T Read<T>(Func<Tuple<int, uint>, Func<int, uint, Tuple<int, uint>>, Func<uint, string>, Func<int, Stream>, T> readFunc)
