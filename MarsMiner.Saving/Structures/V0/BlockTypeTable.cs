@@ -146,6 +146,8 @@ namespace MarsMiner.Saving.Structures.V0
 
         public static BlockTypeTable Read(Tuple<int, uint> source, Func<int, uint, Tuple<int, uint>> resolvePointerFunc, Func<uint, string> resolveStringFunc, Func<int, Stream> getStreamFunc, ReadOptions readOptions)
         {
+            Console.WriteLine("Reading {0} from {1}", "BlockTypeTable", source);
+
             var stream = getStreamFunc(source.Item1);
             stream.Seek(source.Item2, SeekOrigin.Begin);
             var r = new BinaryReader(stream);
@@ -159,6 +161,8 @@ namespace MarsMiner.Saving.Structures.V0
                 blockSubtypes[i] = r.ReadInt32();
             }
 
+            var end = stream.Position;
+
             var blockTypeNames = new string[blockTypeNameCount];
 
             for (int i = 0; i < blockTypeNameCount; i++)
@@ -167,6 +171,9 @@ namespace MarsMiner.Saving.Structures.V0
             }
 
             BlockTypeTable newBlockTypeTable = new BlockTypeTable(blockTypeNames, blockSubtypes, source);
+
+            Console.WriteLine("Read {0} from {1} to {2} == {3}", "BlockTypeTable", newBlockTypeTable.Address, newBlockTypeTable.Address.Item2 + newBlockTypeTable.Length, end);
+
             return newBlockTypeTable;
         }
 

@@ -98,7 +98,7 @@ namespace MarsMiner.Saving
         public T Read<T, RO>(Func<Tuple<int, uint>, Func<int, uint, Tuple<int, uint>>, Func<uint, string>, Func<int, Stream>, RO, T> readFunc, RO readOptions) where T : IBlockStructure
         {
             T header = readFunc(new Tuple<int, uint>(0, 0), ResolvePointer, ResolveString, x => blobFiles[x], readOptions);
-            //MarkFreeSpace(header);
+            MarkFreeSpace(header);
             return header;
         }
 
@@ -171,7 +171,7 @@ namespace MarsMiner.Saving
 
         private void WriteBlock(IBlockStructure block)
         {
-            Console.WriteLine("Writing {0} from {1} to {2}", block.GetType(), block.Address, block.Address.Item2 + block.Length);
+            Console.WriteLine("Writing {0} from {1} to {2}", block.GetType().FullName.Split('.').Last(), block.Address, block.Address.Item2 + block.Length);
 
             var blockBlob = blobFiles[block.Address.Item1];
 
@@ -249,7 +249,6 @@ namespace MarsMiner.Saving
                 throw new ArgumentException("blockStructure.Address already set!");
             }
 
-
             var blockLength = blockStructure.Length;
 
             Tuple<int, Tuple<int, int>> bestMatch = null;
@@ -266,6 +265,11 @@ namespace MarsMiner.Saving
 
                     bestMatch = new Tuple<int, Tuple<int, int>>(fileIndex, freeArea);
                 }
+            }
+            if (bestMatch != null)
+            {
+                //Resize to fit block
+                bestMatch = new Tuple<int, Tuple<int, int>>(bestMatch.Item1, new Tuple<int, int>(bestMatch.Item2.Item1, bestMatch.Item2.Item1 + blockLength));
             }
 
             if (bestMatch == null)
@@ -295,6 +299,11 @@ namespace MarsMiner.Saving
                     new Tuple<int, int>(
                         (int)blobFiles[newBlobIndex].Length,
                         (int)blobFiles[newBlobIndex].Length + blockLength));
+            }
+
+            if (bestMatch.Item2.Item2 - bestMatch.Item2.Item1 != blockLength)
+            {
+                throw new Exception("Area mismatch! Wanted" + blockLength + "bytes, but got " + (bestMatch.Item2.Item2 - bestMatch.Item2.Item1) + " bytes.");
             }
 
             AllocateSpace(bestMatch.Item1, bestMatch.Item2);
@@ -327,7 +336,7 @@ namespace MarsMiner.Saving
             while (blobFiles[fileIndex].Length < spaceArea.Item2)
             {
                 var oldlength = blobFiles[fileIndex].Length;
-                blobFiles[fileIndex].SetLength(oldlength + spaceArea.Item2 - 1);
+                blobFiles[fileIndex].SetLength(oldlength + spaceArea.Item2);
                 freeSpace[fileIndex].Add(new Tuple<int, int>((int)oldlength, (int)blobFiles[fileIndex].Length));
             }
             freeSpace[fileIndex].Subtract(spaceArea);

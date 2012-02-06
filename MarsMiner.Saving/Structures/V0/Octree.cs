@@ -141,6 +141,8 @@ namespace MarsMiner.Saving.Structures.V0
 
         public static Octree Read(Tuple<int, uint> source, Func<int, uint, Tuple<int, uint>> resolvePointerFunc, Func<uint, string> resolveStringFunc, Func<int, Stream> getStreamFunc, ReadOptions readOptions)
         {
+            Console.WriteLine("Reading {0} from {1}", "Octree", source);
+
             var stream = getStreamFunc(source.Item1);
             stream.Seek(source.Item2, SeekOrigin.Begin);
             var r = new BinaryReader(stream);
@@ -151,7 +153,13 @@ namespace MarsMiner.Saving.Structures.V0
             var octreeFlags = new BitArray(r.ReadBytes(octreeFlagsLength));
             var octreeValues = r.ReadBytes(octreeValuesLength);
 
-            return new Octree(octreeFlags, octreeValues, source);
+            var end = stream.Position;
+
+            Octree newOctree = new Octree(octreeFlags, octreeValues, source);
+
+            Console.WriteLine("Read {0} from {1} to {2} == {3}", "Octree", newOctree.Address, newOctree.Address.Item2 + newOctree.Length, end);
+
+            return newOctree;
         }
 
         public void Unload()

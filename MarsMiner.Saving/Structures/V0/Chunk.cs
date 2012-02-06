@@ -151,6 +151,8 @@ namespace MarsMiner.Saving.Structures.V0
 
         public static Chunk Read(Tuple<int, uint> source, Func<int, uint, Tuple<int, uint>> resolvePointerFunc, Func<uint, string> resolveStringFunc, Func<int, Stream> getStreamFunc, ReadOptions readOptions)
         {
+            Console.WriteLine("Reading {0} from {1}", "Chunk", source);
+
             var stream = getStreamFunc(source.Item1);
             stream.Seek(source.Item2, SeekOrigin.Begin);
             var r = new BinaryReader(stream);
@@ -164,6 +166,8 @@ namespace MarsMiner.Saving.Structures.V0
             {
                 octreePointers[i] = r.ReadUInt32();
             }
+
+            var end = stream.Position;
 
             var blockTypeTable = BlockTypeTable.Read(resolvePointerFunc(source.Item1, blockTypeTablePointer), resolvePointerFunc, resolveStringFunc, getStreamFunc, readOptions);
             var octrees = new Octree[octreeCount];
@@ -179,6 +183,8 @@ namespace MarsMiner.Saving.Structures.V0
             {
                 readOptions.ChunkCallback(chunk);
             }
+
+            Console.WriteLine("Read {0} from {1} to {2} == {3}", "Chunk", chunk.Address, chunk.Address.Item2 + chunk.Length, end);
 
             return chunk;
         }
