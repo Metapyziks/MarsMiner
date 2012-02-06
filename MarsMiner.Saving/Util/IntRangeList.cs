@@ -27,6 +27,7 @@ namespace MarsMiner.Saving.Util
     public class IntRangeList
     {
         //TODO: This can be made much faster with a sorted set.
+        //TODO: Make immutable.
 
         private List<Tuple<int, int>> ranges = new List<Tuple<int, int>>();
 
@@ -46,10 +47,12 @@ namespace MarsMiner.Saving.Util
             {
                 if (r.Item2 < newRangeStart || newRangeEnd < r.Item1)
                 {
+                    // No collision
                     newRanges.Add(r);
                 }
                 else
                 {
+                    // Collision, merge ranges
                     newRangeStart = Math.Min(r.Item1, newRangeStart);
                     newRangeEnd = Math.Max(r.Item2, newRangeEnd);
                 }
@@ -68,16 +71,19 @@ namespace MarsMiner.Saving.Util
             {
                 if (r.Item2 < range.Item1 || range.Item2 < r.Item1)
                 {
+                    // No collision
                     newRanges.Add(r);
                 }
                 else
                 {
                     if (r.Item1 < range.Item1)
                     {
+                        // Start of r remains
                         newRanges.Add(new Tuple<int, int>(r.Item1, range.Item1));
                     }
                     if (range.Item2 < r.Item2)
                     {
+                        // End of r remains
                         newRanges.Add(new Tuple<int, int>(range.Item2, r.Item2));
                     }
                 }
