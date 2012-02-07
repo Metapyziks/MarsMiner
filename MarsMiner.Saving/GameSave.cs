@@ -527,8 +527,6 @@ namespace MarsMiner.Saving
         {
             closing = true;
 
-            Flush();
-
             pointerFile.Dispose();
             stringFile.Dispose();
             foreach (var blob in blobFiles)
@@ -537,11 +535,6 @@ namespace MarsMiner.Saving
             }
 
             closed = true;
-        }
-
-        private void Flush()
-        {
-            //TODO: Flush save
         }
 
         ~GameSave()
