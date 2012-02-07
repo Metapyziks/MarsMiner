@@ -60,6 +60,8 @@ namespace MarsMiner.Saving.Structures.V0
             {
                 var usedSpace = new Dictionary<int, IntRangeList>();
 
+                usedSpace.Add(mainIndex.RecursiveUsedSpace);
+
                 if (!usedSpace.ContainsKey(Address.Item1))
                 {
                     usedSpace[Address.Item1] = new IntRangeList();
