@@ -80,11 +80,6 @@ namespace MarsMiner.Saving
             if (blockAsHeader == null)
             {
                 WriteBlock(block);
-
-                if (unload)
-                {
-                    block.Unload();
-                }
             }
             else
             {
@@ -106,6 +101,11 @@ namespace MarsMiner.Saving
                 blobFiles[0].Flush(); // Don't cache header write
 
                 MarkFreeSpace(blockAsHeader);
+            }
+
+            if (unload)
+            {
+                block.Unload();
             }
         }
 

@@ -47,20 +47,20 @@ namespace MarsMiner.Saving.Structures.V0
             set { throw new InvalidOperationException("Can't set address on Header!"); }
         }
 
+        private Dictionary<int, IntRangeList> recursiveUsedSpace;
         public Dictionary<int, IntRangeList> RecursiveUsedSpace
         {
             get
             {
-                var usedSpace = new Dictionary<int, IntRangeList>();
-
-                usedSpace.Add(mainIndex.RecursiveUsedSpace);
-
-                if (!usedSpace.ContainsKey(Address.Item1))
+                if (recursiveUsedSpace == null)
                 {
-                    usedSpace[Address.Item1] = new IntRangeList();
+                    CalculateRecursiveUsedSpace();
                 }
-                usedSpace[Address.Item1].Add((int)Address.Item2, (int)Address.Item2 + Length);
-                return usedSpace;
+                return recursiveUsedSpace;
+            }
+            private set
+            {
+                recursiveUsedSpace = value;
             }
         }
 
@@ -122,14 +122,28 @@ namespace MarsMiner.Saving.Structures.V0
 
         public void Unload()
         {
-            throw new InvalidOperationException("Can't unload the header!");
+            if (Address == null || (mainIndex != null && mainIndex.Address == null))
+            {
+                throw new InvalidOperationException("Can't unload unbound blocks!");
+            }
+
             CalculateRecursiveUsedSpace();
+            mainIndex = null;
         }
 
 
         public void CalculateRecursiveUsedSpace()
         {
-            //Do nothing.
+            if (recursiveUsedSpace != null) return;
+
+            recursiveUsedSpace = new Dictionary<int, IntRangeList>();
+            recursiveUsedSpace.Add(mainIndex.RecursiveUsedSpace);
+
+            if (!recursiveUsedSpace.ContainsKey(Address.Item1))
+            {
+                recursiveUsedSpace[Address.Item1] = new IntRangeList();
+            }
+            recursiveUsedSpace[Address.Item1].Add(new Tuple<int, int>((int)Address.Item2, (int)Address.Item2 + Length));
         }
     }
 }
