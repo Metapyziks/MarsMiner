@@ -118,8 +118,10 @@ namespace MarsMiner.Saving
 
         private void MarkFreeSpace<T>(T header) where T : IHeader
         {
+#if DebugVerboseSpace
             PrintUsedSpace();
             Console.WriteLine("MarkFreeSpace called.");
+#endif
 
             for (int i = 0; i < freeSpace.Length; i++)
             {
@@ -131,10 +133,13 @@ namespace MarsMiner.Saving
             {
                 freeSpace[kv.Key].Subtract(kv.Value);
             }
-
+            
+#if DebugVerboseSpace
             PrintUsedSpace();
+#endif
         }
-
+        
+#if DebugVerboseSpace
         private void PrintUsedSpace()
         {
             for (int b = 0; b < blobFiles.Length; b++)
@@ -178,6 +183,7 @@ namespace MarsMiner.Saving
                 Console.WriteLine("Used ratio: {0}", (float)used / max);
             }
         }
+#endif
 
         private Tuple<int, uint> ResolvePointer(int sourceBlob, uint pointer)
         {
@@ -234,7 +240,9 @@ namespace MarsMiner.Saving
 
         private void WriteBlock(IBlockStructure block)
         {
+#if DebugVerboseBlocks
             Console.WriteLine("Writing {0} from {1} to {2}", block.GetType().FullName.Split('.').Last(), block.Address, block.Address.Item2 + block.Length);
+#endif
 
             var blockBlob = blobFiles[block.Address.Item1];
 
@@ -247,7 +255,9 @@ namespace MarsMiner.Saving
         {
             if (source.Address.Item1 == target.Address.Item1)
             {
+#if DebugVerbosePointers
                 Console.WriteLine("Local: {0} → {1}", source.Address, target.Address);
+#endif
                 return target.Address.Item2;
             }
 
@@ -255,12 +265,16 @@ namespace MarsMiner.Saving
             {
                 if (pointers[i] == target.Address)
                 {
+#if DebugVerbosePointers
                     Console.WriteLine("Global {2}: {0} → {1}", source.Address, target.Address, i);
+#endif
                     return GlobalPointerFlag | (uint)i;
                 }
             }
-
+            
+#if DebugVerbosePointers
             Console.WriteLine("New global {2}: {0} → {1}", source.Address, target.Address, pointers.Count - 1);
+#endif
             return GlobalPointerFlag | AddGlobalPointer(target.Address);
         }
 

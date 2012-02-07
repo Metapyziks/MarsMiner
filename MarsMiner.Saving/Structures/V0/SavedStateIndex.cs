@@ -144,7 +144,9 @@ namespace MarsMiner.Saving.Structures.V0
 
         public static SavedStateIndex Read(Tuple<int, uint> source, Func<int, uint, Tuple<int, uint>> resolvePointerFunc, Func<uint, string> resolveStringFunc, Func<int, Stream> getStreamFunc, ReadOptions readOptions)
         {
+#if DebugVerboseBlocks
             Console.WriteLine("Reading {0} from {1}", "SavedStateIndex", source);
+#endif
 
             var stream = getStreamFunc(source.Item1);
             stream.Seek(source.Item2, SeekOrigin.Begin);
@@ -162,7 +164,9 @@ namespace MarsMiner.Saving.Structures.V0
                             ChunkTable.Read(resolvePointerFunc(source.Item1, chunkTablePointer), resolvePointerFunc, resolveStringFunc, getStreamFunc, readOptions),
                             source);
 
+#if DebugVerboseBlocks
             Console.WriteLine("Read {0} from {1} to {2} == {3}", "SavedStateIndex", newSavedStateIndex.Address, newSavedStateIndex.Address.Item2 + newSavedStateIndex.Length, end);
+#endif
 
             return newSavedStateIndex;
         }

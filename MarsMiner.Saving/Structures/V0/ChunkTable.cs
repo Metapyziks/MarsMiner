@@ -169,7 +169,9 @@ namespace MarsMiner.Saving.Structures.V0
 
         public static ChunkTable Read(Tuple<int, uint> source, Func<int, uint, Tuple<int, uint>> resolvePointerFunc, Func<uint, string> resolveStringFunc, Func<int, Stream> getStreamFunc, ReadOptions readOptions)
         {
+#if DebugVerboseBlocks
             Console.WriteLine("Reading {0} from {1}", "ChunkTable", source);
+#endif
 
             var stream = getStreamFunc(source.Item1);
             stream.Seek(source.Item2, SeekOrigin.Begin);
@@ -198,8 +200,10 @@ namespace MarsMiner.Saving.Structures.V0
             }
 
             ChunkTable newChunkTable = new ChunkTable(xLocations, yLocations, chunks, source);
-
+            
+#if DebugVerboseBlocks
             Console.WriteLine("Read {0} from {1} to {2} == {3}", "ChunkTable", newChunkTable.Address, newChunkTable.Address.Item2 + newChunkTable.Length, end);
+#endif
 
             return newChunkTable;
         }

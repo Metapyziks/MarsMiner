@@ -95,7 +95,9 @@ namespace MarsMiner.Saving.Structures.V0
 
         public static Header Read(Tuple<int, uint> source, Func<int, uint, Tuple<int, uint>> resolvePointerFunc, Func<uint, string> resolveStringFunc, Func<int, Stream> getStreamFunc, ReadOptions readOptions)
         {
+#if DebugVerboseBlocks
             Console.WriteLine("Reading {0} from {1}", "Header", source);
+#endif
 
             var stream = getStreamFunc(source.Item1);
             stream.Seek(source.Item2, SeekOrigin.Begin);
@@ -114,8 +116,10 @@ namespace MarsMiner.Saving.Structures.V0
             var mainIndex = SavedStateIndex.Read(resolvePointerFunc(source.Item1, mainIndexPointer), resolvePointerFunc, resolveStringFunc, getStreamFunc, readOptions);
 
             Header newHeader = new Header(mainIndex);
-
+            
+#if DebugVerboseBlocks
             Console.WriteLine("Read {0} from {1} to {2} == {3}", "Header", newHeader.Address, newHeader.Address.Item2 + newHeader.Length, end);
+#endif
 
             return newHeader;
         }

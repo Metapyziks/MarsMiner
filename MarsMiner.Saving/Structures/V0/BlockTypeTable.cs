@@ -148,7 +148,9 @@ namespace MarsMiner.Saving.Structures.V0
 
         public static BlockTypeTable Read(Tuple<int, uint> source, Func<int, uint, Tuple<int, uint>> resolvePointerFunc, Func<uint, string> resolveStringFunc, Func<int, Stream> getStreamFunc, ReadOptions readOptions)
         {
+#if DebugVerboseBlocks
             Console.WriteLine("Reading {0} from {1}", "BlockTypeTable", source);
+#endif
 
             var stream = getStreamFunc(source.Item1);
             stream.Seek(source.Item2, SeekOrigin.Begin);
@@ -173,8 +175,10 @@ namespace MarsMiner.Saving.Structures.V0
             }
 
             BlockTypeTable newBlockTypeTable = new BlockTypeTable(blockTypeNames, blockSubtypes, source);
-
+            
+#if DebugVerboseBlocks
             Console.WriteLine("Read {0} from {1} to {2} == {3}", "BlockTypeTable", newBlockTypeTable.Address, newBlockTypeTable.Address.Item2 + newBlockTypeTable.Length, end);
+#endif
 
             return newBlockTypeTable;
         }
