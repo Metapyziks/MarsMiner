@@ -23,7 +23,6 @@ using System.Linq;
 using System.Text;
 using MarsMiner.Saving.Interfaces;
 using System.IO;
-using MarsMiner.Saving.Cache;
 using MarsMiner.Saving.Interface.V0;
 using MarsMiner.Saving.Util;
 
@@ -66,8 +65,10 @@ namespace MarsMiner.Saving.Structures.V0
             }
         }
 
-        public void CalculateRecursiveUsedSpace()
+        private void CalculateRecursiveUsedSpace()
         {
+            if (recursiveUsedSpace != null) return;
+
             recursiveUsedSpace = new Dictionary<int, IntRangeList>();
             recursiveUsedSpace.Add(ChunkTable.RecursiveUsedSpace);
 
@@ -173,6 +174,7 @@ namespace MarsMiner.Saving.Structures.V0
                 throw new InvalidOperationException("Can't unload unbound blocks!");
             }
 
+            CalculateRecursiveUsedSpace();
             ChunkTable = null;
         }
     }

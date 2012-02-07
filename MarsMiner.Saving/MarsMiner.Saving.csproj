@@ -41,9 +41,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Cache\WriteTransaction.cs" />
     <Compile Include="GameSave.cs" />
     <Compile Include="Interfaces\IBlockStructure.cs" />
+    <Compile Include="Interfaces\IHeader.cs" />
     <Compile Include="Interface\V0\ReadOptions.cs" />
     <Compile Include="Structures\V0\Octree.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

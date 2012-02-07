@@ -21,7 +21,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using MarsMiner.Saving.Cache;
 using System.IO;
 using MarsMiner.Saving.Util;
 using MarsMiner.Saving.Interfaces;
@@ -45,8 +44,6 @@ namespace MarsMiner.Saving
         private const uint GlobalPointerFlag = 0x80000000;
         private const uint PointerDataMask = uint.MaxValue ^ GlobalPointerFlag;
 
-        private Queue<WriteTransaction> writeQueue;
-
         private FileStream pointerFile;
         List<Tuple<int, uint>> pointers;
 
@@ -65,44 +62,61 @@ namespace MarsMiner.Saving
             stringsByAddress = new Dictionary<uint, string>();
         }
 
-        public void WriteTransaction(WriteTransaction transaction)
+        public void Write(IBlockStructure block, bool unload = true)
         {
-            var blocksToWrite = transaction.Blocks.Where(b => b.Address == null).ToArray();
-            foreach (var block in blocksToWrite)
+            var unboundReferenced = block.UnboundBlocks;
+            foreach (var b in unboundReferenced)
             {
+                Write(b, unload);
+            }
+
+            if (block.Address == null)
+            {
+                // Unbound
                 AllocateSpace(block);
             }
 
-            foreach (var block in blocksToWrite)
+            var blockAsHeader = block as IHeader;
+            if (blockAsHeader == null)
             {
                 WriteBlock(block);
+
+                if (unload)
+                {
+                    block.Unload();
+                }
             }
-
-            UpdatePointerFileHeader();
-            UpdateStringFileHeader();
-
-            pointerFile.Flush();
-            stringFile.Flush();
-            foreach (var blobFile in blobFiles)
+            else
             {
-                blobFile.Flush();
+                // block is a header, update files before writing
+
+                UpdatePointerFileHeader();
+                UpdateStringFileHeader();
+
+                // Write barrier
+                pointerFile.Flush();
+                stringFile.Flush();
+                foreach (var blobFile in blobFiles)
+                {
+                    blobFile.Flush();
+                }
+
+                WriteBlock(block);
+
+                blobFiles[0].Flush(); // Don't cache header write
+
+                MarkFreeSpace(blockAsHeader);
             }
-
-            WriteBlock(transaction.Header);
-
-            blobFiles[0].Flush();
-
-            MarkFreeSpace(transaction.Header); // This is only here and not farther upwards to maintain transaction safety.
         }
 
-        public T Read<T, RO>(Func<Tuple<int, uint>, Func<int, uint, Tuple<int, uint>>, Func<uint, string>, Func<int, Stream>, RO, T> readFunc, RO readOptions) where T : IBlockStructure
+        public T Read<T, RO>(Func<Tuple<int, uint>, Func<int, uint, Tuple<int, uint>>, Func<uint, string>, Func<int, Stream>, RO, T> readFunc, RO readOptions) where T : IHeader
         {
             T header = readFunc(new Tuple<int, uint>(0, 0), ResolvePointer, ResolveString, x => blobFiles[x], readOptions);
             MarkFreeSpace(header);
             return header;
         }
 
-        public void MarkFreeSpace<T>(T header) where T : IBlockStructure
+        private void MarkFreeSpace<T>(T header) where T : IHeader
         {
             PrintUsedSpace();
             Console.WriteLine("MarkFreeSpace called.");
@@ -131,9 +145,9 @@ namespace MarsMiner.Saving
 
                 var max = blobFiles[b].Length;
 
-                var free = 0;
                 var used = 0;
 
+#if DebugDrawUsedSpace
                 for (int i = 0; i < max; i++)
                 {
                     if (Console.CursorLeft >= 100)
@@ -144,7 +158,6 @@ namespace MarsMiner.Saving
                     if (fs.Contains(i))
                     {
                         Console.Write("_");
-                        free++;
                     }
                     else
                     {
@@ -153,6 +166,15 @@ namespace MarsMiner.Saving
                     }
                 }
                 Console.WriteLine();
+#else
+                for (int i = 0; i < max; i++)
+                {
+                    if (!fs.Contains(i))
+                    {
+                        used++;
+                    }
+                }
+#endif
                 Console.WriteLine("Used ratio: {0}", (float)used / max);
             }
         }
@@ -288,6 +310,11 @@ namespace MarsMiner.Saving
             if (blockStructure.Address != null)
             {
                 throw new ArgumentException("blockStructure.Address already set!");
+            }
+
+            if (blockStructure.UnboundBlocks.Length != 0)
+            {
+                throw new ArgumentException("blockStructure has unbound referenced blocks!");
             }
 
             var blockLength = blockStructure.Length;

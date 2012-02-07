@@ -23,13 +23,12 @@ using System.Linq;
 using System.Text;
 using MarsMiner.Saving.Interfaces;
 using System.IO;
-using MarsMiner.Saving.Cache;
 using MarsMiner.Saving.Interface.V0;
 using MarsMiner.Saving.Util;
 
 namespace MarsMiner.Saving.Structures.V0
 {
-    public class Header : IBlockStructure
+    public class Header : IBlockStructure, IHeader
     {
         public const int Version = 0;
         private SavedStateIndex mainIndex;
@@ -38,12 +37,6 @@ namespace MarsMiner.Saving.Structures.V0
         {
             get
             {
-                if (Address != null)
-                {
-                    //Bound
-                    return new IBlockStructure[0];
-                }
-
                 return mainIndex.Address == null ? new IBlockStructure[] { mainIndex } : new IBlockStructure[0];
             }
         }
@@ -127,30 +120,10 @@ namespace MarsMiner.Saving.Structures.V0
             return newHeader;
         }
 
-        public WriteTransaction GetTransaction()
-        {
-            var blocks = new List<IBlockStructure>();
-            var blockStack = new Stack<IBlockStructure>();
-
-            blockStack.Push(SaveIndex);
-
-            while (blockStack.Count > 0)
-            {
-                var block = blockStack.Pop();
-
-                blocks.Add(block);
-                foreach (var b in block.UnboundBlocks)
-                {
-                    blockStack.Push(b);
-                }
-            }
-
-            return new WriteTransaction(this, blocks.ToArray());
-        }
-
         public void Unload()
         {
             throw new InvalidOperationException("Can't unload the header!");
+            CalculateRecursiveUsedSpace();
         }
 
 

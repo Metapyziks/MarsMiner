@@ -40,7 +40,7 @@ namespace MarsMiner.Saving.Test
             var mainIndex = new SavedStateIndex(DateTime.UtcNow.Ticks, saveName, chunkTable);
             var header = new Header(mainIndex);
 
-            gameSave.WriteTransaction(header.GetTransaction());
+            gameSave.Write(header);
         }
 
         public static void TestAddChunkToUnloadedChunks(GameSave gameSave)
@@ -74,7 +74,7 @@ namespace MarsMiner.Saving.Test
             var mainIndex = new SavedStateIndex(DateTime.UtcNow.Ticks, "ChunkTable Length: " + chunkTable.Length, chunkTable);
             var header = new Header(mainIndex);
 
-            gameSave.WriteTransaction(header.GetTransaction());
+            gameSave.Write(header);
         }
 
         public static void TestReading(GameSave gameSave)
@@ -90,13 +90,13 @@ namespace MarsMiner.Saving.Test
 
             var newHeader = new Header(new SavedStateIndex(DateTime.UtcNow.Ticks, "Modified Save", newChunkTable));
 
-            gameSave.WriteTransaction(newHeader.GetTransaction());
+            gameSave.Write(newHeader);
         }
 
         public static void TestResave(GameSave gameSave)
         {
             Header header = gameSave.Read(Header.Read, new ReadOptions());
-            gameSave.WriteTransaction((MarsMiner.Saving.Cache.WriteTransaction)header.GetTransaction());
+            gameSave.Write(header);
         }
 
         public static void TestMarkModify(GameSave gameSave)
@@ -107,7 +107,7 @@ namespace MarsMiner.Saving.Test
 
             var newHeader = new Header(new SavedStateIndex(DateTime.UtcNow.Ticks, "Modified Save", newChunkTable));
 
-            gameSave.WriteTransaction(header.GetTransaction());
+            gameSave.Write(header);
         }
     }
 }

@@ -38,6 +38,5 @@ namespace MarsMiner.Saving.Interfaces
         void Unload();
 
         Dictionary<int, IntRangeList> RecursiveUsedSpace { get; }
-        void CalculateRecursiveUsedSpace();
     }
 }

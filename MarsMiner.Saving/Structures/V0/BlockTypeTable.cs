@@ -58,8 +58,10 @@ namespace MarsMiner.Saving.Structures.V0
             }
         }
 
-        public void CalculateRecursiveUsedSpace()
+        private void CalculateRecursiveUsedSpace()
         {
+            if (recursiveUsedSpace != null) return;
+
             recursiveUsedSpace = new Dictionary<int, IntRangeList>();
 
             if (!recursiveUsedSpace.ContainsKey(Address.Item1))
@@ -184,6 +186,7 @@ namespace MarsMiner.Saving.Structures.V0
                 throw new InvalidOperationException("Can't unload unbound blocks!");
             }
 
+            CalculateRecursiveUsedSpace();
             blockTypeNames = null;
             blockSubTypes = null;
         }
