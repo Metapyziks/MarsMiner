@@ -111,7 +111,9 @@ namespace MarsMiner.Saving.Structures.V0
 
             var mainIndexPointer = r.ReadUInt32();
 
+#if DebugVerboseBlocks || AssertBlockLength
             var end = stream.Position;
+#endif
 
             var mainIndex = SavedStateIndex.Read(resolvePointerFunc(source.Item1, mainIndexPointer), resolvePointerFunc, resolveStringFunc, getStreamFunc, readOptions);
 
@@ -119,6 +121,12 @@ namespace MarsMiner.Saving.Structures.V0
             
 #if DebugVerboseBlocks
             Console.WriteLine("Read {0} from {1} to {2} == {3}", "Header", newHeader.Address, newHeader.Address.Item2 + newHeader.Length, end);
+#endif
+#if AssertBlockLength
+            if (stream.Position - newHeader.Address.Item2 + newHeader.Length != end)
+            {
+                throw new Exception("Length mismatch in Header!");
+            }
 #endif
 
             return newHeader;

@@ -157,12 +157,20 @@ namespace MarsMiner.Saving.Structures.V0
             var octreeFlags = new BitArray(r.ReadBytes(octreeFlagsLength));
             var octreeValues = r.ReadBytes(octreeValuesLength);
 
+#if DebugVerboseBlocks || AssertBlockLength
             var end = stream.Position;
+#endif
 
             Octree newOctree = new Octree(octreeFlags, octreeValues, source);
             
 #if DebugVerboseBlocks
             Console.WriteLine("Read {0} from {1} to {2} == {3}", "Octree", newOctree.Address, newOctree.Address.Item2 + newOctree.Length, end);
+#endif
+#if AssertBlockLength
+            if (stream.Position - newOctree.Address.Item2 + newOctree.Length != end)
+            {
+                throw new Exception("Length mismatch in Octree!");
+            }
 #endif
 
             return newOctree;

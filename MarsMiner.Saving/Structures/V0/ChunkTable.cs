@@ -190,7 +190,9 @@ namespace MarsMiner.Saving.Structures.V0
                 chunkPointers[i] = r.ReadUInt32();
             }
 
+#if DebugVerboseBlocks || AssertBlockLength
             var end = stream.Position;
+#endif
 
             var chunks = new Chunk[chunkCount];
 
@@ -203,6 +205,12 @@ namespace MarsMiner.Saving.Structures.V0
             
 #if DebugVerboseBlocks
             Console.WriteLine("Read {0} from {1} to {2} == {3}", "ChunkTable", newChunkTable.Address, newChunkTable.Address.Item2 + newChunkTable.Length, end);
+#endif
+#if AssertBlockLength
+            if (stream.Position - newChunkTable.Address.Item2 + newChunkTable.Length != end)
+            {
+                throw new Exception("Length mismatch in ChunkTable!");
+            }
 #endif
 
             return newChunkTable;

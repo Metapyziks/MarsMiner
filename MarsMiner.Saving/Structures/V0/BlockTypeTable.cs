@@ -165,7 +165,9 @@ namespace MarsMiner.Saving.Structures.V0
                 blockSubtypes[i] = r.ReadInt32();
             }
 
+#if DebugVerboseBlocks || AssertBlockLength
             var end = stream.Position;
+#endif
 
             var blockTypeNames = new string[blockTypeNameCount];
 
@@ -178,6 +180,12 @@ namespace MarsMiner.Saving.Structures.V0
             
 #if DebugVerboseBlocks
             Console.WriteLine("Read {0} from {1} to {2} == {3}", "BlockTypeTable", newBlockTypeTable.Address, newBlockTypeTable.Address.Item2 + newBlockTypeTable.Length, end);
+#endif
+#if AssertBlockLength
+            if (stream.Position - newBlockTypeTable.Address.Item2 + newBlockTypeTable.Length != end)
+            {
+                throw new Exception("Length mismatch in BlockTypeTable!");
+            }
 #endif
 
             return newBlockTypeTable;

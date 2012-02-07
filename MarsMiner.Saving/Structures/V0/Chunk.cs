@@ -171,7 +171,9 @@ namespace MarsMiner.Saving.Structures.V0
                 octreePointers[i] = r.ReadUInt32();
             }
 
+#if DebugVerboseBlocks || AssertBlockLength
             var end = stream.Position;
+#endif
 
             var blockTypeTable = BlockTypeTable.Read(resolvePointerFunc(source.Item1, blockTypeTablePointer), resolvePointerFunc, resolveStringFunc, getStreamFunc, readOptions);
             var octrees = new Octree[octreeCount];
@@ -190,6 +192,12 @@ namespace MarsMiner.Saving.Structures.V0
 
 #if DebugVerboseBlocks
             Console.WriteLine("Read {0} from {1} to {2} == {3}", "Chunk", chunk.Address, chunk.Address.Item2 + chunk.Length, end);
+#endif
+#if AssertBlockLength
+            if (stream.Position - chunk.Address.Item2 + chunk.Length != end)
+            {
+                throw new Exception("Length mismatch in Chunk!");
+            }
 #endif
 
             return chunk;
