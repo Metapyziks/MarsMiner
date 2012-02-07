@@ -33,6 +33,7 @@ namespace MarsMiner.Saving.Test
         static void Main(string[] args)
         {
             Console.BufferWidth = 1000;
+            Console.BufferHeight = Int16.MaxValue - 1;
 
             var savePath = "." + Path.DirectorySeparatorChar + "TestSave";
             savePath = Path.GetFullPath(savePath);
@@ -56,96 +57,93 @@ namespace MarsMiner.Saving.Test
 
         private static void OpenReadRewrite(string savePath)
         {
-            Console.Write("Opening");
+            Console.WriteLine("Opening...");
             var gameSave = GameSave.Open(savePath);
             Console.WriteLine("...OK");
 
-            Console.Write("Rewriting");
+            Console.WriteLine("Rewriting...");
             Tests.TestResave(gameSave);
             Console.WriteLine("...OK");
 
-            Console.Write("Closing");
+            Console.WriteLine("Closing...");
             gameSave.Close();
             Console.WriteLine("...OK");
         }
 
         private static void OpenReadMarkWrite(string savePath)
         {
-            Console.Write("Opening");
+            Console.WriteLine("Opening...");
             var gameSave = GameSave.Open(savePath);
             Console.WriteLine("...OK");
 
-            Console.Write("Marking and modifying");
+            Console.WriteLine("Marking and modifying...");
             Tests.TestMarkModify(gameSave);
             Console.WriteLine("...OK");
 
-            Console.Write("Closing");
+            Console.WriteLine("Closing...");
             gameSave.Close();
             Console.WriteLine("...OK");
         }
 
         private static void OpenReadUnloadModifyWrite(string savePath)
         {
-            Console.Write("Opening");
+            Console.WriteLine("Opening...");
             var gameSave = GameSave.Open(savePath);
             Console.WriteLine("...OK");
 
-            Console.Write("Unloading and modifying...");
+            Console.WriteLine("Unloading and modifying...");
             Tests.TestAddChunkToUnloadedChunks(gameSave);
             Console.WriteLine("...OK");
 
-            Console.Write("Closing");
+            Console.WriteLine("Closing...");
             gameSave.Close();
             Console.WriteLine("...OK");
         }
 
         private static void OpenReadWrite(string savePath)
         {
-            Console.Write("Opening");
+            Console.WriteLine("Opening...");
             var gameSave = GameSave.Open(savePath);
             Console.WriteLine("...OK");
 
-            Console.Write("Modifying");
+            Console.WriteLine("Modifying...");
             Tests.TestModify(gameSave);
             Console.WriteLine("...OK");
 
-            Console.Write("Closing");
+            Console.WriteLine("Closing...");
             gameSave.Close();
             Console.WriteLine("...OK");
         }
 
         private static void CreateWrite(string savePath)
         {
-            Console.Write("Creating");
+            Console.WriteLine("Creating...");
             var gameSave = GameSave.Create(savePath);
             Console.WriteLine("...OK");
 
-            Console.Write("Writing");
+            Console.WriteLine("Writing...");
             Tests.TestSaving(gameSave, "Test Save");
-            Console.Write(".");
             Tests.TestSaving(gameSave, "Test Save2");
-            Console.Write(".");
             Tests.TestSaving(gameSave, "Test Save");
-            Console.Write(".");
             Tests.TestSaving(gameSave, "Test Save3");
-            Console.WriteLine("OK");
+            Console.WriteLine("...OK");
 
-            Console.Write("Closing");
+            Console.WriteLine("Closing...");
             gameSave.Close();
             Console.WriteLine("...OK");
         }
 
         private static void OpenRead(string savePath)
         {
-            Console.Write("Opening");
+            Console.WriteLine("Opening...");
             var gameSave = GameSave.Open(savePath);
             Console.WriteLine("...OK");
 
-            Console.Write("Reading");
+            Console.WriteLine("Reading...");
             Tests.TestReading(gameSave);
             Console.WriteLine("...OK");
 
-            Console.Write("Closing");
+            Console.WriteLine("Closing...");
             gameSave.Close();
             Console.WriteLine("...OK");
         }

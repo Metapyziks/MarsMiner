@@ -67,7 +67,7 @@ namespace MarsMiner.Saving
 
         public void WriteTransaction(WriteTransaction transaction)
         {
-            var blocksToWrite = transaction.Blocks.Where(b => b.Address == null).OrderByDescending(b => b.Length).ToArray();
+            var blocksToWrite = transaction.Blocks.Where(b => b.Address == null).ToArray();
             foreach (var block in blocksToWrite)
             {
                 AllocateSpace(block);
@@ -92,7 +92,7 @@ namespace MarsMiner.Saving
 
             blobFiles[0].Flush();
 
-            MarkFreeSpace(transaction.Header);
+            MarkFreeSpace(transaction.Header); // This is only here and not farther upwards to maintain transaction safety.
         }
 
         public T Read<T, RO>(Func<Tuple<int, uint>, Func<int, uint, Tuple<int, uint>>, Func<uint, string>, Func<int, Stream>, RO, T> readFunc, RO readOptions) where T : IBlockStructure
@@ -104,6 +104,9 @@ namespace MarsMiner.Saving
 
         public void MarkFreeSpace<T>(T header) where T : IBlockStructure
         {
+            PrintUsedSpace();
+            Console.WriteLine("MarkFreeSpace called.");
+
             for (int i = 0; i < freeSpace.Length; i++)
             {
                 freeSpace[i] = new IntRangeList();
@@ -113,6 +116,44 @@ namespace MarsMiner.Saving
             foreach (var kv in header.RecursiveUsedSpace)
             {
                 freeSpace[kv.Key].Subtract(kv.Value);
+            }
+
+            PrintUsedSpace();
+        }
+
+        private void PrintUsedSpace()
+        {
+            for (int b = 0; b < blobFiles.Length; b++)
+            {
+                Console.Write("Blob {0}: ", b);
+
+                var fs = freeSpace[b];
+
+                var max = blobFiles[b].Length;
+
+                var free = 0;
+                var used = 0;
+
+                for (int i = 0; i < max; i++)
+                {
+                    if (Console.CursorLeft >= 100)
+                    {
+                        Console.WriteLine();
+                    }
+
+                    if (fs.Contains(i))
+                    {
+                        Console.Write("_");
+                        free++;
+                    }
+                    else
+                    {
+                        Console.Write("#");
+                        used++;
+                    }
+                }
+                Console.WriteLine();
+                Console.WriteLine("Used ratio: {0}", (float)used / max);
             }
         }
 
