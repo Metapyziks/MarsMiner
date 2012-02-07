@@ -62,7 +62,7 @@ namespace MarsMiner.Saving
             stringsByAddress = new Dictionary<uint, string>();
         }
 
-        public void Write(IBlockStructure block, bool unload = true)
+        public void Write(IBlockStructure block, bool unload)
         {
             var unboundReferenced = block.UnboundBlocks;
             foreach (var b in unboundReferenced)

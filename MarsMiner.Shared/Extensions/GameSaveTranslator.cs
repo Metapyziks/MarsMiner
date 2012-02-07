@@ -52,7 +52,7 @@ namespace MarsMiner.Shared.Extensions
 
             var newHeader = new SaveHeader(new SaveIndex(DateTime.UtcNow.Ticks, header.SaveIndex.SaveName, new SaveChunkTable(newChunks.ToArray())));
 
-            gameSave.Write(newHeader);
+            gameSave.Write(newHeader, true);
         }
 
         private static Tuple<int, int, SaveChunk> TranslateChunk(Chunk chunk)
