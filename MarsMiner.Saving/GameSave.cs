@@ -62,6 +62,12 @@ namespace MarsMiner.Saving
             stringsByAddress = new Dictionary<uint, string>();
         }
 
+        /// <summary>
+        /// Writes a block and all blocks referenced by it to disk.<para />
+        /// The blocks can be unloaded as they are written.
+        /// </summary>
+        /// <param name="block">The block to write.</param>
+        /// <param name="unload">true: Each block is unloaded after it's written.</param>
         public void Write(IBlockStructure block, bool unload)
         {
             var unboundReferenced = block.UnboundBlocks;
@@ -109,6 +115,14 @@ namespace MarsMiner.Saving
             }
         }
 
+        /// <summary>
+        /// Reads the save and marks available free space.
+        /// </summary>
+        /// <typeparam name="T">The type of the header.</typeparam>
+        /// <typeparam name="RO">The type of the readOptions parameter used in the header's Read method.</typeparam>
+        /// <param name="readFunc">The header's Read method.</param>
+        /// <param name="readOptions">A read options instance matching the header's Read method.</param>
+        /// <returns>A new header instance holding the save.</returns>
         public T Read<T, RO>(Func<Tuple<int, uint>, Func<int, uint, Tuple<int, uint>>, Func<uint, string>, Func<int, Stream>, RO, T> readFunc, RO readOptions) where T : IHeader
         {
             T header = readFunc(new Tuple<int, uint>(0, 0), ResolvePointer, ResolveString, x => blobFiles[x], readOptions);
@@ -424,6 +438,11 @@ namespace MarsMiner.Saving
             freeSpace[fileIndex].Subtract(spaceArea);
         }
 
+        /// <summary>
+        /// Creates a new empty save in a specified directory.
+        /// </summary>
+        /// <param name="path">The directory where the new save is created.<para />Must be empty or nonexistent.</param>
+        /// <returns>A new GameSave instance managing the new save.</returns>
         public static GameSave Create(string path)
         {
             if (!Directory.Exists(path))
@@ -454,6 +473,13 @@ namespace MarsMiner.Saving
             return gameSave;
         }
 
+        /// <summary>
+        /// Opens an existing save from a specified directory.<para />
+        /// This method does not mark available free space!
+        /// </summary>
+        /// <param name="path">The directory where the existing save is located.<para />
+        /// Must contain an existing save.</param>
+        /// <returns>A new GameSave instance managing the existing save.</returns>
         public static GameSave Open(string path)
         {
             if (!Directory.Exists(path))
@@ -523,6 +549,9 @@ namespace MarsMiner.Saving
             }
         }
 
+        /// <summary>
+        /// Disposes all open FileStream instances.<para />The GameSave instance can't be used for reading or writing after Close() is called.
+        /// </summary>
         public void Close()
         {
             closing = true;
