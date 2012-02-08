@@ -30,14 +30,15 @@ namespace MarsMiner.Saving.Structures.V0
     public class Chunk : IBlockStructure
     {
         private Tuple<int, uint> _address;
-        private BlockTypeTable _blockTypeTable;
         private Octree[] _octrees;
+
+        public BlockTypeTable BlockTypeTable { get; private set; }
 
         private Dictionary<int, IntRangeList> _recursiveUsedSpace;
 
         public Chunk(BlockTypeTable blockTypeTable, Octree[] octrees)
         {
-            _blockTypeTable = blockTypeTable;
+            BlockTypeTable = blockTypeTable;
             _octrees = octrees;
 
             Length = 4 // blockTypeTable
@@ -57,11 +58,6 @@ namespace MarsMiner.Saving.Structures.V0
             get { return _octrees.ToArray(); }
         }
 
-        public BlockTypeTable BlockTypeTable
-        {
-            get { return _blockTypeTable; }
-        }
-
         #region IBlockStructure Members
 
         public IBlockStructure[] UnboundBlocks
@@ -75,9 +71,9 @@ namespace MarsMiner.Saving.Structures.V0
                 }
 
                 List<IBlockStructure> blocks = _octrees.Where(o => o.Address == null).ToList<IBlockStructure>();
-                if (_blockTypeTable.Address == null)
+                if (BlockTypeTable.Address == null)
                 {
-                    blocks.Add(_blockTypeTable);
+                    blocks.Add(BlockTypeTable);
                 }
                 return blocks.ToArray();
             }
@@ -144,7 +140,7 @@ namespace MarsMiner.Saving.Structures.V0
             }
 
             CalculateRecursiveUsedSpace();
-            _blockTypeTable = null;
+            BlockTypeTable = null;
             _octrees = null;
         }
 
@@ -155,7 +151,7 @@ namespace MarsMiner.Saving.Structures.V0
             if (_recursiveUsedSpace != null) return;
 
             _recursiveUsedSpace = new Dictionary<int, IntRangeList>();
-            _recursiveUsedSpace.Add(_blockTypeTable.RecursiveUsedSpace);
+            _recursiveUsedSpace.Add(BlockTypeTable.RecursiveUsedSpace);
             foreach (Octree octree in _octrees)
             {
                 _recursiveUsedSpace.Add(octree.RecursiveUsedSpace);
