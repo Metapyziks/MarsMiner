@@ -55,7 +55,7 @@ namespace MarsMiner.Saving.Structures.V0
             _chunks = chunks;
 
             Length = 4 //chunk count
-                     + chunks.Length*
+                     + chunks.Length *
                      (4 // xLocation
                       + 4 // yLocation
                       + 4); // chunk
@@ -122,7 +122,7 @@ namespace MarsMiner.Saving.Structures.V0
 #endif
             var w = new BinaryWriter(stream);
 
-            w.Write((uint) _chunks.LongLength);
+            w.Write((uint)_chunks.LongLength);
             for (long i = 0; i < _chunks.LongLength; i++)
             {
                 w.Write(_xLocations[i]);
@@ -167,7 +167,7 @@ namespace MarsMiner.Saving.Structures.V0
             {
                 _recursiveUsedSpace[Address.Item1] = new IntRangeList();
             }
-            _recursiveUsedSpace[Address.Item1].Add(new Tuple<int, int>((int) Address.Item2, (int) Address.Item2 + Length));
+            _recursiveUsedSpace[Address.Item1] += new Tuple<int, int>((int)Address.Item2, (int)Address.Item2 + Length);
         }
 
         public IEnumerable<Tuple<int, int, Chunk>> GetChunks()

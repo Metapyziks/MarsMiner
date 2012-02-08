@@ -31,7 +31,7 @@ namespace MarsMiner.Saving.Util
                 {
                     rangeLists0[k] = new IntRangeList();
                 }
-                rangeLists0[k].Add(rangeLists1[k]);
+                rangeLists0[k] += rangeLists1[k];
             }
         }
     }

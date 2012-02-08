@@ -43,7 +43,7 @@ namespace MarsMiner.Saving.Structures.V0
 
             Length = 4 // blockTypeTable
                      + 1 // octreeCount
-                     + 4*Octrees.Length; // octrees
+                     + 4 * Octrees.Length; // octrees
         }
 
         private Chunk(BlockTypeTable blockTypeTable, Octree[] octrees, Tuple<int, uint> address)
@@ -119,7 +119,7 @@ namespace MarsMiner.Saving.Structures.V0
             var w = new BinaryWriter(stream);
 
             w.Write(getBlockPointerFunc(this, BlockTypeTable));
-            w.Write((byte) Octrees.Length);
+            w.Write((byte)Octrees.Length);
             foreach (Octree octree in Octrees)
             {
                 w.Write(getBlockPointerFunc(this, octree));
@@ -161,7 +161,7 @@ namespace MarsMiner.Saving.Structures.V0
             {
                 _recursiveUsedSpace[Address.Item1] = new IntRangeList();
             }
-            _recursiveUsedSpace[Address.Item1].Add(new Tuple<int, int>((int) Address.Item2, (int) Address.Item2 + Length));
+            _recursiveUsedSpace[Address.Item1] += new Tuple<int, int>((int)Address.Item2, (int)Address.Item2 + Length);
         }
 
         public static Chunk Read(Tuple<int, uint> source, Func<int, uint, Tuple<int, uint>> resolvePointerFunc,

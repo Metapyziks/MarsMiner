@@ -43,7 +43,7 @@ namespace MarsMiner.Saving.Structures.V0
 
             Length = 4 // octreeFlags length
                      + 4 // octreeValueList length
-                     + (octreeFlags.Length/8) + (octreeFlags.Length%8 == 0 ? 0 : 1) // octreeFlags
+                     + (octreeFlags.Length / 8) + (octreeFlags.Length % 8 == 0 ? 0 : 1) // octreeFlags
                      + octreeValues.Length; // octreeValues
         }
 
@@ -110,17 +110,17 @@ namespace MarsMiner.Saving.Structures.V0
 #endif
             var w = new BinaryWriter(stream);
 
-            int octreeFlagsLength = (OctreeFlags.Length/8) + (OctreeFlags.Length%8 == 0 ? 0 : 1);
+            int octreeFlagsLength = (_octreeFlags.Length / 8) + (_octreeFlags.Length % 8 == 0 ? 0 : 1);
 
             w.Write(octreeFlagsLength);
 
-            w.Write(OctreeValues.Length);
+            w.Write(_octreeValues.Length);
 
             var buffer = new byte[octreeFlagsLength];
-            OctreeFlags.CopyTo(buffer, 0);
+            _octreeFlags.CopyTo(buffer, 0);
             w.Write(buffer);
 
-            w.Write(OctreeValues);
+            w.Write(_octreeValues);
 #if AssertBlockLength
             if (stream.Position - start != Length)
             {
@@ -153,7 +153,7 @@ namespace MarsMiner.Saving.Structures.V0
             {
                 _recursiveUsedSpace[Address.Item1] = new IntRangeList();
             }
-            _recursiveUsedSpace[Address.Item1].Add(new Tuple<int, int>((int) Address.Item2, (int) Address.Item2 + Length));
+            _recursiveUsedSpace[Address.Item1] += new Tuple<int, int>((int)Address.Item2, (int)Address.Item2 + Length);
         }
 
         public static Octree Read(Tuple<int, uint> source, Func<int, uint, Tuple<int, uint>> resolvePointerFunc,

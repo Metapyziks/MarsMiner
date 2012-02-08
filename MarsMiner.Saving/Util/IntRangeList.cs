@@ -28,19 +28,29 @@ namespace MarsMiner.Saving.Util
         //TODO: This can be made much faster with a sorted set.
         //TODO: Make immutable.
 
-        private List<Tuple<int, int>> _ranges = new List<Tuple<int, int>>();
+        private List<Tuple<int, int>> _ranges;
+
+        public IntRangeList()
+        {
+            _ranges = new List<Tuple<int, int>>();
+        }
+
+        private IntRangeList(IntRangeList list)
+        {
+            _ranges = new List<Tuple<int, int>>(list._ranges);
+        }
 
         public Tuple<int, int>[] Items
         {
             get { return _ranges.ToArray(); }
         }
 
-        public void Add(int start, int end)
+        private void Add(int start, int end)
         {
             Add(new Tuple<int, int>(start, end));
         }
 
-        public void Add(Tuple<int, int> range)
+        private void Add(Tuple<int, int> range)
         {
             var newRanges = new List<Tuple<int, int>>();
 
@@ -67,7 +77,15 @@ namespace MarsMiner.Saving.Util
             _ranges = newRanges;
         }
 
-        public void Subtract(Tuple<int, int> range)
+        private void Add(IntRangeList rangeList)
+        {
+            foreach (var range in rangeList._ranges)
+            {
+                Add(range);
+            }
+        }
+
+        private void Subtract(Tuple<int, int> range)
         {
             var newRanges = new List<Tuple<int, int>>();
 
@@ -96,20 +114,40 @@ namespace MarsMiner.Saving.Util
             _ranges = newRanges;
         }
 
-        public void Add(IntRangeList rangeList)
-        {
-            foreach (var range in rangeList._ranges)
-            {
-                Add(range);
-            }
-        }
-
-        public void Subtract(IntRangeList rangeList)
+        private void Subtract(IntRangeList rangeList)
         {
             foreach (var range in rangeList._ranges)
             {
                 Subtract(range);
             }
+        }
+
+        public static IntRangeList operator +(IntRangeList list1, IntRangeList list2)
+        {
+            var newList = new IntRangeList(list1);
+            newList.Add(list2);
+            return newList;
+        }
+
+        public static IntRangeList operator +(IntRangeList list, Tuple<int, int> range)
+        {
+            var newList = new IntRangeList(list);
+            newList.Add(range);
+            return newList;
+        }
+
+        public static IntRangeList operator -(IntRangeList list1, IntRangeList list2)
+        {
+            var newList = new IntRangeList(list1);
+            newList.Subtract(list2);
+            return newList;
+        }
+
+        public static IntRangeList operator -(IntRangeList list, Tuple<int, int> range)
+        {
+            var newList = new IntRangeList(list);
+            newList.Subtract(range);
+            return newList;
         }
 
         public bool Contains(int integer)

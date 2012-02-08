@@ -42,6 +42,8 @@ namespace MarsMiner.Saving
 
         private const uint GlobalPointerFlag = 0x80000000;
         private const uint PointerDataMask = uint.MaxValue ^ GlobalPointerFlag;
+        private const int StringFileVersion = 0;
+        private const int PointerFileVersion = 0;
 
         private FileStream _pointerFile;
         private List<Tuple<int, uint>> _pointers;
@@ -140,12 +142,12 @@ namespace MarsMiner.Saving
             for (int i = 0; i < _freeSpace.Length; i++)
             {
                 _freeSpace[i] = new IntRangeList();
-                _freeSpace[i].Add(new Tuple<int, int>(8, (int) _blobFiles[i].Length));
+                _freeSpace[i] += new Tuple<int, int>(8, (int)_blobFiles[i].Length);
             }
 
             foreach (var kv in header.RecursiveUsedSpace)
             {
-                _freeSpace[kv.Key].Subtract(kv.Value);
+                _freeSpace[kv.Key] -= kv.Value;
             }
 
 #if DebugVerboseSpace
@@ -205,7 +207,7 @@ namespace MarsMiner.Saving
             {
                 return new Tuple<int, uint>(sourceBlob, pointer);
             }
-            return _pointers[(int) (pointer & PointerDataMask)];
+            return _pointers[(int)(pointer & PointerDataMask)];
         }
 
         private string ResolveString(uint address)
@@ -232,7 +234,7 @@ namespace MarsMiner.Saving
             _stringFile.Seek(0, SeekOrigin.Begin);
 
             var w = new BinaryWriter(_stringFile);
-            w.Write(0); //TODO: Move string file version to constant.
+            w.Write(StringFileVersion);
             w.Write(_stringsByAddress.Count);
         }
 
@@ -241,7 +243,7 @@ namespace MarsMiner.Saving
             _pointerFile.Seek(0, SeekOrigin.Begin);
 
             var w = new BinaryWriter(_pointerFile);
-            w.Write(0); //TODO: Move pointer file version to constant.
+            w.Write(PointerFileVersion);
             w.Write(0); //Reserved
         }
 
@@ -275,7 +277,7 @@ namespace MarsMiner.Saving
 #if DebugVerbosePointers
                     Console.WriteLine("Global {2}: {0} → {1}", source.Address, target.Address, i);
 #endif
-                    return GlobalPointerFlag | (uint) i;
+                    return GlobalPointerFlag | (uint)i;
                 }
             }
 
@@ -294,7 +296,7 @@ namespace MarsMiner.Saving
             w.Write(target.Item1);
             w.Write(target.Item2);
 
-            return GlobalPointerFlag | (uint) (_pointers.Count - 1);
+            return GlobalPointerFlag | (uint)(_pointers.Count - 1);
         }
 
         private uint FindStringAddress(string s)
@@ -315,7 +317,7 @@ namespace MarsMiner.Saving
         {
             _stringFile.Seek(_stringFile.Length, SeekOrigin.Begin);
 
-            var address = (uint) _stringFile.Position;
+            var address = (uint)_stringFile.Position;
 
             var w = new BinaryWriter(_stringFile);
             w.Write(s);
@@ -378,8 +380,8 @@ namespace MarsMiner.Saving
                         bestMatch = new Tuple<int, Tuple<int, int>>(
                             fileIndex,
                             new Tuple<int, int>(
-                                (int) _blobFiles[fileIndex].Length,
-                                (int) _blobFiles[fileIndex].Length + blockLength));
+                                (int)_blobFiles[fileIndex].Length,
+                                (int)_blobFiles[fileIndex].Length + blockLength));
 
                         _blobFiles[fileIndex].SetLength(_blobFiles[fileIndex].Length + blockLength);
 
@@ -394,8 +396,8 @@ namespace MarsMiner.Saving
 
                 bestMatch = new Tuple<int, Tuple<int, int>>(newBlobIndex,
                                                             new Tuple<int, int>(
-                                                                (int) _blobFiles[newBlobIndex].Length,
-                                                                (int) _blobFiles[newBlobIndex].Length + blockLength));
+                                                                (int)_blobFiles[newBlobIndex].Length,
+                                                                (int)_blobFiles[newBlobIndex].Length + blockLength));
             }
 
             if (bestMatch.Item2.Item2 - bestMatch.Item2.Item1 != blockLength)
@@ -406,7 +408,7 @@ namespace MarsMiner.Saving
 
             AllocateSpace(bestMatch.Item1, bestMatch.Item2);
 
-            blockStructure.Address = new Tuple<int, uint>(bestMatch.Item1, (uint) bestMatch.Item2.Item1);
+            blockStructure.Address = new Tuple<int, uint>(bestMatch.Item1, (uint)bestMatch.Item2.Item1);
         }
 
         private int AddNewBlob()
@@ -436,9 +438,9 @@ namespace MarsMiner.Saving
             {
                 long oldlength = _blobFiles[fileIndex].Length;
                 _blobFiles[fileIndex].SetLength(oldlength + spaceArea.Item2);
-                _freeSpace[fileIndex].Add(new Tuple<int, int>((int) oldlength, (int) _blobFiles[fileIndex].Length));
+                _freeSpace[fileIndex] += new Tuple<int, int>((int)oldlength, (int)_blobFiles[fileIndex].Length);
             }
-            _freeSpace[fileIndex].Subtract(spaceArea);
+            _freeSpace[fileIndex] -= spaceArea;
         }
 
         /// <summary>
@@ -480,7 +482,7 @@ namespace MarsMiner.Saving
                                                     FileAccess.ReadWrite,
                                                     FileShare.None)
                                       };
-            gameSave._freeSpace = new[] {new IntRangeList()};
+            gameSave._freeSpace = new[] { new IntRangeList() };
             gameSave._blobFiles[0].Write(new byte[8], 0, 8);
 
             return gameSave;

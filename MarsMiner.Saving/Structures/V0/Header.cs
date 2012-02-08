@@ -42,7 +42,7 @@ namespace MarsMiner.Saving.Structures.V0
 
         public IBlockStructure[] UnboundBlocks
         {
-            get { return SaveIndex.Address == null ? new IBlockStructure[] {SaveIndex} : new IBlockStructure[0]; }
+            get { return SaveIndex.Address == null ? new IBlockStructure[] { SaveIndex } : new IBlockStructure[0]; }
         }
 
         public Tuple<int, uint> Address
@@ -154,7 +154,7 @@ namespace MarsMiner.Saving.Structures.V0
             {
                 _recursiveUsedSpace[Address.Item1] = new IntRangeList();
             }
-            _recursiveUsedSpace[Address.Item1].Add(new Tuple<int, int>((int) Address.Item2, (int) Address.Item2 + Length));
+            _recursiveUsedSpace[Address.Item1] += new Tuple<int, int>((int)Address.Item2, (int)Address.Item2 + Length);
         }
     }
 }

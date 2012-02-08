@@ -61,7 +61,7 @@ namespace MarsMiner.Saving.Structures.V0
                     return new IBlockStructure[0];
                 }
 
-                return ChunkTable.Address == null ? new IBlockStructure[] {ChunkTable} : new IBlockStructure[0];
+                return ChunkTable.Address == null ? new IBlockStructure[] { ChunkTable } : new IBlockStructure[0];
             }
         }
 
@@ -147,7 +147,7 @@ namespace MarsMiner.Saving.Structures.V0
             {
                 _recursiveUsedSpace[Address.Item1] = new IntRangeList();
             }
-            _recursiveUsedSpace[Address.Item1].Add(new Tuple<int, int>((int) Address.Item2, (int) Address.Item2 + Length));
+            _recursiveUsedSpace[Address.Item1] += new Tuple<int, int>((int)Address.Item2, (int)Address.Item2 + Length);
         }
 
         public static SavedStateIndex Read(Tuple<int, uint> source, Func<int, uint, Tuple<int, uint>> resolvePointerFunc,

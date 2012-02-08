@@ -46,7 +46,7 @@ namespace MarsMiner.Saving.Structures.V0
             _blockSubTypes = blockSubTypes;
 
             Length = 2 // block type count
-                     + (4 + 4)*blockTypeNames.Length; // block type names and subtypes
+                     + (4 + 4) * blockTypeNames.Length; // block type names and subtypes
         }
 
         private BlockTypeTable(string[] blockTypeNames, int[] blockSubTypes, Tuple<int, uint> address)
@@ -115,7 +115,7 @@ namespace MarsMiner.Saving.Structures.V0
 #endif
             var w = new BinaryWriter(stream);
 
-            w.Write((ushort) _blockTypeNames.Length);
+            w.Write((ushort)_blockTypeNames.Length);
             for (int i = 0; i < _blockTypeNames.Length; i++)
             {
                 w.Write(getStringPointerFunc(_blockTypeNames[i]));
@@ -153,7 +153,7 @@ namespace MarsMiner.Saving.Structures.V0
             {
                 _recursiveUsedSpace[Address.Item1] = new IntRangeList();
             }
-            _recursiveUsedSpace[Address.Item1].Add(new Tuple<int, int>((int) Address.Item2, (int) Address.Item2 + Length));
+            _recursiveUsedSpace[Address.Item1] += new Tuple<int, int>((int)Address.Item2, (int)Address.Item2 + Length);
         }
 
         public static BlockTypeTable Read(Tuple<int, uint> source, Func<int, uint, Tuple<int, uint>> resolvePointerFunc,
