@@ -108,7 +108,7 @@ namespace MarsMiner.Saving.Test
 
         public static void TestMarkModify(GameSave gameSave)
         {
-            var header = gameSave.Read(Header.Read, new ReadOptions());
+            Header header = gameSave.Read(Header.Read, new ReadOptions());
 
             var newChunkTable =
                 new ChunkTable(

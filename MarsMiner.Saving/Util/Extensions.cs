@@ -25,7 +25,7 @@ namespace MarsMiner.Saving.Util
     {
         public static void Add(this Dictionary<int, IntRangeList> rangeLists0, Dictionary<int, IntRangeList> rangeLists1)
         {
-            foreach (var k in rangeLists1.Keys)
+            foreach (int k in rangeLists1.Keys)
             {
                 if (!rangeLists0.ContainsKey(k))
                 {

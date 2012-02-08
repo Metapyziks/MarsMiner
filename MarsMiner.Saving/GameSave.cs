@@ -470,15 +470,16 @@ namespace MarsMiner.Saving
             gameSave._stringFile.Write(new byte[8], 0, 8);
 
             gameSave._pointerFile = File.Open(Path.Combine(path, "pointers"), FileMode.CreateNew, FileAccess.ReadWrite,
-                                             FileShare.None);
+                                              FileShare.None);
             gameSave._pointerFile.Write(new byte[8], 0, 8);
             gameSave._pointers = new List<Tuple<int, uint>>();
 
             gameSave._blobFiles = new[]
-                                     {
-                                         File.Open(Path.Combine(path, "blob0"), FileMode.CreateNew, FileAccess.ReadWrite,
-                                                   FileShare.None)
-                                     };
+                                      {
+                                          File.Open(Path.Combine(path, "blob0"), FileMode.CreateNew,
+                                                    FileAccess.ReadWrite,
+                                                    FileShare.None)
+                                      };
             gameSave._freeSpace = new[] {new IntRangeList()};
             gameSave._blobFiles[0].Write(new byte[8], 0, 8);
 
@@ -511,7 +512,6 @@ namespace MarsMiner.Saving
                                    _pointerFile =
                                        File.Open(pointersPath, FileMode.Open, FileAccess.ReadWrite, FileShare.None)
                                };
-
 
 
             gameSave.ReadPointers();
@@ -547,7 +547,7 @@ namespace MarsMiner.Saving
             _pointerFile.Seek(0, SeekOrigin.Begin);
             var r = new BinaryReader(_pointerFile);
 
-            var version = r.ReadInt32();
+            int version = r.ReadInt32();
             if (version != 0)
             {
                 throw new InvalidDataException("Invalid pointer file version!");
@@ -559,8 +559,8 @@ namespace MarsMiner.Saving
             while (_pointerFile.Position < _pointerFile.Length)
             {
                 _pointers.Add(new Tuple<int, uint>(
-                                 r.ReadInt32(),
-                                 r.ReadUInt32()));
+                                  r.ReadInt32(),
+                                  r.ReadUInt32()));
             }
         }
 
@@ -579,6 +579,7 @@ namespace MarsMiner.Saving
             _closed = true;
         }
 
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Reliability", "CA2000:Dispose objects before losing scope")]
         ~GameSave()
         {
             if (!_closed)

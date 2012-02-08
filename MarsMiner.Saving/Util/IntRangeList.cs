@@ -114,7 +114,7 @@ namespace MarsMiner.Saving.Util
 
         public bool Contains(int integer)
         {
-            return _ranges.Where(r => r.Item1 <= integer && r.Item2 > integer).Any();
+            return _ranges.Any(r => r.Item1 <= integer && r.Item2 > integer);
         }
     }
 }

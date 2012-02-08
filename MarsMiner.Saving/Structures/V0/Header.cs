@@ -30,23 +30,19 @@ namespace MarsMiner.Saving.Structures.V0
     {
         public const int Version = 0;
         private Dictionary<int, IntRangeList> _recursiveUsedSpace;
-        private SavedStateIndex _saveIndex;
 
         public Header(SavedStateIndex saveIndex)
         {
-            _saveIndex = saveIndex;
+            SaveIndex = saveIndex;
         }
 
-        public SavedStateIndex SaveIndex
-        {
-            get { return _saveIndex; }
-        }
+        public SavedStateIndex SaveIndex { get; private set; }
 
         #region IHeader Members
 
         public IBlockStructure[] UnboundBlocks
         {
-            get { return _saveIndex.Address == null ? new IBlockStructure[] {_saveIndex} : new IBlockStructure[0]; }
+            get { return SaveIndex.Address == null ? new IBlockStructure[] {SaveIndex} : new IBlockStructure[0]; }
         }
 
         public Tuple<int, uint> Address
@@ -81,7 +77,7 @@ namespace MarsMiner.Saving.Structures.V0
             var w = new BinaryWriter(stream);
 
             w.Write(Version);
-            w.Write(getBlockPointerFunc(this, _saveIndex));
+            w.Write(getBlockPointerFunc(this, SaveIndex));
 #if AssertBlockLength
             if (stream.Position - start != Length)
             {
@@ -92,13 +88,13 @@ namespace MarsMiner.Saving.Structures.V0
 
         public void Unload()
         {
-            if (Address == null || (_saveIndex != null && _saveIndex.Address == null))
+            if (Address == null || (SaveIndex != null && SaveIndex.Address == null))
             {
                 throw new InvalidOperationException("Can't unload unbound blocks!");
             }
 
             CalculateRecursiveUsedSpace();
-            _saveIndex = null;
+            SaveIndex = null;
         }
 
         #endregion
@@ -152,7 +148,7 @@ namespace MarsMiner.Saving.Structures.V0
             if (_recursiveUsedSpace != null) return;
 
             _recursiveUsedSpace = new Dictionary<int, IntRangeList>();
-            _recursiveUsedSpace.Add(_saveIndex.RecursiveUsedSpace);
+            _recursiveUsedSpace.Add(SaveIndex.RecursiveUsedSpace);
 
             if (!_recursiveUsedSpace.ContainsKey(Address.Item1))
             {
