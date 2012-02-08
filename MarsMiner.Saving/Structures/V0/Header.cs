@@ -19,26 +19,34 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using MarsMiner.Saving.Interfaces;
 using System.IO;
 using MarsMiner.Saving.Interface.V0;
+using MarsMiner.Saving.Interfaces;
 using MarsMiner.Saving.Util;
 
 namespace MarsMiner.Saving.Structures.V0
 {
-    public class Header : IBlockStructure, IHeader
+    public class Header : IHeader
     {
         public const int Version = 0;
-        private SavedStateIndex mainIndex;
+        private Dictionary<int, IntRangeList> _recursiveUsedSpace;
+        private SavedStateIndex _saveIndex;
+
+        public Header(SavedStateIndex saveIndex)
+        {
+            _saveIndex = saveIndex;
+        }
+
+        public SavedStateIndex SaveIndex
+        {
+            get { return _saveIndex; }
+        }
+
+        #region IHeader Members
 
         public IBlockStructure[] UnboundBlocks
         {
-            get
-            {
-                return mainIndex.Address == null ? new IBlockStructure[] { mainIndex } : new IBlockStructure[0];
-            }
+            get { return _saveIndex.Address == null ? new IBlockStructure[] {_saveIndex} : new IBlockStructure[0]; }
         }
 
         public Tuple<int, uint> Address
@@ -47,44 +55,33 @@ namespace MarsMiner.Saving.Structures.V0
             set { throw new InvalidOperationException("Can't set address on Header!"); }
         }
 
-        private Dictionary<int, IntRangeList> recursiveUsedSpace;
         public Dictionary<int, IntRangeList> RecursiveUsedSpace
         {
             get
             {
-                if (recursiveUsedSpace == null)
+                if (_recursiveUsedSpace == null)
                 {
                     CalculateRecursiveUsedSpace();
                 }
-                return recursiveUsedSpace;
-            }
-            private set
-            {
-                recursiveUsedSpace = value;
+                return _recursiveUsedSpace;
             }
         }
-
-        public Header(SavedStateIndex mainIndex)
-        {
-            this.mainIndex = mainIndex;
-        }
-
-        public SavedStateIndex SaveIndex { get { return mainIndex; } }
 
         public int Length
         {
             get { return 8; }
         }
 
-        public void Write(Stream stream, Func<IBlockStructure, IBlockStructure, uint> getBlockPointerFunc, Func<string, uint> getStringPointerFunc)
+        public void Write(Stream stream, Func<IBlockStructure, IBlockStructure, uint> getBlockPointerFunc,
+                          Func<string, uint> getStringPointerFunc)
         {
 #if AssertBlockLength
-            var start = stream.Position;
+            long start = stream.Position;
 #endif
             var w = new BinaryWriter(stream);
 
             w.Write(Version);
-            w.Write(getBlockPointerFunc(this, mainIndex));
+            w.Write(getBlockPointerFunc(this, _saveIndex));
 #if AssertBlockLength
             if (stream.Position - start != Length)
             {
@@ -93,32 +90,49 @@ namespace MarsMiner.Saving.Structures.V0
 #endif
         }
 
-        public static Header Read(Tuple<int, uint> source, Func<int, uint, Tuple<int, uint>> resolvePointerFunc, Func<uint, string> resolveStringFunc, Func<int, Stream> getStreamFunc, ReadOptions readOptions)
+        public void Unload()
+        {
+            if (Address == null || (_saveIndex != null && _saveIndex.Address == null))
+            {
+                throw new InvalidOperationException("Can't unload unbound blocks!");
+            }
+
+            CalculateRecursiveUsedSpace();
+            _saveIndex = null;
+        }
+
+        #endregion
+
+        public static Header Read(Tuple<int, uint> source, Func<int, uint, Tuple<int, uint>> resolvePointerFunc,
+                                  Func<uint, string> resolveStringFunc, Func<int, Stream> getStreamFunc,
+                                  ReadOptions readOptions)
         {
 #if DebugVerboseBlocks
             Console.WriteLine("Reading {0} from {1}", "Header", source);
 #endif
 
-            var stream = getStreamFunc(source.Item1);
+            Stream stream = getStreamFunc(source.Item1);
             stream.Seek(source.Item2, SeekOrigin.Begin);
             var r = new BinaryReader(stream);
 
-            var version = r.ReadInt32();
+            int version = r.ReadInt32();
             if (version != Version)
             {
                 throw new InvalidDataException("Expected file version " + Version + ", was " + version + ".");
             }
 
-            var mainIndexPointer = r.ReadUInt32();
+            uint mainIndexPointer = r.ReadUInt32();
 
 #if DebugVerboseBlocks || AssertBlockLength
-            var end = stream.Position;
+            long end = stream.Position;
 #endif
 
-            var mainIndex = SavedStateIndex.Read(resolvePointerFunc(source.Item1, mainIndexPointer), resolvePointerFunc, resolveStringFunc, getStreamFunc, readOptions);
+            SavedStateIndex mainIndex = SavedStateIndex.Read(resolvePointerFunc(source.Item1, mainIndexPointer),
+                                                             resolvePointerFunc, resolveStringFunc, getStreamFunc,
+                                                             readOptions);
 
-            Header newHeader = new Header(mainIndex);
-            
+            var newHeader = new Header(mainIndex);
+
 #if DebugVerboseBlocks
             Console.WriteLine("Read {0} from {1} to {2} == {3}", "Header", newHeader.Address, newHeader.Address.Item2 + newHeader.Length, end);
 #endif
@@ -132,30 +146,19 @@ namespace MarsMiner.Saving.Structures.V0
             return newHeader;
         }
 
-        public void Unload()
-        {
-            if (Address == null || (mainIndex != null && mainIndex.Address == null))
-            {
-                throw new InvalidOperationException("Can't unload unbound blocks!");
-            }
-
-            CalculateRecursiveUsedSpace();
-            mainIndex = null;
-        }
-
 
         public void CalculateRecursiveUsedSpace()
         {
-            if (recursiveUsedSpace != null) return;
+            if (_recursiveUsedSpace != null) return;
 
-            recursiveUsedSpace = new Dictionary<int, IntRangeList>();
-            recursiveUsedSpace.Add(mainIndex.RecursiveUsedSpace);
+            _recursiveUsedSpace = new Dictionary<int, IntRangeList>();
+            _recursiveUsedSpace.Add(_saveIndex.RecursiveUsedSpace);
 
-            if (!recursiveUsedSpace.ContainsKey(Address.Item1))
+            if (!_recursiveUsedSpace.ContainsKey(Address.Item1))
             {
-                recursiveUsedSpace[Address.Item1] = new IntRangeList();
+                _recursiveUsedSpace[Address.Item1] = new IntRangeList();
             }
-            recursiveUsedSpace[Address.Item1].Add(new Tuple<int, int>((int)Address.Item2, (int)Address.Item2 + Length));
+            _recursiveUsedSpace[Address.Item1].Add(new Tuple<int, int>((int) Address.Item2, (int) Address.Item2 + Length));
         }
     }
 }

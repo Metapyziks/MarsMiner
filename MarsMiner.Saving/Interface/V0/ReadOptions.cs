@@ -18,14 +18,12 @@
  */
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+using MarsMiner.Saving.Structures.V0;
 
 namespace MarsMiner.Saving.Interface.V0
 {
     public class ReadOptions
     {
-        public Action<MarsMiner.Saving.Structures.V0.Chunk> ChunkCallback { get; set; }
+        public Action<Chunk> ChunkCallback { get; set; }
     }
 }

@@ -19,86 +19,17 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using MarsMiner.Saving.Interfaces;
 using System.IO;
 using MarsMiner.Saving.Interface.V0;
+using MarsMiner.Saving.Interfaces;
 using MarsMiner.Saving.Util;
 
 namespace MarsMiner.Saving.Structures.V0
 {
     public class SavedStateIndex : IBlockStructure
     {
-        public long Timestamp { get; private set; }
-        public string SaveName { get; private set; }
-        public ChunkTable ChunkTable { get; private set; }
-
-        public IBlockStructure[] UnboundBlocks
-        {
-            get
-            {
-                if (ChunkTable == null)
-                {
-                    //Unloaded
-                    return new IBlockStructure[0];
-                }
-
-                return ChunkTable.Address == null ? new IBlockStructure[] { ChunkTable } : new IBlockStructure[0];
-            }
-        }
-
-        private Tuple<int, uint> address;
-        public Tuple<int, uint> Address
-        {
-            get
-            {
-                return address;
-            }
-            set
-            {
-                if (address != null)
-                {
-                    throw new InvalidOperationException("Address can't be reassigned!");
-                }
-                address = value;
-            }
-        }
-
-        private void CalculateRecursiveUsedSpace()
-        {
-            if (recursiveUsedSpace != null) return;
-
-            recursiveUsedSpace = new Dictionary<int, IntRangeList>();
-            recursiveUsedSpace.Add(ChunkTable.RecursiveUsedSpace);
-
-            if (!recursiveUsedSpace.ContainsKey(Address.Item1))
-            {
-                recursiveUsedSpace[Address.Item1] = new IntRangeList();
-            }
-            recursiveUsedSpace[Address.Item1].Add(new Tuple<int, int>((int)Address.Item2, (int)Address.Item2 + Length));
-        }
-
-        private Dictionary<int, IntRangeList> recursiveUsedSpace;
-        public Dictionary<int, IntRangeList> RecursiveUsedSpace
-        {
-            get
-            {
-                if (Address == null)
-                {
-                    throw new InvalidOperationException("Can't get used space from unbound block!");
-                }
-                if (recursiveUsedSpace == null)
-                {
-                    CalculateRecursiveUsedSpace();
-                }
-                return recursiveUsedSpace;
-            }
-            private set
-            {
-                recursiveUsedSpace = value;
-            }
-        }
+        private Tuple<int, uint> _address;
+        private Dictionary<int, IntRangeList> _recursiveUsedSpace;
 
         public SavedStateIndex(long timestamp, string saveName, ChunkTable chunkTable)
         {
@@ -114,26 +45,76 @@ namespace MarsMiner.Saving.Structures.V0
             CalculateRecursiveUsedSpace();
         }
 
+        public long Timestamp { get; private set; }
+        public string SaveName { get; private set; }
+        public ChunkTable ChunkTable { get; private set; }
+
+        #region IBlockStructure Members
+
+        public IBlockStructure[] UnboundBlocks
+        {
+            get
+            {
+                if (ChunkTable == null)
+                {
+                    //Unloaded
+                    return new IBlockStructure[0];
+                }
+
+                return ChunkTable.Address == null ? new IBlockStructure[] {ChunkTable} : new IBlockStructure[0];
+            }
+        }
+
+        public Tuple<int, uint> Address
+        {
+            get { return _address; }
+            set
+            {
+                if (_address != null)
+                {
+                    throw new InvalidOperationException("Address can't be reassigned!");
+                }
+                _address = value;
+            }
+        }
+
+        public Dictionary<int, IntRangeList> RecursiveUsedSpace
+        {
+            get
+            {
+                if (Address == null)
+                {
+                    throw new InvalidOperationException("Can't get used space from unbound block!");
+                }
+                if (_recursiveUsedSpace == null)
+                {
+                    CalculateRecursiveUsedSpace();
+                }
+                return _recursiveUsedSpace;
+            }
+        }
+
         public int Length
         {
             get
             {
                 return 8 // timestamp
-                    + 4 // saveName
-                    + 4; // chunkTable
+                       + 4 // saveName
+                       + 4; // chunkTable
             }
         }
 
-        public void Write(Stream stream, Func<IBlockStructure, IBlockStructure, uint> getBlockPointerFunc, Func<string, uint> getStringPointerFunc)
+        public void Write(Stream stream, Func<IBlockStructure, IBlockStructure, uint> getBlockPointerFunc,
+                          Func<string, uint> getStringPointerFunc)
         {
 #if AssertBlockLength
-            var start = stream.Position;
+            long start = stream.Position;
 #endif
             var w = new BinaryWriter(stream);
 
             w.Write(Timestamp);
             w.Write(getStringPointerFunc(SaveName));
-            w.Write((uint)getBlockPointerFunc(this, ChunkTable));
+            w.Write(getBlockPointerFunc(this, ChunkTable));
 #if AssertBlockLength
             if (stream.Position - start != Length)
             {
@@ -142,29 +123,59 @@ namespace MarsMiner.Saving.Structures.V0
 #endif
         }
 
-        public static SavedStateIndex Read(Tuple<int, uint> source, Func<int, uint, Tuple<int, uint>> resolvePointerFunc, Func<uint, string> resolveStringFunc, Func<int, Stream> getStreamFunc, ReadOptions readOptions)
+        public void Unload()
+        {
+            if (Address == null)
+            {
+                throw new InvalidOperationException("Can't unload unbound blocks!");
+            }
+
+            CalculateRecursiveUsedSpace();
+            ChunkTable = null;
+        }
+
+        #endregion
+
+        private void CalculateRecursiveUsedSpace()
+        {
+            if (_recursiveUsedSpace != null) return;
+
+            _recursiveUsedSpace = new Dictionary<int, IntRangeList>();
+            _recursiveUsedSpace.Add(ChunkTable.RecursiveUsedSpace);
+
+            if (!_recursiveUsedSpace.ContainsKey(Address.Item1))
+            {
+                _recursiveUsedSpace[Address.Item1] = new IntRangeList();
+            }
+            _recursiveUsedSpace[Address.Item1].Add(new Tuple<int, int>((int) Address.Item2, (int) Address.Item2 + Length));
+        }
+
+        public static SavedStateIndex Read(Tuple<int, uint> source, Func<int, uint, Tuple<int, uint>> resolvePointerFunc,
+                                           Func<uint, string> resolveStringFunc, Func<int, Stream> getStreamFunc,
+                                           ReadOptions readOptions)
         {
 #if DebugVerboseBlocks
             Console.WriteLine("Reading {0} from {1}", "SavedStateIndex", source);
 #endif
 
-            var stream = getStreamFunc(source.Item1);
+            Stream stream = getStreamFunc(source.Item1);
             stream.Seek(source.Item2, SeekOrigin.Begin);
             var r = new BinaryReader(stream);
 
-            var timestamp = r.ReadInt64();
-            var saveNameAddress = r.ReadUInt32();
-            var chunkTablePointer = r.ReadUInt32();
+            long timestamp = r.ReadInt64();
+            uint saveNameAddress = r.ReadUInt32();
+            uint chunkTablePointer = r.ReadUInt32();
 
 #if DebugVerboseBlocks || AssertBlockLength
-            var end = stream.Position;
+            long end = stream.Position;
 #endif
 
-            SavedStateIndex newSavedStateIndex = new SavedStateIndex(
-                            timestamp,
-                            resolveStringFunc(saveNameAddress),
-                            ChunkTable.Read(resolvePointerFunc(source.Item1, chunkTablePointer), resolvePointerFunc, resolveStringFunc, getStreamFunc, readOptions),
-                            source);
+            var newSavedStateIndex = new SavedStateIndex(
+                timestamp,
+                resolveStringFunc(saveNameAddress),
+                ChunkTable.Read(resolvePointerFunc(source.Item1, chunkTablePointer), resolvePointerFunc,
+                                resolveStringFunc, getStreamFunc, readOptions),
+                source);
 
 #if DebugVerboseBlocks
             Console.WriteLine("Read {0} from {1} to {2} == {3}", "SavedStateIndex", newSavedStateIndex.Address, newSavedStateIndex.Address.Item2 + newSavedStateIndex.Length, end);
@@ -177,17 +188,6 @@ namespace MarsMiner.Saving.Structures.V0
 #endif
 
             return newSavedStateIndex;
-        }
-
-        public void Unload()
-        {
-            if (Address == null)
-            {
-                throw new InvalidOperationException("Can't unload unbound blocks!");
-            }
-
-            CalculateRecursiveUsedSpace();
-            ChunkTable = null;
         }
     }
 }

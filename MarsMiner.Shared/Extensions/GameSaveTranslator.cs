@@ -18,17 +18,13 @@
  */
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Collections;
-
 using MarsMiner.Saving;
+using MarsMiner.Saving.Interface.V0;
 using MarsMiner.Shared.Geometry;
 using MarsMiner.Shared.Octree;
-
-using MarsMiner.Saving.Interface.V0;
-
 using SaveChunk = MarsMiner.Saving.Structures.V0.Chunk;
 using SaveOctree = MarsMiner.Saving.Structures.V0.Octree;
 using SaveBlockTypeTable = MarsMiner.Saving.Structures.V0.BlockTypeTable;
@@ -42,15 +38,18 @@ namespace MarsMiner.Shared.Extensions
     {
         public static void WriteChunk(this GameSave gameSave, Chunk chunk)
         {
-            var saveChunk = TranslateChunk(chunk);
+            Tuple<int, int, SaveChunk> saveChunk = TranslateChunk(chunk);
 
-            var header = gameSave.Read(SaveHeader.Read, new ReadOptions());
+            SaveHeader header = gameSave.Read(SaveHeader.Read, new ReadOptions());
 
-            var newChunks = header.SaveIndex.ChunkTable.GetChunks().Where(c => c.Item1 != chunk.X || c.Item2 != chunk.Z).ToList();
+            List<Tuple<int, int, SaveChunk>> newChunks =
+                header.SaveIndex.ChunkTable.GetChunks().Where(c => c.Item1 != chunk.X || c.Item2 != chunk.Z).ToList();
 
             newChunks.Add(saveChunk);
 
-            var newHeader = new SaveHeader(new SaveIndex(DateTime.UtcNow.Ticks, header.SaveIndex.SaveName, new SaveChunkTable(newChunks.ToArray())));
+            var newHeader =
+                new SaveHeader(new SaveIndex(DateTime.UtcNow.Ticks, header.SaveIndex.SaveName,
+                                             new SaveChunkTable(newChunks.ToArray())));
 
             gameSave.Write(newHeader, true);
         }
@@ -69,19 +68,20 @@ namespace MarsMiner.Shared.Extensions
                 saveOctrees[i] = TranslateOctree(chunk.Octrees[i]);
             }
 
-            var saveBlockTypeTable = TranslateBlockTypeTable(BlockManager.GetAll()); //TODO: Find most used blocks in chunk?
+            var saveBlockTypeTable = TranslateBlockTypeTable(BlockManager.GetAll());
+                //TODO: Find most used blocks in chunk?
 
             var saveChunk = new SaveChunk(saveBlockTypeTable, saveOctrees);
 
             return new Tuple<int, int, SaveChunk>(chunk.X, chunk.Z, saveChunk);
         }
 
-        private static SaveBlockTypeTable TranslateBlockTypeTable(BlockType[] blockTypes)
+        private static SaveBlockTypeTable TranslateBlockTypeTable(IEnumerable<BlockType> blockTypes)
         {
-            return new SaveBlockTypeTable(blockTypes.Select(x => new Tuple<string, int>(x.Name, x.SubType)));
+            return new SaveBlockTypeTable(blockTypes.Select(x => new Tuple<string, int>(x.Name, x.SubType)).ToArray());
         }
 
-        private static SaveOctree TranslateOctree(Octree.Octree<ushort> octree)
+        private static SaveOctree TranslateOctree(IEnumerable<OctreeNode<ushort>> octree)
         {
             var octreeFlags = new List<bool>();
             var octreeValues = new List<byte>();
@@ -94,7 +94,8 @@ namespace MarsMiner.Shared.Extensions
                     {
                         octreeFlags.Add(true); //HasChildren
                         //TODO: Find LOD value.
-                        { //Start of filler code.
+                        {
+                            //Start of filler code.
                             octreeFlags.Add(false);
                             octreeValues.Add(0);
                         } //End of filler code.
@@ -109,7 +110,7 @@ namespace MarsMiner.Shared.Extensions
                         if (leaf.Value <= byte.MaxValue)
                         {
                             octreeFlags.Add(false); //HasLargeValue
-                            octreeValues.Add((byte)leaf.Value);
+                            octreeValues.Add((byte) leaf.Value);
                         }
                         else
                         {

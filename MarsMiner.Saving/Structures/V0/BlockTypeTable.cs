@@ -19,83 +19,21 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using MarsMiner.Saving.Interfaces;
 using System.IO;
+using System.Linq;
 using MarsMiner.Saving.Interface.V0;
+using MarsMiner.Saving.Interfaces;
 using MarsMiner.Saving.Util;
 
 namespace MarsMiner.Saving.Structures.V0
 {
     public class BlockTypeTable : IBlockStructure
     {
-        private string[] blockTypeNames;
-        private int[] blockSubTypes;
+        private Tuple<int, uint> _address;
+        private int[] _blockSubTypes;
+        private string[] _blockTypeNames;
 
-        public IBlockStructure[] UnboundBlocks
-        {
-            get
-            {
-                return new IBlockStructure[0];
-            }
-        }
-
-        private Tuple<int, uint> address;
-        public Tuple<int, uint> Address
-        {
-            get
-            {
-                return address;
-            }
-            set
-            {
-                if (address != null)
-                {
-                    throw new InvalidOperationException("Address can't be reassigned!");
-                }
-                address = value;
-            }
-        }
-
-        private void CalculateRecursiveUsedSpace()
-        {
-            if (recursiveUsedSpace != null) return;
-
-            recursiveUsedSpace = new Dictionary<int, IntRangeList>();
-
-            if (!recursiveUsedSpace.ContainsKey(Address.Item1))
-            {
-                recursiveUsedSpace[Address.Item1] = new IntRangeList();
-            }
-            recursiveUsedSpace[Address.Item1].Add(new Tuple<int, int>((int)Address.Item2, (int)Address.Item2 + Length));
-        }
-
-        private Dictionary<int, IntRangeList> recursiveUsedSpace;
-        public Dictionary<int, IntRangeList> RecursiveUsedSpace
-        {
-            get
-            {
-                if (Address == null)
-                {
-                    throw new InvalidOperationException("Can't get used space from unbound block!");
-                }
-                if (recursiveUsedSpace == null)
-                {
-                    CalculateRecursiveUsedSpace();
-                }
-                return recursiveUsedSpace;
-            }
-            set
-            {
-                recursiveUsedSpace = value;
-            }
-        }
-
-        public Tuple<string, int> this[int index]
-        {
-            get { return new Tuple<string, int>(blockTypeNames[index], blockSubTypes[index]); }
-        }
+        private Dictionary<int, IntRangeList> _recursiveUsedSpace;
 
         public BlockTypeTable(string[] blockTypeNames, int[] blockSubTypes)
         {
@@ -104,11 +42,11 @@ namespace MarsMiner.Saving.Structures.V0
                 throw new ArgumentException("blockTypeNames and blockSubTypes must have the same length.");
             }
 
-            this.blockTypeNames = blockTypeNames;
-            this.blockSubTypes = blockSubTypes;
+            _blockTypeNames = blockTypeNames;
+            _blockSubTypes = blockSubTypes;
 
             Length = 2 // block type count
-                    + (4 + 4) * blockTypeNames.Length; // block type names and subtypes
+                     + (4 + 4)*blockTypeNames.Length; // block type names and subtypes
         }
 
         private BlockTypeTable(string[] blockTypeNames, int[] blockSubTypes, Tuple<int, uint> address)
@@ -118,25 +56,70 @@ namespace MarsMiner.Saving.Structures.V0
             CalculateRecursiveUsedSpace();
         }
 
-        public BlockTypeTable(IEnumerable<Tuple<string, int>> blockTypes)
+        public BlockTypeTable(Tuple<string, int>[] blockTypes)
             : this(
                 blockTypes.Select(x => x.Item1).ToArray(),
-                blockTypes.Select(x => x.Item2).ToArray()) { }
+                blockTypes.Select(x => x.Item2).ToArray())
+        {
+        }
+
+        public Tuple<string, int> this[int index]
+        {
+            get { return new Tuple<string, int>(_blockTypeNames[index], _blockSubTypes[index]); }
+        }
+
+        #region IBlockStructure Members
+
+        public IBlockStructure[] UnboundBlocks
+        {
+            get { return new IBlockStructure[0]; }
+        }
+
+        public Tuple<int, uint> Address
+        {
+            get { return _address; }
+            set
+            {
+                if (_address != null)
+                {
+                    throw new InvalidOperationException("Address can't be reassigned!");
+                }
+                _address = value;
+            }
+        }
+
+        public Dictionary<int, IntRangeList> RecursiveUsedSpace
+        {
+            get
+            {
+                if (Address == null)
+                {
+                    throw new InvalidOperationException("Can't get used space from unbound block!");
+                }
+                if (_recursiveUsedSpace == null)
+                {
+                    CalculateRecursiveUsedSpace();
+                }
+                return _recursiveUsedSpace;
+            }
+            set { _recursiveUsedSpace = value; }
+        }
 
         public int Length { get; private set; }
 
-        public void Write(Stream stream, Func<IBlockStructure, IBlockStructure, uint> getBlockPointerFunc, Func<string, uint> getStringPointerFunc)
+        public void Write(Stream stream, Func<IBlockStructure, IBlockStructure, uint> getBlockPointerFunc,
+                          Func<string, uint> getStringPointerFunc)
         {
 #if AssertBlockLength
-            var start = stream.Position;
+            long start = stream.Position;
 #endif
             var w = new BinaryWriter(stream);
 
-            w.Write((ushort)blockTypeNames.Length);
-            for (int i = 0; i < blockTypeNames.Length; i++)
+            w.Write((ushort) _blockTypeNames.Length);
+            for (int i = 0; i < _blockTypeNames.Length; i++)
             {
-                w.Write(getStringPointerFunc(blockTypeNames[i]));
-                w.Write(blockSubTypes[i]);
+                w.Write(getStringPointerFunc(_blockTypeNames[i]));
+                w.Write(_blockSubTypes[i]);
             }
 #if AssertBlockLength
             if (stream.Position - start != Length)
@@ -146,17 +129,46 @@ namespace MarsMiner.Saving.Structures.V0
 #endif
         }
 
-        public static BlockTypeTable Read(Tuple<int, uint> source, Func<int, uint, Tuple<int, uint>> resolvePointerFunc, Func<uint, string> resolveStringFunc, Func<int, Stream> getStreamFunc, ReadOptions readOptions)
+        public void Unload()
+        {
+            if (Address == null)
+            {
+                throw new InvalidOperationException("Can't unload unbound blocks!");
+            }
+
+            CalculateRecursiveUsedSpace();
+            _blockTypeNames = null;
+            _blockSubTypes = null;
+        }
+
+        #endregion
+
+        private void CalculateRecursiveUsedSpace()
+        {
+            if (_recursiveUsedSpace != null) return;
+
+            _recursiveUsedSpace = new Dictionary<int, IntRangeList>();
+
+            if (!_recursiveUsedSpace.ContainsKey(Address.Item1))
+            {
+                _recursiveUsedSpace[Address.Item1] = new IntRangeList();
+            }
+            _recursiveUsedSpace[Address.Item1].Add(new Tuple<int, int>((int) Address.Item2, (int) Address.Item2 + Length));
+        }
+
+        public static BlockTypeTable Read(Tuple<int, uint> source, Func<int, uint, Tuple<int, uint>> resolvePointerFunc,
+                                          Func<uint, string> resolveStringFunc, Func<int, Stream> getStreamFunc,
+                                          ReadOptions readOptions)
         {
 #if DebugVerboseBlocks
             Console.WriteLine("Reading {0} from {1}", "BlockTypeTable", source);
 #endif
 
-            var stream = getStreamFunc(source.Item1);
+            Stream stream = getStreamFunc(source.Item1);
             stream.Seek(source.Item2, SeekOrigin.Begin);
             var r = new BinaryReader(stream);
 
-            var blockTypeNameCount = r.ReadUInt16();
+            ushort blockTypeNameCount = r.ReadUInt16();
             var blockTypeNameAddresses = new uint[blockTypeNameCount];
             var blockSubtypes = new int[blockTypeNameCount];
             for (int i = 0; i < blockTypeNameCount; i++)
@@ -166,7 +178,7 @@ namespace MarsMiner.Saving.Structures.V0
             }
 
 #if DebugVerboseBlocks || AssertBlockLength
-            var end = stream.Position;
+            long end = stream.Position;
 #endif
 
             var blockTypeNames = new string[blockTypeNameCount];
@@ -176,8 +188,8 @@ namespace MarsMiner.Saving.Structures.V0
                 blockTypeNames[i] = resolveStringFunc(blockTypeNameAddresses[i]);
             }
 
-            BlockTypeTable newBlockTypeTable = new BlockTypeTable(blockTypeNames, blockSubtypes, source);
-            
+            var newBlockTypeTable = new BlockTypeTable(blockTypeNames, blockSubtypes, source);
+
 #if DebugVerboseBlocks
             Console.WriteLine("Read {0} from {1} to {2} == {3}", "BlockTypeTable", newBlockTypeTable.Address, newBlockTypeTable.Address.Item2 + newBlockTypeTable.Length, end);
 #endif
@@ -189,18 +201,6 @@ namespace MarsMiner.Saving.Structures.V0
 #endif
 
             return newBlockTypeTable;
-        }
-
-        public void Unload()
-        {
-            if (Address == null)
-            {
-                throw new InvalidOperationException("Can't unload unbound blocks!");
-            }
-
-            CalculateRecursiveUsedSpace();
-            blockTypeNames = null;
-            blockSubTypes = null;
         }
     }
 }

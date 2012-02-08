@@ -20,7 +20,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 
 namespace MarsMiner.Saving.Util
 {
@@ -29,21 +28,26 @@ namespace MarsMiner.Saving.Util
         //TODO: This can be made much faster with a sorted set.
         //TODO: Make immutable.
 
-        private List<Tuple<int, int>> ranges = new List<Tuple<int, int>>();
+        private List<Tuple<int, int>> _ranges = new List<Tuple<int, int>>();
+
+        public Tuple<int, int>[] Items
+        {
+            get { return _ranges.ToArray(); }
+        }
 
         public void Add(int start, int end)
         {
-            Add((Tuple<int, int>)new Tuple<int, int>(start, end));
+            Add(new Tuple<int, int>(start, end));
         }
 
         public void Add(Tuple<int, int> range)
         {
             var newRanges = new List<Tuple<int, int>>();
 
-            var newRangeStart = range.Item1;
-            var newRangeEnd = range.Item2;
+            int newRangeStart = range.Item1;
+            int newRangeEnd = range.Item2;
 
-            foreach (var r in ranges)
+            foreach (var r in _ranges)
             {
                 if (r.Item2 < newRangeStart || newRangeEnd < r.Item1)
                 {
@@ -60,14 +64,14 @@ namespace MarsMiner.Saving.Util
 
             newRanges.Add(new Tuple<int, int>(newRangeStart, newRangeEnd));
 
-            ranges = newRanges;
+            _ranges = newRanges;
         }
 
         public void Subtract(Tuple<int, int> range)
         {
             var newRanges = new List<Tuple<int, int>>();
 
-            foreach (var r in ranges)
+            foreach (var r in _ranges)
             {
                 if (r.Item2 < range.Item1 || range.Item2 < r.Item1)
                 {
@@ -89,12 +93,12 @@ namespace MarsMiner.Saving.Util
                 }
             }
 
-            ranges = newRanges;
+            _ranges = newRanges;
         }
 
         public void Add(IntRangeList rangeList)
         {
-            foreach (var range in rangeList.ranges)
+            foreach (var range in rangeList._ranges)
             {
                 Add(range);
             }
@@ -102,27 +106,15 @@ namespace MarsMiner.Saving.Util
 
         public void Subtract(IntRangeList rangeList)
         {
-            foreach (var range in rangeList.ranges)
+            foreach (var range in rangeList._ranges)
             {
                 Subtract(range);
             }
         }
 
-        public Tuple<int, int>[] Items
-        {
-            get
-            {
-                return ranges.ToArray();
-            }
-        }
-
         public bool Contains(int integer)
         {
-            foreach (var item in ranges.Where(r => r.Item1 <= integer && r.Item2 > integer))
-            {
-                return true;
-            }
-            return false;
+            return _ranges.Where(r => r.Item1 <= integer && r.Item2 > integer).Any();
         }
     }
 }

@@ -19,8 +19,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.IO;
 using MarsMiner.Saving.Util;
 
@@ -29,14 +27,16 @@ namespace MarsMiner.Saving.Interfaces
     public interface IBlockStructure
     {
         int Length { get; }
-        void Write(Stream stream, Func<IBlockStructure, IBlockStructure, uint> getBlockPointerFunc, Func<string, uint> getStringPointerFunc);
 
         Tuple<int, uint> Address { get; set; }
 
         IBlockStructure[] UnboundBlocks { get; }
 
-        void Unload();
-
         Dictionary<int, IntRangeList> RecursiveUsedSpace { get; }
+
+        void Write(Stream stream, Func<IBlockStructure, IBlockStructure, uint> getBlockPointerFunc,
+                   Func<string, uint> getStringPointerFunc);
+
+        void Unload();
     }
 }

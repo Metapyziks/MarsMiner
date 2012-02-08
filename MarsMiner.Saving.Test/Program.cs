@@ -18,24 +18,19 @@
  */
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.IO;
-
-using MarsMiner.Saving.Structures.V0;
 using System.Threading;
 
 namespace MarsMiner.Saving.Test
 {
-    class Program
+    internal class Program
     {
-        static void Main(string[] args)
+        private static void Main()
         {
             Console.BufferWidth = 1000;
             Console.BufferHeight = Int16.MaxValue - 1;
 
-            var savePath = "." + Path.DirectorySeparatorChar + "TestSave";
+            string savePath = "." + Path.DirectorySeparatorChar + "TestSave";
             savePath = Path.GetFullPath(savePath);
 
             if (Directory.Exists(savePath))
@@ -58,7 +53,7 @@ namespace MarsMiner.Saving.Test
         private static void OpenReadRewrite(string savePath)
         {
             Console.WriteLine("Opening...");
-            var gameSave = GameSave.Open(savePath);
+            GameSave gameSave = GameSave.Open(savePath);
             Console.WriteLine("...OK");
 
             Console.WriteLine("Rewriting...");
@@ -70,10 +65,12 @@ namespace MarsMiner.Saving.Test
             Console.WriteLine("...OK");
         }
 
+// ReSharper disable UnusedMember.Local
         private static void OpenReadMarkWrite(string savePath)
+// ReSharper restore UnusedMember.Local
         {
             Console.WriteLine("Opening...");
-            var gameSave = GameSave.Open(savePath);
+            GameSave gameSave = GameSave.Open(savePath);
             Console.WriteLine("...OK");
 
             Console.WriteLine("Marking and modifying...");
@@ -88,7 +85,7 @@ namespace MarsMiner.Saving.Test
         private static void OpenReadUnloadModifyWrite(string savePath)
         {
             Console.WriteLine("Opening...");
-            var gameSave = GameSave.Open(savePath);
+            GameSave gameSave = GameSave.Open(savePath);
             Console.WriteLine("...OK");
 
             Console.WriteLine("Unloading and modifying...");
@@ -100,10 +97,12 @@ namespace MarsMiner.Saving.Test
             Console.WriteLine("...OK");
         }
 
+// ReSharper disable UnusedMember.Local
         private static void OpenReadWrite(string savePath)
+// ReSharper restore UnusedMember.Local
         {
             Console.WriteLine("Opening...");
-            var gameSave = GameSave.Open(savePath);
+            GameSave gameSave = GameSave.Open(savePath);
             Console.WriteLine("...OK");
 
             Console.WriteLine("Modifying...");
@@ -118,7 +117,7 @@ namespace MarsMiner.Saving.Test
         private static void CreateWrite(string savePath)
         {
             Console.WriteLine("Creating...");
-            var gameSave = GameSave.Create(savePath);
+            GameSave gameSave = GameSave.Create(savePath);
             Console.WriteLine("...OK");
 
             Console.WriteLine("Writing...");
@@ -136,7 +135,7 @@ namespace MarsMiner.Saving.Test
         private static void OpenRead(string savePath)
         {
             Console.WriteLine("Opening...");
-            var gameSave = GameSave.Open(savePath);
+            GameSave gameSave = GameSave.Open(savePath);
             Console.WriteLine("...OK");
 
             Console.WriteLine("Reading...");

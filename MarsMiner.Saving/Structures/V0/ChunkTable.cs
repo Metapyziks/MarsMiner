@@ -19,20 +19,56 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using MarsMiner.Saving.Interfaces;
 using System.IO;
+using System.Linq;
 using MarsMiner.Saving.Interface.V0;
+using MarsMiner.Saving.Interfaces;
 using MarsMiner.Saving.Util;
 
 namespace MarsMiner.Saving.Structures.V0
 {
     public class ChunkTable : IBlockStructure
     {
-        private int[] xLocations;
-        private int[] zLocations;
-        private Chunk[] chunks;
+        private Tuple<int, uint> _address;
+        private Chunk[] _chunks;
+
+        private Dictionary<int, IntRangeList> _recursiveUsedSpace;
+        private int[] _xLocations;
+        private int[] _zLocations;
+
+        public ChunkTable(Tuple<int, int, Chunk>[] chunks)
+            : this(
+                chunks.Select(x => x.Item1).ToArray(),
+                chunks.Select(x => x.Item2).ToArray(),
+                chunks.Select(x => x.Item3).ToArray())
+        {
+        }
+
+        public ChunkTable(int[] xLocations, int[] zLocations, Chunk[] chunks)
+        {
+            if (xLocations.Length != zLocations.Length || zLocations.Length != chunks.Length)
+            {
+                throw new ArgumentException("Argument arrays must have the same length!");
+            }
+            _xLocations = xLocations;
+            _zLocations = zLocations;
+            _chunks = chunks;
+
+            Length = 4 //chunk count
+                     + chunks.Length*
+                     (4 // xLocation
+                      + 4 // yLocation
+                      + 4); // chunk
+        }
+
+        private ChunkTable(int[] xLocations, int[] zLocations, Chunk[] chunks, Tuple<int, uint> address)
+            : this(xLocations, zLocations, chunks)
+        {
+            Address = address;
+            CalculateRecursiveUsedSpace();
+        }
+
+        #region IBlockStructure Members
 
         public IBlockStructure[] UnboundBlocks
         {
@@ -43,45 +79,23 @@ namespace MarsMiner.Saving.Structures.V0
                     //Bound
                     return new IBlockStructure[0];
                 }
-                return chunks.Where(c => c.Address == null).ToArray();
+                return _chunks.Where(c => c.Address == null).ToArray<IBlockStructure>();
             }
         }
 
-        private Tuple<int, uint> address;
         public Tuple<int, uint> Address
         {
-            get
-            {
-                return address;
-            }
+            get { return _address; }
             set
             {
-                if (address != null)
+                if (_address != null)
                 {
                     throw new InvalidOperationException("Address can't be reassigned!");
                 }
-                address = value;
+                _address = value;
             }
         }
 
-        private void CalculateRecursiveUsedSpace()
-        {
-            if (recursiveUsedSpace != null) return;
-
-            recursiveUsedSpace = new Dictionary<int, IntRangeList>();
-            foreach (var chunk in chunks)
-            {
-                recursiveUsedSpace.Add(chunk.RecursiveUsedSpace);
-            }
-
-            if (!recursiveUsedSpace.ContainsKey(Address.Item1))
-            {
-                recursiveUsedSpace[Address.Item1] = new IntRangeList();
-            }
-            recursiveUsedSpace[Address.Item1].Add(new Tuple<int, int>((int)Address.Item2, (int)Address.Item2 + Length));
-        }
-
-        private Dictionary<int, IntRangeList> recursiveUsedSpace;
         public Dictionary<int, IntRangeList> RecursiveUsedSpace
         {
             get
@@ -90,73 +104,30 @@ namespace MarsMiner.Saving.Structures.V0
                 {
                     throw new InvalidOperationException("Can't get used space from unbound block!");
                 }
-                if (recursiveUsedSpace == null)
+                if (_recursiveUsedSpace == null)
                 {
                     CalculateRecursiveUsedSpace();
                 }
-                return recursiveUsedSpace;
+                return _recursiveUsedSpace;
             }
-            private set
-            {
-                recursiveUsedSpace = value;
-            }
-        }
-
-        public IEnumerable<Tuple<int, int, Chunk>> GetChunks()
-        {
-            for (int i = 0; i < chunks.Length; i++)
-            {
-                yield return new Tuple<int, int, Chunk>(xLocations[i], zLocations[i], chunks[i]);
-            }
-        }
-
-        public ChunkTable(Tuple<int, int, Chunk>[] chunks)
-            : this(
-                chunks.Select(x => x.Item1).ToArray(),
-                chunks.Select(x => x.Item2).ToArray(),
-                chunks.Select(x => x.Item3).ToArray())
-        { }
-
-        public ChunkTable(int[] xLocations, int[] zLocations, Chunk[] chunks)
-        {
-            if (xLocations.Length != zLocations.Length || zLocations.Length != chunks.Length)
-            {
-                throw new ArgumentException("Argument arrays must have the same length!");
-            }
-            this.xLocations = xLocations;
-            this.zLocations = zLocations;
-            this.chunks = chunks;
-
-            Length = 4 //chunk count
-
-                    + chunks.Length *
-                    (4 // xLocation
-                    + 4 // yLocation
-                    + 4); // chunk
-        }
-
-        private ChunkTable(int[] xLocations, int[] zLocations, Chunk[] chunks, Tuple<int, uint> address)
-            : this(xLocations, zLocations, chunks)
-        {
-            Address = address;
-            CalculateRecursiveUsedSpace();
         }
 
         public int Length { get; private set; }
 
-        public void Write(Stream stream, Func<IBlockStructure, IBlockStructure, uint> getBlockPointerFunc, Func<string, uint> getStringPointerFunc)
+        public void Write(Stream stream, Func<IBlockStructure, IBlockStructure, uint> getBlockPointerFunc,
+                          Func<string, uint> getStringPointerFunc)
         {
 #if AssertBlockLength
-            var start = stream.Position;
+            long start = stream.Position;
 #endif
             var w = new BinaryWriter(stream);
 
-            w.Write((uint)chunks.LongLength);
-            for (long i = 0; i < chunks.LongLength; i++)
+            w.Write((uint) _chunks.LongLength);
+            for (long i = 0; i < _chunks.LongLength; i++)
             {
-                w.Write(xLocations[i]);
-                w.Write(zLocations[i]);
-                var chunkPointer = getBlockPointerFunc(this, chunks[i]);
+                w.Write(_xLocations[i]);
+                w.Write(_zLocations[i]);
+                uint chunkPointer = getBlockPointerFunc(this, _chunks[i]);
                 w.Write(chunkPointer);
             }
 #if AssertBlockLength
@@ -167,17 +138,56 @@ namespace MarsMiner.Saving.Structures.V0
 #endif
         }
 
-        public static ChunkTable Read(Tuple<int, uint> source, Func<int, uint, Tuple<int, uint>> resolvePointerFunc, Func<uint, string> resolveStringFunc, Func<int, Stream> getStreamFunc, ReadOptions readOptions)
+        public void Unload()
+        {
+            if (Address == null)
+            {
+                throw new InvalidOperationException("Can't unload unbound blocks!");
+            }
+
+            CalculateRecursiveUsedSpace();
+            _xLocations = null;
+            _zLocations = null;
+            _chunks = null;
+        }
+
+        #endregion
+
+        private void CalculateRecursiveUsedSpace()
+        {
+            if (_recursiveUsedSpace != null) return;
+
+            _recursiveUsedSpace = new Dictionary<int, IntRangeList>();
+            foreach (Chunk chunk in _chunks)
+            {
+                _recursiveUsedSpace.Add(chunk.RecursiveUsedSpace);
+            }
+
+            if (!_recursiveUsedSpace.ContainsKey(Address.Item1))
+            {
+                _recursiveUsedSpace[Address.Item1] = new IntRangeList();
+            }
+            _recursiveUsedSpace[Address.Item1].Add(new Tuple<int, int>((int) Address.Item2, (int) Address.Item2 + Length));
+        }
+
+        public IEnumerable<Tuple<int, int, Chunk>> GetChunks()
+        {
+            return _chunks.Select((t, i) => new Tuple<int, int, Chunk>(_xLocations[i], _zLocations[i], t));
+        }
+
+        public static ChunkTable Read(Tuple<int, uint> source, Func<int, uint, Tuple<int, uint>> resolvePointerFunc,
+                                      Func<uint, string> resolveStringFunc, Func<int, Stream> getStreamFunc,
+                                      ReadOptions readOptions)
         {
 #if DebugVerboseBlocks
             Console.WriteLine("Reading {0} from {1}", "ChunkTable", source);
 #endif
 
-            var stream = getStreamFunc(source.Item1);
+            Stream stream = getStreamFunc(source.Item1);
             stream.Seek(source.Item2, SeekOrigin.Begin);
             var r = new BinaryReader(stream);
 
-            var chunkCount = r.ReadUInt32();
+            uint chunkCount = r.ReadUInt32();
 
             var xLocations = new int[chunkCount];
             var yLocations = new int[chunkCount];
@@ -191,18 +201,19 @@ namespace MarsMiner.Saving.Structures.V0
             }
 
 #if DebugVerboseBlocks || AssertBlockLength
-            var end = stream.Position;
+            long end = stream.Position;
 #endif
 
             var chunks = new Chunk[chunkCount];
 
             for (int i = 0; i < chunkCount; i++)
             {
-                chunks[i] = Chunk.Read(resolvePointerFunc(source.Item1, chunkPointers[i]), resolvePointerFunc, resolveStringFunc, getStreamFunc, readOptions);
+                chunks[i] = Chunk.Read(resolvePointerFunc(source.Item1, chunkPointers[i]), resolvePointerFunc,
+                                       resolveStringFunc, getStreamFunc, readOptions);
             }
 
-            ChunkTable newChunkTable = new ChunkTable(xLocations, yLocations, chunks, source);
-            
+            var newChunkTable = new ChunkTable(xLocations, yLocations, chunks, source);
+
 #if DebugVerboseBlocks
             Console.WriteLine("Read {0} from {1} to {2} == {3}", "ChunkTable", newChunkTable.Address, newChunkTable.Address.Item2 + newChunkTable.Length, end);
 #endif
@@ -214,19 +225,6 @@ namespace MarsMiner.Saving.Structures.V0
 #endif
 
             return newChunkTable;
-        }
-
-        public void Unload()
-        {
-            if (Address == null)
-            {
-                throw new InvalidOperationException("Can't unload unbound blocks!");
-            }
-
-            CalculateRecursiveUsedSpace();
-            xLocations = null;
-            zLocations = null;
-            chunks = null;
         }
     }
 }
