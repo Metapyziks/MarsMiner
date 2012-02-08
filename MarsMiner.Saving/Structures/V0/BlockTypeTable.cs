@@ -194,7 +194,7 @@ namespace MarsMiner.Saving.Structures.V0
             Console.WriteLine("Read {0} from {1} to {2} == {3}", "BlockTypeTable", newBlockTypeTable.Address, newBlockTypeTable.Address.Item2 + newBlockTypeTable.Length, end);
 #endif
 #if AssertBlockLength
-            if (stream.Position - newBlockTypeTable.Address.Item2 + newBlockTypeTable.Length != end)
+            if (newBlockTypeTable.Address.Item2 + newBlockTypeTable.Length != end)
             {
                 throw new Exception("Length mismatch in BlockTypeTable!");
             }

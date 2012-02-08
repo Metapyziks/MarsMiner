@@ -181,7 +181,7 @@ namespace MarsMiner.Saving.Structures.V0
             Console.WriteLine("Read {0} from {1} to {2} == {3}", "SavedStateIndex", newSavedStateIndex.Address, newSavedStateIndex.Address.Item2 + newSavedStateIndex.Length, end);
 #endif
 #if AssertBlockLength
-            if (stream.Position - newSavedStateIndex.Address.Item2 + newSavedStateIndex.Length != end)
+            if (newSavedStateIndex.Address.Item2 + newSavedStateIndex.Length != end)
             {
                 throw new Exception("Length mismatch in SavedStateIndex!");
             }

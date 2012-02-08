@@ -133,7 +133,7 @@ namespace MarsMiner.Saving.Structures.V0
             Console.WriteLine("Read {0} from {1} to {2} == {3}", "Header", newHeader.Address, newHeader.Address.Item2 + newHeader.Length, end);
 #endif
 #if AssertBlockLength
-            if (stream.Position - newHeader.Address.Item2 + newHeader.Length != end)
+            if (newHeader.Address.Item2 + newHeader.Length != end)
             {
                 throw new Exception("Length mismatch in Header!");
             }

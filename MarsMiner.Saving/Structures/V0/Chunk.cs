@@ -216,7 +216,7 @@ namespace MarsMiner.Saving.Structures.V0
             Console.WriteLine("Read {0} from {1} to {2} == {3}", "Chunk", chunk.Address, chunk.Address.Item2 + chunk.Length, end);
 #endif
 #if AssertBlockLength
-            if (stream.Position - chunk.Address.Item2 + chunk.Length != end)
+            if (chunk.Address.Item2 + chunk.Length != end)
             {
                 throw new Exception("Length mismatch in Chunk!");
             }

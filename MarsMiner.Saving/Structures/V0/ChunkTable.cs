@@ -218,7 +218,7 @@ namespace MarsMiner.Saving.Structures.V0
             Console.WriteLine("Read {0} from {1} to {2} == {3}", "ChunkTable", newChunkTable.Address, newChunkTable.Address.Item2 + newChunkTable.Length, end);
 #endif
 #if AssertBlockLength
-            if (stream.Position - newChunkTable.Address.Item2 + newChunkTable.Length != end)
+            if (newChunkTable.Address.Item2 + newChunkTable.Length != end)
             {
                 throw new Exception("Length mismatch in ChunkTable!");
             }
