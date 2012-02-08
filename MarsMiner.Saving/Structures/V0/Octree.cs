@@ -21,6 +21,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using MarsMiner.Saving.Interface.V0;
 using MarsMiner.Saving.Interfaces;
 using MarsMiner.Saving.Util;
@@ -34,8 +35,6 @@ namespace MarsMiner.Saving.Structures.V0
         private byte[] _octreeValues;
 
         private Dictionary<int, IntRangeList> _recursiveUsedSpace;
-
-        //TODO: accessors
 
         public Octree(BitArray octreeFlags, byte[] octreeValues)
         {
@@ -93,6 +92,16 @@ namespace MarsMiner.Saving.Structures.V0
 
         public int Length { get; private set; }
 
+        public BitArray OctreeFlags
+        {
+            get { return new BitArray(_octreeFlags); }
+        }
+
+        public IEnumerable<byte> OctreeValues
+        {
+            get { return _octreeValues.AsEnumerable(); }
+        }
+
         public void Write(Stream stream, Func<IBlockStructure, IBlockStructure, uint> getBlockPointerFunc,
                           Func<string, uint> getStringPointerFunc)
         {
@@ -101,17 +110,17 @@ namespace MarsMiner.Saving.Structures.V0
 #endif
             var w = new BinaryWriter(stream);
 
-            int octreeFlagsLength = (_octreeFlags.Length/8) + (_octreeFlags.Length%8 == 0 ? 0 : 1);
+            int octreeFlagsLength = (OctreeFlags.Length/8) + (OctreeFlags.Length%8 == 0 ? 0 : 1);
 
             w.Write(octreeFlagsLength);
 
-            w.Write(_octreeValues.Length);
+            w.Write(OctreeValues.Length);
 
             var buffer = new byte[octreeFlagsLength];
-            _octreeFlags.CopyTo(buffer, 0);
+            OctreeFlags.CopyTo(buffer, 0);
             w.Write(buffer);
 
-            w.Write(_octreeValues);
+            w.Write(OctreeValues);
 #if AssertBlockLength
             if (stream.Position - start != Length)
             {
