@@ -25,23 +25,24 @@ using System.IO;
 
 using MarsMiner.Shared.Networking;
 
-namespace MarsMiner.Server.Networking
+namespace MarsMiner.Client.Networking
 {
-    public class ClientBase : RemoteNetworkedObject
+    public class ServerBase : RemoteNetworkedObject
     {
-        protected static readonly ClientPacketType PTAliveCheck =
-            PacketManager.Register( "AliveCheck", delegate( ClientBase sender,
-                ClientPacketType type, Stream stream )
-        {
-            return sender.OnReceiveAliveCheck( stream );
-        } );
+        protected static readonly ServerPacketType PTAliveCheck =
+            PacketManager.Register( "AliveCheck", delegate( ServerBase sender,
+                ServerPacketType type, Stream stream )
+            {
+                return sender.OnReceiveAliveCheck( stream );
+            } );
 
-        protected static readonly ClientPacketType PTPacketDictionary =
-            PacketManager.Register( "PacketDictionary", delegate( ClientBase sender,
-                ClientPacketType type, Stream stream )
-        {
-            return sender.OnReceivePacketDictionary( stream );
-        } );
+        protected static readonly ServerPacketType PTPacketDictionary =
+            PacketManager.Register( "PacketDictionary", delegate( ServerBase sender,
+                ServerPacketType type, Stream stream )
+            {
+                return sender.OnReceivePacketDictionary( stream );
+            } );
+
 
         protected override bool ReadPacket()
         {
@@ -56,19 +57,29 @@ namespace MarsMiner.Server.Networking
 
         public void SendPacketDictionary()
         {
-            Stream stream = StartPacket( PTPacketDictionary );
-            BinaryWriter writer = new BinaryWriter( stream );
-            ClientPacketType[] types = PacketManager.GetAllTypes();
-            writer.Write( (UInt16) types.Length );
-            foreach ( ClientPacketType t in types )
-            {
-                writer.Write( t.Name );
-                writer.Write( t.ID );
-            }
+            StartPacket( PTPacketDictionary );
+            SendPacket();
         }
 
         protected bool OnReceivePacketDictionary( Stream stream )
         {
+            BinaryReader reader = new BinaryReader( stream );
+            UInt16 count = reader.ReadUInt16();
+            for ( int i = 0; i < count; ++i )
+            {
+                String name = reader.ReadString();
+                UInt16 id = reader.ReadUInt16();
+
+                try
+                {
+                    PacketManager.SetTypeID( name, id );
+                }
+                catch ( KeyNotFoundException )
+                {
+                    return false;
+                }
+            }
+
             return true;
         }
     }

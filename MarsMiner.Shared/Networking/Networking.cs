@@ -24,67 +24,15 @@ using System.Net;
 
 namespace MarsMiner.Shared.Networking
 {
-    public delegate bool PacketHandlerDelegate( RemoteNetworkedObject sender,
-        PacketType type, Stream stream );
-
     public class PacketType
     {
-        public readonly UInt16 ID;
-        public readonly String Name;
+        public UInt16 ID;
+        public String Name;
 
-        public readonly PacketHandlerDelegate PacketHandler;
-
-        internal PacketType( UInt16 id, String name, PacketHandlerDelegate handler )
+        protected PacketType( UInt16 id, String name )
         {
             ID = id;
             Name = name;
-
-            PacketHandler = handler;
-        }
-    }
-
-    public static class PacketManager
-    {
-        private static UInt16 stNextID = 0x0000;
-
-        private static Dictionary<String,PacketType> stTypeNames = new Dictionary<string, PacketType>();
-        private static PacketType[] stTypeIDs = new PacketType[ 0 ];
-
-        public static PacketType Register( String name, PacketHandlerDelegate handler )
-        {
-            if ( stTypeNames.ContainsKey( name ) )
-                throw new Exception( "Can not register new packet type:"
-                    + "packet type already registered with the name \"" + name + "\"" );
-
-            PacketType type = new PacketType( stNextID, name, handler );
-
-            stTypeIDs[ stNextID ] = type;
-            stTypeNames.Add( name, type );
-
-            ++stNextID;
-
-            return type;
-        }
-
-        public static PacketType GetType( String typeName )
-        {
-            return stTypeNames[ typeName ];
-        }
-
-        public static PacketType GetType( UInt16 typeID )
-        {
-            return stTypeIDs[ typeID ];
-        }
-
-        public static bool HandlePacket( RemoteNetworkedObject sender, Stream stream )
-        {
-            UInt16 id = BitConverter.ToUInt16( stream.ReadBytes( 2 ), 0 );
-
-            if ( stNextID <= id )
-                throw new Exception( "Unknown packet type recieved" );
-
-            PacketType type = stTypeIDs[ id ];
-            return type.PacketHandler( sender, type, stream );
         }
     }
 
@@ -107,33 +55,21 @@ namespace MarsMiner.Shared.Networking
 
     public class RemoteNetworkedObject
     {
-        public static readonly PacketType AliveCheck;
-
-        static RemoteNetworkedObject()
-        {
-            AliveCheck = PacketManager.Register( "AliveCheck",
-                delegate( RemoteNetworkedObject sender,
-                    PacketType type, Stream stream )
-            {
-                switch ( stream.ReadByte() )
-                {
-                    case 0x00:
-                        sender.myTimingOut = false;
-                        return true;
-                    case 0xFF:
-                        sender.SendAliveCheck( false );
-                        return true;
-                    default:
-                        return false;
-                }
-            } );
-        }
-
         private DateTime myLastReceivedTime;
         private bool myTimingOut;
 
         public double TimeOutDelay;
         public double AliveCheckPeriod;
+
+        public byte AuthLevel { get; protected set; }
+
+        public bool IsAdmin
+        {
+            get
+            {
+                return AuthLevel > 127;
+            }
+        }
 
         public double SecondsSinceLastPacket
         {
@@ -152,6 +88,8 @@ namespace MarsMiner.Shared.Networking
                     SendAliveCheck( true );
                     myTimingOut = true;
                 }
+                else if ( myTimingOut && SecondsSinceLastPacket < AliveCheckPeriod )
+                    myTimingOut = false;
 
                 return myTimingOut;
             }
@@ -197,12 +135,13 @@ namespace MarsMiner.Shared.Networking
             throw new NotImplementedException();
         }
 
-        protected bool ReadPacket()
+        protected virtual bool ReadPacket()
         {
             OnReceivePacket();
             myLastReceivedTime = DateTime.Now;
             myTimingOut = false;
-            return PacketManager.HandlePacket( this, ReceiveStream );
+
+            return true;
         }
 
         protected virtual void OnReceivePacket()
@@ -212,7 +151,7 @@ namespace MarsMiner.Shared.Networking
 
         public virtual Stream StartPacket( String typeName )
         {
-            return StartPacket( PacketManager.GetType( typeName ) );
+            throw new NotImplementedException();
         }
 
         public virtual Stream StartPacket( PacketType type )
@@ -227,16 +166,36 @@ namespace MarsMiner.Shared.Networking
             throw new NotImplementedException();
         }
 
-        public virtual bool PacketPending()
+        public void SendPacket( PacketType type )
         {
-            throw new NotImplementedException();
+            StartPacket( type );
+            SendPacket();
         }
 
         public void SendAliveCheck( bool expectReply )
         {
-            Stream str = StartPacket( AliveCheck );
-            str.WriteByte( (byte)( expectReply ? 0xFF : 0x00 ) );
+            Stream str = StartPacket( "AliveCheck" );
+            str.WriteByte( (byte) ( expectReply ? 0xFF : 0x00 ) );
             SendPacket();
+        }
+
+        protected bool OnReceiveAliveCheck( Stream stream )
+        {
+            switch ( stream.ReadByte() )
+            {
+                case 0x00:
+                    return true;
+                case 0xFF:
+                    SendAliveCheck( false );
+                    return true;
+                default:
+                    return false;
+            }
+        }
+
+        public virtual bool PacketPending()
+        {
+            throw new NotImplementedException();
         }
     }
 }
