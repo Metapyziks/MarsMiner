@@ -72,7 +72,7 @@ namespace MarsMiner.Shared.Networking
             return myServerToClientWaitingPackets != 0;
         }
 
-        public static BinaryReader ReadClientToServerPacket()
+        public static Stream ReadClientToServerPacket()
         {
             if ( myClientToServerWaitingPackets == 0 )
                 throw new EndOfStreamException();
@@ -81,10 +81,10 @@ namespace MarsMiner.Shared.Networking
 
             Monitor.Enter( myClientToServerStream );
             myClientToServerStream.Position = myLastClientToServerReadPos;
-            return new BinaryReader( myClientToServerStream );
+            return myClientToServerStream;
         }
 
-        public static BinaryReader ReadServerToClientPacket()
+        public static Stream ReadServerToClientPacket()
         {
             if ( myServerToClientWaitingPackets == 0 )
                 throw new EndOfStreamException();
@@ -93,7 +93,7 @@ namespace MarsMiner.Shared.Networking
 
             Monitor.Enter( myServerToClientStream );
             myServerToClientStream.Position = myLastServerToClientReadPos;
-            return new BinaryReader( myServerToClientStream );
+            return myServerToClientStream;
         }
 
         public static void EndReadingClientToServerPacket()

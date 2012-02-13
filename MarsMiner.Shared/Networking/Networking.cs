@@ -111,16 +111,6 @@ namespace MarsMiner.Shared.Networking
             }
         }
 
-        protected virtual Stream SendStream
-        {
-            get { throw new NotImplementedException(); }
-        }
-
-        protected virtual Stream ReceiveStream
-        {
-            get { throw new NotImplementedException(); }
-        }
-
         public RemoteNetworkedObject()
         {
             myLastReceivedTime = DateTime.Now;
@@ -135,7 +125,7 @@ namespace MarsMiner.Shared.Networking
             throw new NotImplementedException();
         }
 
-        protected virtual bool ReadPacket()
+        protected virtual bool ReadPacket( Stream stream )
         {
             OnReceivePacket();
             myLastReceivedTime = DateTime.Now;
@@ -156,9 +146,13 @@ namespace MarsMiner.Shared.Networking
 
         public virtual Stream StartPacket( PacketType type )
         {
-            Stream str = SendStream;
-            str.Write( BitConverter.GetBytes( type.ID ), 0, 2 );
-            return str;
+            throw new NotImplementedException();
+        }
+
+        protected Stream StartPacket( PacketType type, Stream stream )
+        {
+            stream.Write( BitConverter.GetBytes( type.ID ), 0, 2 );
+            return stream;
         }
 
         public virtual void SendPacket()

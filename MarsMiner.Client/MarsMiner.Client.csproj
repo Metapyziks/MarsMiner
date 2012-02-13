@@ -62,6 +62,7 @@
     <Compile Include="Graphics\VisibilityBComponant.cs" />
     <Compile Include="MarsMinerPlugin.cs" />
     <Compile Include="Networking\GameClient.cs" />
+    <Compile Include="Networking\LocalServer.cs" />
     <Compile Include="Networking\PacketManager.cs" />
     <Compile Include="Networking\ServerBase.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

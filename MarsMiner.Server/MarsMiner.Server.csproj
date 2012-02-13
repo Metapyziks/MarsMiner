@@ -42,6 +42,7 @@
   <ItemGroup>
     <Compile Include="Networking\ClientBase.cs" />
     <Compile Include="Networking\GameServer.cs" />
+    <Compile Include="Networking\LocalClient.cs" />
     <Compile Include="Networking\PacketManager.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

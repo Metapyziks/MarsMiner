@@ -44,10 +44,10 @@ namespace MarsMiner.Client.Networking
             } );
 
 
-        protected override bool ReadPacket()
+        protected override bool ReadPacket( Stream stream )
         {
-            base.ReadPacket();
-            return PacketManager.HandlePacket( this, ReceiveStream );
+            base.ReadPacket( stream );
+            return PacketManager.HandlePacket( this, stream );
         }
 
         public override Stream StartPacket( String typeName )
