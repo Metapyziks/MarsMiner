@@ -30,12 +30,12 @@ namespace MarsMiner.Saving.Test
     {
         public static void TestSaving(GameSave gameSave, string saveName)
         {
-            var octree = new Octree(new BitArray(new[] {false, false}), new byte[] {1});
+            var octree = new Octree(new BitArray(new[] { false, false }), new byte[] { 1 });
             var blockTypeTable = new BlockTypeTable(
-                new[] {"Block 0", "Block 1", "Block 2", "Block 2"},
-                new[] {0, 0, 0, 1});
-            var chunk = new Chunk(blockTypeTable, new[] {octree});
-            var chunkTable = new ChunkTable(new[] {0}, new[] {0}, new[] {chunk});
+                new[] { "Block 0", "Block 1", "Block 2", "Block 2" },
+                new[] { 0, 0, 0, 1 });
+            var chunk = new Chunk(blockTypeTable, new[] { octree });
+            var chunkTable = new ChunkTable(new[] { 0 }, new[] { 0 }, new[] { chunk });
             var mainIndex = new SavedStateIndex(DateTime.UtcNow.Ticks, saveName, chunkTable);
             var header = new Header(mainIndex);
 
@@ -46,22 +46,22 @@ namespace MarsMiner.Saving.Test
         {
             Header oldHeader = gameSave.Read(Header.Read, new ReadOptions
                                                               {
-                                                                  ChunkCallback = c =>
-                                                                                      {
-                                                                                          Console.WriteLine(
-                                                                                              "Loaded chunk at {0}",
-                                                                                              c.Address);
-                                                                                          c.Unload();
-                                                                                      }
+                                                                  ChunkRead = (cx, cz, c) =>
+                                                                                  {
+                                                                                      Console.WriteLine(
+                                                                                          "Loaded chunk at {0}",
+                                                                                          c.Address);
+                                                                                      c.Unload();
+                                                                                  }
                                                               });
 
             ChunkTable oldChunkTable = oldHeader.SaveIndex.ChunkTable;
 
-            var octree = new Octree(new BitArray(new[] {false, false}), new byte[] {1});
+            var octree = new Octree(new BitArray(new[] { false, false }), new byte[] { 1 });
             var blockTypeTable = new BlockTypeTable(
-                new[] {"Block 0", "Block 1", "Block 2", "Block 2"},
-                new[] {0, 0, 0, 1});
-            var chunk = new Chunk(blockTypeTable, new[] {octree});
+                new[] { "Block 0", "Block 1", "Block 2", "Block 2" },
+                new[] { 0, 0, 0, 1 });
+            var chunk = new Chunk(blockTypeTable, new[] { octree });
 
             var r = new Random();
 

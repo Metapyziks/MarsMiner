@@ -210,6 +210,10 @@ namespace MarsMiner.Saving.Structures.V0
             {
                 chunks[i] = Chunk.Read(resolvePointerFunc(source.Item1, chunkPointers[i]), resolvePointerFunc,
                                        resolveStringFunc, getStreamFunc, readOptions);
+                if (readOptions.ChunkRead!=null)
+                {
+                    readOptions.ChunkRead(xLocations[i], yLocations[i], chunks[i]);
+                }
             }
 
             var newChunkTable = new ChunkTable(xLocations, yLocations, chunks, source);

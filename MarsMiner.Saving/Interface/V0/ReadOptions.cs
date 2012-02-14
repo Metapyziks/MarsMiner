@@ -24,6 +24,15 @@ namespace MarsMiner.Saving.Interface.V0
 {
     public class ReadOptions
     {
-        public Action<Chunk> ChunkCallback { get; set; }
+        public Action<int, int, Chunk> ChunkRead { get; set; }
+
+        public  ReadOptions()
+        {
+        }
+
+        public ReadOptions(ReadOptions readOptions)
+        {
+            ChunkRead = readOptions.ChunkRead;
+        }
     }
 }

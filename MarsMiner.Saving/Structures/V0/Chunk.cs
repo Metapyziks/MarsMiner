@@ -203,11 +203,6 @@ namespace MarsMiner.Saving.Structures.V0
 
             var chunk = new Chunk(blockTypeTable, octrees, source);
 
-            if (readOptions.ChunkCallback != null)
-            {
-                readOptions.ChunkCallback(chunk);
-            }
-
 #if DebugVerboseBlocks
             Console.WriteLine("Read {0} from {1} to {2} == {3}", "Chunk", chunk.Address, chunk.Address.Item2 + chunk.Length, end);
 #endif
