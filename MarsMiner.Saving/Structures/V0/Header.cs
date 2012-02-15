@@ -20,129 +20,28 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using MarsMiner.Saving.Interface.V0;
 using MarsMiner.Saving.Interfaces;
 using MarsMiner.Saving.Util;
 
 namespace MarsMiner.Saving.Structures.V0
 {
-    public class Header : IHeader
+    public sealed class Header : BlockStructure, IHeader
     {
         public const int Version = 0;
         private Dictionary<int, IntRangeList> _recursiveUsedSpace;
 
-        public Header(SavedStateIndex saveIndex)
+        public Header(GameSave gameSave, Tuple<int, uint> address) : base(gameSave, address)
+        {
+        }
+
+        public Header(GameSave gameSave, SavedStateIndex saveIndex) : base(gameSave)
         {
             SaveIndex = saveIndex;
         }
 
         public SavedStateIndex SaveIndex { get; private set; }
 
-        #region IHeader Members
-
-        public IBlockStructure[] UnboundBlocks
-        {
-            get { return SaveIndex.Address == null ? new IBlockStructure[] { SaveIndex } : new IBlockStructure[0]; }
-        }
-
-        public Tuple<int, uint> Address
-        {
-            get { return new Tuple<int, uint>(0, 0); }
-            set { throw new InvalidOperationException("Can't set address on Header!"); }
-        }
-
-        public Dictionary<int, IntRangeList> RecursiveUsedSpace
-        {
-            get
-            {
-                if (_recursiveUsedSpace == null)
-                {
-                    CalculateRecursiveUsedSpace();
-                }
-                return _recursiveUsedSpace;
-            }
-        }
-
-        public int Length
-        {
-            get { return 8; }
-        }
-
-        public void Write(Stream stream, Func<IBlockStructure, IBlockStructure, uint> getBlockPointerFunc,
-                          Func<string, uint> getStringPointerFunc)
-        {
-#if AssertBlockLength
-            long start = stream.Position;
-#endif
-            var w = new BinaryWriter(stream);
-
-            w.Write(Version);
-            w.Write(getBlockPointerFunc(this, SaveIndex));
-#if AssertBlockLength
-            if (stream.Position - start != Length)
-            {
-                throw new Exception("Length mismatch in Header!");
-            }
-#endif
-        }
-
-        public void Unload()
-        {
-            if (Address == null || (SaveIndex != null && SaveIndex.Address == null))
-            {
-                throw new InvalidOperationException("Can't unload unbound blocks!");
-            }
-
-            CalculateRecursiveUsedSpace();
-            SaveIndex = null;
-        }
-
-        #endregion
-
-        public static Header Read(Tuple<int, uint> source, Func<int, uint, Tuple<int, uint>> resolvePointerFunc,
-                                  Func<uint, string> resolveStringFunc, Func<int, Stream> getStreamFunc,
-                                  ReadOptions readOptions)
-        {
-#if DebugVerboseBlocks
-            Console.WriteLine("Reading {0} from {1}", "Header", source);
-#endif
-
-            Stream stream = getStreamFunc(source.Item1);
-            stream.Seek(source.Item2, SeekOrigin.Begin);
-            var r = new BinaryReader(stream);
-
-            int version = r.ReadInt32();
-            if (version != Version)
-            {
-                throw new InvalidDataException("Expected file version " + Version + ", was " + version + ".");
-            }
-
-            uint mainIndexPointer = r.ReadUInt32();
-
-#if DebugVerboseBlocks || AssertBlockLength
-            long end = stream.Position;
-#endif
-
-            SavedStateIndex mainIndex = SavedStateIndex.Read(resolvePointerFunc(source.Item1, mainIndexPointer),
-                                                             resolvePointerFunc, resolveStringFunc, getStreamFunc,
-                                                             readOptions);
-
-            var newHeader = new Header(mainIndex);
-
-#if DebugVerboseBlocks
-            Console.WriteLine("Read {0} from {1} to {2} == {3}", "Header", newHeader.Address, newHeader.Address.Item2 + newHeader.Length, end);
-#endif
-#if AssertBlockLength
-            if (newHeader.Address.Item2 + newHeader.Length != end)
-            {
-                throw new Exception("Length mismatch in Header!");
-            }
-#endif
-
-            return newHeader;
-        }
-
-
+        //TODO: Split and move into BlockStructure
         public void CalculateRecursiveUsedSpace()
         {
             if (_recursiveUsedSpace != null) return;
@@ -154,7 +53,37 @@ namespace MarsMiner.Saving.Structures.V0
             {
                 _recursiveUsedSpace[Address.Item1] = new IntRangeList();
             }
-            _recursiveUsedSpace[Address.Item1] += new Tuple<int, int>((int)Address.Item2, (int)Address.Item2 + Length);
+            _recursiveUsedSpace[Address.Item1] += new Tuple<int, int>((int) Address.Item2, (int) Address.Item2 + Length);
+        }
+
+        protected override void ReadData(BinaryReader reader)
+        {
+            int version = reader.ReadInt32();
+            if (version != Version)
+            {
+                throw new InvalidDataException("Expected file version " + Version + ", was " + version + ".");
+            }
+
+            uint saveIndexPointer = reader.ReadUInt32();
+
+            SaveIndex = new SavedStateIndex(GameSave, GameSave.ResolvePointer(Address.Item1, saveIndexPointer));
+        }
+
+        protected override void ForgetData()
+        {
+            SaveIndex = null;
+        }
+
+        protected override void WriteData(BinaryWriter writer)
+        {
+            writer.Write(Version);
+            writer.Write(GameSave.FindBlockPointer(this, SaveIndex));
+        }
+
+        protected override void UpdateLength()
+        {
+            Length = 4 // Version
+                     + 4; // SaveIndex;
         }
     }
 }

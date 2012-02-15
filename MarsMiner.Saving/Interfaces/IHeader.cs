@@ -19,7 +19,7 @@
 
 namespace MarsMiner.Saving.Interfaces
 {
-    public interface IHeader : IBlockStructure
+    public interface IHeader
     {
     }
 }
