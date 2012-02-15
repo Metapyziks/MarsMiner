@@ -126,10 +126,15 @@ namespace MarsMiner.Saving
             Func<Tuple<int, uint>, Func<int, uint, Tuple<int, uint>>, Func<uint, string>, Func<int, Stream>, TRo, T>
                 readFunc, TRo readOptions) where T : IHeader
         {
-            T header = readFunc(new Tuple<int, uint>(0, 0), ResolvePointer, ResolveString, x => _blobFiles[x],
+            T header = readFunc(new Tuple<int, uint>(0, 0), ResolvePointer, ResolveString, GetBlobFile,
                                 readOptions);
             MarkFreeSpace(header);
             return header;
+        }
+
+        internal FileStream GetBlobFile(int x)
+        {
+            return _blobFiles[x];
         }
 
         private void MarkFreeSpace<T>(T header) where T : IHeader

@@ -26,20 +26,16 @@ namespace MarsMiner.Saving.Interfaces
 {
     public abstract class BlockStructure
     {
-        private readonly Func<int, Stream> _getStreamFunc;
+        private readonly GameSave _gameSave;
         private Tuple<int, uint> _address;
-        private Func<int, uint, Tuple<int, uint>> _resolvePointerFunc;
-        private Func<uint, string> _resolveStringFunc;
 
-        public BlockStructure(Tuple<int, uint> address,
-                              Func<int, Stream> getStreamFunc,
-                              Func<int, uint, Tuple<int, uint>> resolvePointerFunc,
-                              Func<uint, string> resolveStringFunc)
+        public BlockStructure(GameSave gameSave,
+                              Tuple<int, uint> address)
         {
+            if (gameSave == null) throw new ArgumentNullException("gameSave");
+            if (address == null) throw new ArgumentNullException("address");
+            _gameSave = gameSave;
             Address = address;
-            _getStreamFunc = getStreamFunc;
-            _resolvePointerFunc = resolvePointerFunc;
-            _resolveStringFunc = resolveStringFunc;
         }
 
         public Tuple<int, uint> Address
@@ -49,7 +45,7 @@ namespace MarsMiner.Saving.Interfaces
             {
                 if (_address != null)
                 {
-                    throw new InvalidOperationException("Address can't be reassigned!");
+                    throw new InvalidOperationException("Tried to set Address more than once.");
                 }
                 _address = value;
             }
@@ -61,6 +57,7 @@ namespace MarsMiner.Saving.Interfaces
         }
 
         public bool Loaded { get; private set; }
+        public bool Written { get; private set; }
 
         public IBlockStructure[] UnboundBlocks
         {
@@ -81,8 +78,13 @@ namespace MarsMiner.Saving.Interfaces
         public void Load()
         {
             if (Loaded) return;
+            if (!Written)
+            {
+                // This shouldn't happen.
+                throw new InvalidOperationException("Tried to load unwritten block.");
+            }
 
-            Stream stream = _getStreamFunc(_address.Item1);
+            Stream stream = _gameSave.GetBlobFile(_address.Item1);
             stream.Seek(_address.Item2, SeekOrigin.Begin);
             var reader = new BinaryReader(stream);
 
@@ -95,7 +97,14 @@ namespace MarsMiner.Saving.Interfaces
 
         public void Unload()
         {
-            if (!Loaded) { return; }
+            if (!Loaded)
+            {
+                return;
+            }
+            if (!Written)
+            {
+                throw new InvalidOperationException("Tried to unload unwritten block.");
+            }
 
             ForgetData();
 
@@ -103,5 +112,24 @@ namespace MarsMiner.Saving.Interfaces
         }
 
         protected abstract void ForgetData();
+
+        public void Write()
+        {
+            if (!Bound)
+            {
+                throw new InvalidOperationException("Tried to write unbound block.");
+            }
+
+            if (Written)
+            {
+                return;
+            }
+
+            WriteData();
+
+            Written = true;
+        }
+
+        protected abstract void WriteData();
     }
 }
