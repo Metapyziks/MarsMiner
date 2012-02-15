@@ -34,12 +34,7 @@ namespace MarsMiner.Saving.Structures.V0
         private int[] _xLocations;
         private int[] _zLocations;
 
-        public ChunkTable(GameSave gameSave, Tuple<int, int, Chunk>[] chunks)
-            : this(
-                gameSave,
-                chunks.Select(x => x.Item1).ToArray(),
-                chunks.Select(x => x.Item2).ToArray(),
-                chunks.Select(x => x.Item3).ToArray())
+        public ChunkTable(GameSave gameSave, Tuple<int, uint> address) : base(gameSave, address)
         {
         }
 
@@ -54,6 +49,15 @@ namespace MarsMiner.Saving.Structures.V0
             _chunks = chunks;
 
             UpdateLength();
+        }
+
+        public ChunkTable(GameSave gameSave, Tuple<int, int, Chunk>[] chunks)
+            : this(
+                gameSave,
+                chunks.Select(x => x.Item1).ToArray(),
+                chunks.Select(x => x.Item2).ToArray(),
+                chunks.Select(x => x.Item3).ToArray())
+        {
         }
 
         //TODO: Split and move into BlockStructure
