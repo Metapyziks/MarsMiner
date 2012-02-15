@@ -84,6 +84,8 @@ namespace MarsMiner.Server.Networking
         public event EventHandler<DisconnectEventArgs> Disconnected;
         public event EventHandler<MessageEventArgs> ReceivedMessage;
 
+        public int Slot;
+
         protected override bool ReadPacket( Stream stream )
         {
             base.ReadPacket( stream );

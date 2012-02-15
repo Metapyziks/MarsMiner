@@ -34,6 +34,18 @@ namespace MarsMiner.Shared.Networking
         private static long myLastServerToClientReadPos = 0;
         private static long myLastServerToClientWritePos = 0;
 
+        public static bool ConnectionWaiting { get; private set; }
+
+        public static void EstablishConnection()
+        {
+            ConnectionWaiting = true;
+        }
+
+        public static void AcceptConnection()
+        {
+            ConnectionWaiting = false;
+        }
+
         public static Stream StartClientToServerPacket()
         {
             Monitor.Enter( myClientToServerStream );

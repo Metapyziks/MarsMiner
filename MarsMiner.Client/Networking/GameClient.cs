@@ -21,10 +21,25 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Net;
+
+using MarsMiner.Shared.Networking;
 
 namespace MarsMiner.Client.Networking
 {
     public class GameClient
     {
+        public ServerBase Server { get; private set; }
+
+        public bool ConnectLocal()
+        {
+            Server = new LocalServer();
+            return Server.Connect();
+        }
+
+        public bool ConnectRemote( IPAddress server, int port = 35820 )
+        {
+            throw new NotImplementedException();
+        }
     }
 }

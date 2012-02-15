@@ -68,5 +68,18 @@ namespace MarsMiner.Client.Networking
         {
             LocalConnection.SendClientToServerPacket();
         }
+
+        protected override bool AttemptConnection()
+        {
+            LocalConnection.EstablishConnection();
+
+            DateTime start = DateTime.Now;
+
+            while ( LocalConnection.ConnectionWaiting )
+                if ( ( DateTime.Now - start ).TotalSeconds > 5.0 )
+                    return false;
+            
+            return true;
+        }
     }
 }

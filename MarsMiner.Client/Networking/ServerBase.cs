@@ -84,10 +84,15 @@ namespace MarsMiner.Client.Networking
         public event EventHandler<DisconnectEventArgs> Disconnected;
         public event EventHandler<MessageEventArgs> ReceivedMessage;
 
-        public void Connect()
+        public bool Connect()
         {
             if ( AttemptConnection() )
+            {
                 OnConnect();
+                return true;
+            }
+
+            return false;
         }
 
         protected virtual bool AttemptConnection()

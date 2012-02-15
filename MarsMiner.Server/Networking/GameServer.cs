@@ -21,11 +21,101 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
+
+using MarsMiner.Shared.Networking;
 
 namespace MarsMiner.Server.Networking
 {
     public class GameServer
     {
+        public bool IsRunning { get; private set; }
 
+        public ClientBase[] Slots { get; private set; }
+        public int SlotCount
+        {
+            get { return Slots.Length; }
+            set
+            {
+                if ( IsRunning )
+                    throw new InvalidOperationException( "Cannot change slot "
+                        + "count while server is running" );
+
+                Slots = new ClientBase[ value ];
+            }
+        }
+
+        public int ClientCount { get; private set; }
+        public bool CanAcceptClients
+        {
+            get { return ClientCount < SlotCount; }
+        }
+        public int NextFreeSlot
+        {
+            get
+            {
+                for ( int i = 0; i < SlotCount; ++i )
+                    if ( Slots[ i ] == null )
+                        return i;
+
+                return -1;
+            }
+        }
+
+        public GameServer()
+        {
+            SlotCount = 1;
+            ClientCount = 0;
+        }
+
+        public void Run()
+        {
+            IsRunning = true;
+
+            while ( IsRunning )
+            {
+                if ( CanAcceptClients )
+                    ListenForConnections();
+
+                if ( ClientCount > 0 )
+                    UpdateClients();
+            }
+        }
+
+        private void ListenForConnections()
+        {
+            if ( LocalConnection.ConnectionWaiting )
+                AddClient( new LocalClient() );
+        }
+
+        private void UpdateClients()
+        {
+            for ( int i = 0; i < Slots.Length; ++i )
+            {
+                ClientBase client = Slots[ i ];
+                if ( client != null )
+                {
+                    client.CheckForPackets();
+                }
+            }
+        }
+
+        protected void AddClient( ClientBase client )
+        {
+            client.Slot = NextFreeSlot;
+            Slots[ client.Slot ] = client;
+            ++ClientCount;
+        }
+
+        protected void RemoveClient( ClientBase client )
+        {
+            Slots[ client.Slot ] = null;
+            --ClientCount;
+        }
+
+        public void Stop()
+        {
+            IsRunning = false;
+        }
     }
 }
