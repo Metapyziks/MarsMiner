@@ -102,6 +102,6 @@ namespace MarsMiner.Saving.Interfaces
             Loaded = false;
         }
 
-        protected abstract void ForgetData() { }
+        protected abstract void ForgetData();
     }
 }
