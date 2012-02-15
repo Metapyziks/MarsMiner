@@ -28,7 +28,6 @@ namespace MarsMiner.Saving.Structures.V0
 {
     public sealed class ChunkTable : BlockStructure
     {
-        private Tuple<int, uint> _address;
         private Chunk[] _chunks;
 
         private Dictionary<int, IntRangeList> _recursiveUsedSpace;
@@ -56,37 +55,6 @@ namespace MarsMiner.Saving.Structures.V0
 
             UpdateLength();
         }
-
-        public Tuple<int, uint> Address
-        {
-            get { return _address; }
-            set
-            {
-                if (_address != null)
-                {
-                    throw new InvalidOperationException("Address can't be reassigned!");
-                }
-                _address = value;
-            }
-        }
-
-        public Dictionary<int, IntRangeList> RecursiveUsedSpace
-        {
-            get
-            {
-                if (Address == null)
-                {
-                    throw new InvalidOperationException("Can't get used space from unbound block!");
-                }
-                if (_recursiveUsedSpace == null)
-                {
-                    CalculateRecursiveUsedSpace();
-                }
-                return _recursiveUsedSpace;
-            }
-        }
-
-        public int Length { get; private set; }
 
         //TODO: Split and move into BlockStructure
         private void CalculateRecursiveUsedSpace()
