@@ -26,7 +26,7 @@ namespace MarsMiner.Saving.Interfaces
 {
     public abstract class BlockStructure
     {
-        private readonly GameSave _gameSave;
+        protected readonly GameSave _gameSave;
         private Tuple<int, uint> _address;
 
         public BlockStructure(GameSave gameSave,
@@ -36,6 +36,17 @@ namespace MarsMiner.Saving.Interfaces
             if (address == null) throw new ArgumentNullException("address");
             _gameSave = gameSave;
             Address = address;
+            Written = true;
+            Loaded = false;
+        }
+
+        protected BlockStructure(GameSave gameSave)
+        {
+            if (gameSave == null) throw new ArgumentNullException("gameSave");
+            _gameSave = gameSave;
+            Address = null;
+            Written = false;
+            Loaded = true;
         }
 
         public Tuple<int, uint> Address
@@ -56,8 +67,26 @@ namespace MarsMiner.Saving.Interfaces
             get { return Address != null; }
         }
 
-        public bool Loaded { get; private set; }
+        private bool _loaded;
+        public bool Loaded
+        {
+            get { return _loaded; }
+            private set { _loaded = value; }
+        }
+
         public bool Written { get; private set; }
+
+        private int? _length;
+        public int Length
+        {
+            get {
+                if (_length == null)
+                {
+                    throw new InvalidOperationException("Length isn't set.");
+                }
+                return _length.Value; }
+            protected set { _length = value; }
+        }
 
         public IBlockStructure[] UnboundBlocks
         {
@@ -84,11 +113,27 @@ namespace MarsMiner.Saving.Interfaces
                 throw new InvalidOperationException("Tried to load unwritten block.");
             }
 
+#if DebugVerboseBlocks
+            Console.WriteLine("Reading {0} from {1}", this.GetType(), source);
+#endif
+
             Stream stream = _gameSave.GetBlobFile(_address.Item1);
             stream.Seek(_address.Item2, SeekOrigin.Begin);
             var reader = new BinaryReader(stream);
 
             ReadData(reader);
+
+            UpdateLength();
+
+#if DebugVerboseBlocks
+            Console.WriteLine("Read {0} from {1} to {2} == {3}", this.GetType(), Address, Address.Item2 + Length, stream.Position);
+#endif
+#if AssertBlockLength
+            if (Address.Item2 + Length != stream.Position)
+            {
+                throw new Exception("Length mismatch in " + GetType() + "!");
+            }
+#endif
 
             Loaded = true;
         }
@@ -125,11 +170,31 @@ namespace MarsMiner.Saving.Interfaces
                 return;
             }
 
-            WriteData();
+            throw new NotImplementedException("Write dependencies...");
+
+            Stream stream = _gameSave.GetBlobFile(_address.Item1);
+            stream.Seek(_address.Item2, SeekOrigin.Begin);
+
+#if AssertBlockLength
+            long start = stream.Position;
+#endif
+
+            var writer = new BinaryWriter(stream);
+
+            WriteData(writer);
+
+#if AssertBlockLength
+            if (stream.Position - start != Length)
+            {
+                throw new Exception("Length mismatch after writing " + GetType() + "!");
+            }
+#endif
 
             Written = true;
         }
 
-        protected abstract void WriteData();
+        protected abstract void WriteData(BinaryWriter writer);
+
+        protected abstract void UpdateLength();
     }
 }

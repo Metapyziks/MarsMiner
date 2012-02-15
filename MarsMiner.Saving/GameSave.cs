@@ -215,7 +215,7 @@ namespace MarsMiner.Saving
             return _pointers[(int)(pointer & PointerDataMask)];
         }
 
-        private string ResolveString(uint address)
+        internal string ResolveString(uint address)
         {
             string s;
             if (_stringsByAddress.TryGetValue(address, out s))
@@ -304,7 +304,7 @@ namespace MarsMiner.Saving
             return GlobalPointerFlag | (uint)(_pointers.Count - 1);
         }
 
-        private uint FindStringAddress(string s)
+        internal uint FindStringAddress(string s)
         {
             if (s == null)
             {
