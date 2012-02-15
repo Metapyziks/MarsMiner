@@ -21,13 +21,12 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using MarsMiner.Saving.Interface.V0;
 using MarsMiner.Saving.Interfaces;
 using MarsMiner.Saving.Util;
 
 namespace MarsMiner.Saving.Structures.V0
 {
-    public class ChunkTable : IBlockStructure
+    public sealed class ChunkTable : BlockStructure
     {
         private Tuple<int, uint> _address;
         private Chunk[] _chunks;
@@ -36,15 +35,16 @@ namespace MarsMiner.Saving.Structures.V0
         private int[] _xLocations;
         private int[] _zLocations;
 
-        public ChunkTable(Tuple<int, int, Chunk>[] chunks)
+        public ChunkTable(GameSave gameSave, Tuple<int, int, Chunk>[] chunks)
             : this(
+                gameSave,
                 chunks.Select(x => x.Item1).ToArray(),
                 chunks.Select(x => x.Item2).ToArray(),
                 chunks.Select(x => x.Item3).ToArray())
         {
         }
 
-        public ChunkTable(int[] xLocations, int[] zLocations, Chunk[] chunks)
+        public ChunkTable(GameSave gameSave, int[] xLocations, int[] zLocations, Chunk[] chunks) : base(gameSave)
         {
             if (xLocations.Length != zLocations.Length || zLocations.Length != chunks.Length)
             {
@@ -54,33 +54,7 @@ namespace MarsMiner.Saving.Structures.V0
             _zLocations = zLocations;
             _chunks = chunks;
 
-            Length = 4 //chunk count
-                     + chunks.Length *
-                     (4 // xLocation
-                      + 4 // yLocation
-                      + 4); // chunk
-        }
-
-        private ChunkTable(int[] xLocations, int[] zLocations, Chunk[] chunks, Tuple<int, uint> address)
-            : this(xLocations, zLocations, chunks)
-        {
-            Address = address;
-            CalculateRecursiveUsedSpace();
-        }
-
-        #region IBlockStructure Members
-
-        public IBlockStructure[] UnboundBlocks
-        {
-            get
-            {
-                if (Address != null)
-                {
-                    //Bound
-                    return new IBlockStructure[0];
-                }
-                return _chunks.Where(c => c.Address == null).ToArray<IBlockStructure>();
-            }
+            UpdateLength();
         }
 
         public Tuple<int, uint> Address
@@ -114,45 +88,7 @@ namespace MarsMiner.Saving.Structures.V0
 
         public int Length { get; private set; }
 
-        public void Write(Stream stream, Func<IBlockStructure, IBlockStructure, uint> getBlockPointerFunc,
-                          Func<string, uint> getStringPointerFunc)
-        {
-#if AssertBlockLength
-            long start = stream.Position;
-#endif
-            var w = new BinaryWriter(stream);
-
-            w.Write((uint)_chunks.LongLength);
-            for (long i = 0; i < _chunks.LongLength; i++)
-            {
-                w.Write(_xLocations[i]);
-                w.Write(_zLocations[i]);
-                uint chunkPointer = getBlockPointerFunc(this, _chunks[i]);
-                w.Write(chunkPointer);
-            }
-#if AssertBlockLength
-            if (stream.Position - start != Length)
-            {
-                throw new Exception("Length mismatch in ChunkTable!");
-            }
-#endif
-        }
-
-        public void Unload()
-        {
-            if (Address == null)
-            {
-                throw new InvalidOperationException("Can't unload unbound blocks!");
-            }
-
-            CalculateRecursiveUsedSpace();
-            _xLocations = null;
-            _zLocations = null;
-            _chunks = null;
-        }
-
-        #endregion
-
+        //TODO: Split and move into BlockStructure
         private void CalculateRecursiveUsedSpace()
         {
             if (_recursiveUsedSpace != null) return;
@@ -167,7 +103,7 @@ namespace MarsMiner.Saving.Structures.V0
             {
                 _recursiveUsedSpace[Address.Item1] = new IntRangeList();
             }
-            _recursiveUsedSpace[Address.Item1] += new Tuple<int, int>((int)Address.Item2, (int)Address.Item2 + Length);
+            _recursiveUsedSpace[Address.Item1] += new Tuple<int, int>((int) Address.Item2, (int) Address.Item2 + Length);
         }
 
         public IEnumerable<Tuple<int, int, Chunk>> GetChunks()
@@ -175,60 +111,55 @@ namespace MarsMiner.Saving.Structures.V0
             return _chunks.Select((t, i) => new Tuple<int, int, Chunk>(_xLocations[i], _zLocations[i], t));
         }
 
-        public static ChunkTable Read(Tuple<int, uint> source, Func<int, uint, Tuple<int, uint>> resolvePointerFunc,
-                                      Func<uint, string> resolveStringFunc, Func<int, Stream> getStreamFunc,
-                                      ReadOptions readOptions)
+        protected override void ReadData(BinaryReader reader)
         {
-#if DebugVerboseBlocks
-            Console.WriteLine("Reading {0} from {1}", "ChunkTable", source);
-#endif
+            uint chunkCount = reader.ReadUInt32();
 
-            Stream stream = getStreamFunc(source.Item1);
-            stream.Seek(source.Item2, SeekOrigin.Begin);
-            var r = new BinaryReader(stream);
-
-            uint chunkCount = r.ReadUInt32();
-
-            var xLocations = new int[chunkCount];
-            var yLocations = new int[chunkCount];
+            _xLocations = new int[chunkCount];
+            _zLocations = new int[chunkCount];
             var chunkPointers = new uint[chunkCount];
 
             for (int i = 0; i < chunkCount; i++)
             {
-                xLocations[i] = r.ReadInt32();
-                yLocations[i] = r.ReadInt32();
-                chunkPointers[i] = r.ReadUInt32();
+                _xLocations[i] = reader.ReadInt32();
+                _zLocations[i] = reader.ReadInt32();
+                chunkPointers[i] = reader.ReadUInt32();
             }
 
-#if DebugVerboseBlocks || AssertBlockLength
-            long end = stream.Position;
-#endif
-
-            var chunks = new Chunk[chunkCount];
+            _chunks = new Chunk[chunkCount];
 
             for (int i = 0; i < chunkCount; i++)
             {
-                chunks[i] = Chunk.Read(resolvePointerFunc(source.Item1, chunkPointers[i]), resolvePointerFunc,
-                                       resolveStringFunc, getStreamFunc, readOptions);
-                if (readOptions.ChunkRead!=null)
-                {
-                    readOptions.ChunkRead(xLocations[i], yLocations[i], chunks[i]);
-                }
+                _chunks[i] = new Chunk(GameSave, GameSave.ResolvePointer(Address.Item1, chunkPointers[i]));
             }
+        }
 
-            var newChunkTable = new ChunkTable(xLocations, yLocations, chunks, source);
+        protected override void ForgetData()
+        {
+            _xLocations = null;
+            _zLocations = null;
+            _chunks = null;
+        }
 
-#if DebugVerboseBlocks
-            Console.WriteLine("Read {0} from {1} to {2} == {3}", "ChunkTable", newChunkTable.Address, newChunkTable.Address.Item2 + newChunkTable.Length, end);
-#endif
-#if AssertBlockLength
-            if (newChunkTable.Address.Item2 + newChunkTable.Length != end)
+        protected override void WriteData(BinaryWriter writer)
+        {
+            writer.Write((uint) _chunks.LongLength);
+            for (long i = 0; i < _chunks.LongLength; i++)
             {
-                throw new Exception("Length mismatch in ChunkTable!");
+                writer.Write(_xLocations[i]);
+                writer.Write(_zLocations[i]);
+                uint chunkPointer = GameSave.FindBlockPointer(this, _chunks[i]);
+                writer.Write(chunkPointer);
             }
-#endif
+        }
 
-            return newChunkTable;
+        protected override void UpdateLength()
+        {
+            Length = 4 //chunk count
+                     + _chunks.Length *
+                     (4 // xLocation
+                      + 4 // yLocation
+                      + 4); // chunk
         }
     }
 }

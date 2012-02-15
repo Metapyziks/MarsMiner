@@ -26,6 +26,7 @@ namespace MarsMiner.Saving.Interfaces
 {
     public abstract class BlockStructure
     {
+        //TODO: Make private and add shortcut methods
         protected readonly GameSave GameSave;
         private Tuple<int, uint> _address;
 
