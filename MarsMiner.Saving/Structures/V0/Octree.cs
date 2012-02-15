@@ -22,75 +22,26 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using MarsMiner.Saving.Interface.V0;
 using MarsMiner.Saving.Interfaces;
 using MarsMiner.Saving.Util;
 
 namespace MarsMiner.Saving.Structures.V0
 {
-    public class Octree : IBlockStructure
+    public sealed class Octree : BlockStructure
     {
-        private Tuple<int, uint> _address;
         private BitArray _octreeFlags;
         private byte[] _octreeValues;
 
         private Dictionary<int, IntRangeList> _recursiveUsedSpace;
 
-        public Octree(BitArray octreeFlags, byte[] octreeValues)
+        public Octree(GameSave gameSave, BitArray octreeFlags, byte[] octreeValues)
+            : base(gameSave)
         {
             _octreeFlags = octreeFlags;
             _octreeValues = octreeValues;
 
-            Length = 4 // octreeFlags length
-                     + 4 // octreeValueList length
-                     + (octreeFlags.Length / 8) + (octreeFlags.Length % 8 == 0 ? 0 : 1) // octreeFlags
-                     + octreeValues.Length; // octreeValues
+            UpdateLength();
         }
-
-        private Octree(BitArray octreeFlags, byte[] octreeValues, Tuple<int, uint> address)
-            : this(octreeFlags, octreeValues)
-        {
-            Address = address;
-            CalculateRecursiveUsedSpace();
-        }
-
-        #region IBlockStructure Members
-
-        public IBlockStructure[] UnboundBlocks
-        {
-            get { return new IBlockStructure[0]; }
-        }
-
-        public Tuple<int, uint> Address
-        {
-            get { return _address; }
-            set
-            {
-                if (_address != null)
-                {
-                    throw new InvalidOperationException("Address can't be reassigned!");
-                }
-                _address = value;
-            }
-        }
-
-        public Dictionary<int, IntRangeList> RecursiveUsedSpace
-        {
-            get
-            {
-                if (Address == null)
-                {
-                    throw new InvalidOperationException("Can't get used space from unbound block!");
-                }
-                if (_recursiveUsedSpace == null)
-                {
-                    CalculateRecursiveUsedSpace();
-                }
-                return _recursiveUsedSpace;
-            }
-        }
-
-        public int Length { get; private set; }
 
         public BitArray OctreeFlags
         {
@@ -102,47 +53,7 @@ namespace MarsMiner.Saving.Structures.V0
             get { return _octreeValues.AsEnumerable(); }
         }
 
-        public void Write(Stream stream, Func<IBlockStructure, IBlockStructure, uint> getBlockPointerFunc,
-                          Func<string, uint> getStringPointerFunc)
-        {
-#if AssertBlockLength
-            long start = stream.Position;
-#endif
-            var w = new BinaryWriter(stream);
-
-            int octreeFlagsLength = (_octreeFlags.Length / 8) + (_octreeFlags.Length % 8 == 0 ? 0 : 1);
-
-            w.Write(octreeFlagsLength);
-
-            w.Write(_octreeValues.Length);
-
-            var buffer = new byte[octreeFlagsLength];
-            _octreeFlags.CopyTo(buffer, 0);
-            w.Write(buffer);
-
-            w.Write(_octreeValues);
-#if AssertBlockLength
-            if (stream.Position - start != Length)
-            {
-                throw new Exception("Length mismatch in Octree!");
-            }
-#endif
-        }
-
-        public void Unload()
-        {
-            if (Address == null)
-            {
-                throw new InvalidOperationException("Can't unload unbound blocks!");
-            }
-
-            CalculateRecursiveUsedSpace();
-            _octreeFlags = null;
-            _octreeValues = null;
-        }
-
-        #endregion
-
+        //TODO: Split and move into BlockStructure
         private void CalculateRecursiveUsedSpace()
         {
             if (_recursiveUsedSpace != null) return;
@@ -153,44 +64,45 @@ namespace MarsMiner.Saving.Structures.V0
             {
                 _recursiveUsedSpace[Address.Item1] = new IntRangeList();
             }
-            _recursiveUsedSpace[Address.Item1] += new Tuple<int, int>((int)Address.Item2, (int)Address.Item2 + Length);
+            _recursiveUsedSpace[Address.Item1] += new Tuple<int, int>((int) Address.Item2, (int) Address.Item2 + Length);
         }
 
-        public static Octree Read(Tuple<int, uint> source, Func<int, uint, Tuple<int, uint>> resolvePointerFunc,
-                                  Func<uint, string> resolveStringFunc, Func<int, Stream> getStreamFunc,
-                                  ReadOptions readOptions)
+        protected override void ReadData(BinaryReader reader)
         {
-#if DebugVerboseBlocks
-            Console.WriteLine("Reading {0} from {1}", "Octree", source);
-#endif
+            int octreeFlagsLength = reader.ReadInt32();
+            int octreeValuesLength = reader.ReadInt32();
 
-            Stream stream = getStreamFunc(source.Item1);
-            stream.Seek(source.Item2, SeekOrigin.Begin);
-            var r = new BinaryReader(stream);
+            _octreeFlags = new BitArray(reader.ReadBytes(octreeFlagsLength));
+            _octreeValues = reader.ReadBytes(octreeValuesLength);
+        }
 
-            int octreeFlagsLength = r.ReadInt32();
-            int octreeValuesLength = r.ReadInt32();
+        protected override void ForgetData()
+        {
+            _octreeFlags = null;
+            _octreeValues = null;
+        }
 
-            var octreeFlags = new BitArray(r.ReadBytes(octreeFlagsLength));
-            byte[] octreeValues = r.ReadBytes(octreeValuesLength);
+        protected override void WriteData(BinaryWriter writer)
+        {
+            int octreeFlagsLength = (_octreeFlags.Length / 8) + (_octreeFlags.Length % 8 == 0 ? 0 : 1);
 
-#if DebugVerboseBlocks || AssertBlockLength
-            long end = stream.Position;
-#endif
+            writer.Write(octreeFlagsLength);
 
-            var newOctree = new Octree(octreeFlags, octreeValues, source);
+            writer.Write(_octreeValues.Length);
 
-#if DebugVerboseBlocks
-            Console.WriteLine("Read {0} from {1} to {2} == {3}", "Octree", newOctree.Address, newOctree.Address.Item2 + newOctree.Length, end);
-#endif
-#if AssertBlockLength
-            if (newOctree.Address.Item2 + newOctree.Length != end)
-            {
-                throw new Exception("Length mismatch in Octree!");
-            }
-#endif
+            var buffer = new byte[octreeFlagsLength];
+            _octreeFlags.CopyTo(buffer, 0);
+            writer.Write(buffer);
 
-            return newOctree;
+            writer.Write(_octreeValues);
+        }
+
+        protected override void UpdateLength()
+        {
+            Length = 4 // octreeFlags length
+                     + 4 // octreeValueList length
+                     + (_octreeFlags.Length / 8) + (_octreeFlags.Length % 8 == 0 ? 0 : 1) // octreeFlags
+                     + _octreeValues.Length; // octreeValues
         }
     }
 }

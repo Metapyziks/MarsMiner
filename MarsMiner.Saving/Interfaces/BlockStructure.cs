@@ -114,7 +114,7 @@ namespace MarsMiner.Saving.Interfaces
             }
 
 #if DebugVerboseBlocks
-            Console.WriteLine("Reading {0} from {1}", this.GetType(), source);
+            Console.WriteLine("Reading {0} from {1}", GetType(), source);
 #endif
 
             Stream stream = _gameSave.GetBlobFile(_address.Item1);
@@ -126,7 +126,7 @@ namespace MarsMiner.Saving.Interfaces
             UpdateLength();
 
 #if DebugVerboseBlocks
-            Console.WriteLine("Read {0} from {1} to {2} == {3}", this.GetType(), Address, Address.Item2 + Length, stream.Position);
+            Console.WriteLine("Read {0} from {1} to {2} == {3}", GetType(), Address, Address.Item2 + Length, stream.Position);
 #endif
 #if AssertBlockLength
             if (Address.Item2 + Length != stream.Position)
