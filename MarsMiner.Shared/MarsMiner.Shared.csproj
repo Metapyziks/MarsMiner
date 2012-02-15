@@ -61,6 +61,7 @@
     <Compile Include="Octree\OctreeEnumerator.cs" />
     <Compile Include="Octree\OctreeLeaf.cs" />
     <Compile Include="Octree\OctreeNode.cs" />
+    <Compile Include="PlayerInfo.cs" />
     <Compile Include="Plugin.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Tools.cs" />
