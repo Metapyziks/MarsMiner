@@ -18,19 +18,15 @@
  */
 
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using MarsMiner.Saving.Interfaces;
-using MarsMiner.Saving.Util;
 
 namespace MarsMiner.Saving.Structures.V0
 {
     public sealed class Chunk : BlockStructure
     {
         private Octree[] _octrees;
-
-        private Dictionary<int, IntRangeList> _recursiveUsedSpace;
 
         public Chunk(GameSave gameSave, Tuple<int, uint> address) : base(gameSave, address)
         {
@@ -49,6 +45,11 @@ namespace MarsMiner.Saving.Structures.V0
         public Octree[] Octrees
         {
             get { return _octrees.ToArray(); }
+        }
+
+        public override BlockStructure[] ReferencedBlocks
+        {
+            get { return Octrees.ToArray<BlockStructure>(); }
         }
 
         protected override void ReadData(BinaryReader reader)
@@ -93,25 +94,6 @@ namespace MarsMiner.Saving.Structures.V0
             Length = 4 // blockTypeTable
                      + 1 // octreeCount
                      + 4 * Octrees.Length; // octrees
-        }
-
-        //TODO: Split and move into BlockStructure
-        private void CalculateRecursiveUsedSpace()
-        {
-            if (_recursiveUsedSpace != null) return;
-
-            _recursiveUsedSpace = new Dictionary<int, IntRangeList>();
-            _recursiveUsedSpace.Add(BlockTypeTable.RecursiveUsedSpace);
-            foreach (Octree octree in _octrees)
-            {
-                _recursiveUsedSpace.Add(octree.RecursiveUsedSpace);
-            }
-
-            if (!_recursiveUsedSpace.ContainsKey(Address.Item1))
-            {
-                _recursiveUsedSpace[Address.Item1] = new IntRangeList();
-            }
-            _recursiveUsedSpace[Address.Item1] += new Tuple<int, int>((int) Address.Item2, (int) Address.Item2 + Length);
         }
     }
 }

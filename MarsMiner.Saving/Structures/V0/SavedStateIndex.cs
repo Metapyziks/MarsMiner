@@ -18,17 +18,13 @@
  */
 
 using System;
-using System.Collections.Generic;
 using System.IO;
 using MarsMiner.Saving.Interfaces;
-using MarsMiner.Saving.Util;
 
 namespace MarsMiner.Saving.Structures.V0
 {
     public sealed class SavedStateIndex : BlockStructure
     {
-        private Dictionary<int, IntRangeList> _recursiveUsedSpace;
-
         public SavedStateIndex(GameSave gameSave, Tuple<int, uint> address) : base(gameSave, address)
         {
         }
@@ -47,19 +43,9 @@ namespace MarsMiner.Saving.Structures.V0
         public string SaveName { get; private set; }
         public ChunkTable ChunkTable { get; private set; }
 
-        //TODO: Split and move into BlockStructure
-        private void CalculateRecursiveUsedSpace()
+        public override BlockStructure[] ReferencedBlocks
         {
-            if (_recursiveUsedSpace != null) return;
-
-            _recursiveUsedSpace = new Dictionary<int, IntRangeList>();
-            _recursiveUsedSpace.Add(ChunkTable.RecursiveUsedSpace);
-
-            if (!_recursiveUsedSpace.ContainsKey(Address.Item1))
-            {
-                _recursiveUsedSpace[Address.Item1] = new IntRangeList();
-            }
-            _recursiveUsedSpace[Address.Item1] += new Tuple<int, int>((int) Address.Item2, (int) Address.Item2 + Length);
+            get { return new BlockStructure[] { ChunkTable }; }
         }
 
         protected override void ReadData(BinaryReader reader)
@@ -87,8 +73,8 @@ namespace MarsMiner.Saving.Structures.V0
         protected override void UpdateLength()
         {
             Length = 8 // timestamp
-                   + 4 // saveName
-                   + 4; // chunkTable
+                     + 4 // saveName
+                     + 4; // chunkTable
         }
     }
 }

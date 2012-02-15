@@ -18,17 +18,14 @@
  */
 
 using System;
-using System.Collections.Generic;
 using System.IO;
 using MarsMiner.Saving.Interfaces;
-using MarsMiner.Saving.Util;
 
 namespace MarsMiner.Saving.Structures.V0
 {
     public sealed class Header : BlockStructure, IHeader
     {
         public const int Version = 0;
-        private Dictionary<int, IntRangeList> _recursiveUsedSpace;
 
         public Header(GameSave gameSave, Tuple<int, uint> address) : base(gameSave, address)
         {
@@ -37,23 +34,15 @@ namespace MarsMiner.Saving.Structures.V0
         public Header(GameSave gameSave, SavedStateIndex saveIndex) : base(gameSave)
         {
             SaveIndex = saveIndex;
+
+            UpdateLength();
         }
 
         public SavedStateIndex SaveIndex { get; private set; }
 
-        //TODO: Split and move into BlockStructure
-        public void CalculateRecursiveUsedSpace()
+        public override BlockStructure[] ReferencedBlocks
         {
-            if (_recursiveUsedSpace != null) return;
-
-            _recursiveUsedSpace = new Dictionary<int, IntRangeList>();
-            _recursiveUsedSpace.Add(SaveIndex.RecursiveUsedSpace);
-
-            if (!_recursiveUsedSpace.ContainsKey(Address.Item1))
-            {
-                _recursiveUsedSpace[Address.Item1] = new IntRangeList();
-            }
-            _recursiveUsedSpace[Address.Item1] += new Tuple<int, int>((int) Address.Item2, (int) Address.Item2 + Length);
+            get { return new BlockStructure[] { SaveIndex }; }
         }
 
         protected override void ReadData(BinaryReader reader)

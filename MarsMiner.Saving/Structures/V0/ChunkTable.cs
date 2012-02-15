@@ -22,7 +22,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using MarsMiner.Saving.Interfaces;
-using MarsMiner.Saving.Util;
 
 namespace MarsMiner.Saving.Structures.V0
 {
@@ -30,7 +29,6 @@ namespace MarsMiner.Saving.Structures.V0
     {
         private Chunk[] _chunks;
 
-        private Dictionary<int, IntRangeList> _recursiveUsedSpace;
         private int[] _xLocations;
         private int[] _zLocations;
 
@@ -58,24 +56,6 @@ namespace MarsMiner.Saving.Structures.V0
                 chunks.Select(x => x.Item2).ToArray(),
                 chunks.Select(x => x.Item3).ToArray())
         {
-        }
-
-        //TODO: Split and move into BlockStructure
-        private void CalculateRecursiveUsedSpace()
-        {
-            if (_recursiveUsedSpace != null) return;
-
-            _recursiveUsedSpace = new Dictionary<int, IntRangeList>();
-            foreach (Chunk chunk in _chunks)
-            {
-                _recursiveUsedSpace.Add(chunk.RecursiveUsedSpace);
-            }
-
-            if (!_recursiveUsedSpace.ContainsKey(Address.Item1))
-            {
-                _recursiveUsedSpace[Address.Item1] = new IntRangeList();
-            }
-            _recursiveUsedSpace[Address.Item1] += new Tuple<int, int>((int) Address.Item2, (int) Address.Item2 + Length);
         }
 
         public IEnumerable<Tuple<int, int, Chunk>> GetChunks()
@@ -132,6 +112,11 @@ namespace MarsMiner.Saving.Structures.V0
                      (4 // xLocation
                       + 4 // yLocation
                       + 4); // chunk
+        }
+
+        public override BlockStructure[] ReferencedBlocks
+        {
+            get { return _chunks.ToArray<BlockStructure>(); }
         }
     }
 }

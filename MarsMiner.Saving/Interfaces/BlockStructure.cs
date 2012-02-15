@@ -20,6 +20,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using MarsMiner.Saving.Util;
 
 namespace MarsMiner.Saving.Interfaces
@@ -29,9 +30,12 @@ namespace MarsMiner.Saving.Interfaces
         //TODO: Make private and add shortcut methods
         protected readonly GameSave GameSave;
         private Tuple<int, uint> _address;
+        private int? _length;
+        private Dictionary<int, IntRangeList> _recursiveUsedSpace;
+        private Dictionary<int, IntRangeList> _usedSpace;
 
         protected BlockStructure(GameSave gameSave,
-                              Tuple<int, uint> address)
+                                 Tuple<int, uint> address)
         {
             if (gameSave == null) throw new ArgumentNullException("gameSave");
             if (address == null) throw new ArgumentNullException("address");
@@ -68,41 +72,63 @@ namespace MarsMiner.Saving.Interfaces
             get { return Address != null; }
         }
 
-        private bool _loaded;
-        public bool Loaded
-        {
-            get { return _loaded; }
-            private set { _loaded = value; }
-        }
+        public bool Loaded { get; private set; }
 
         public bool Written { get; private set; }
 
-        private int? _length;
         public int Length
         {
-            get {
+            get
+            {
                 if (_length == null)
                 {
                     throw new InvalidOperationException("Length isn't set.");
                 }
-                return _length.Value; }
+
+                return _length.Value;
+            }
             protected set { _length = value; }
         }
 
-        public IBlockStructure[] UnboundBlocks
+        public BlockStructure[] UnboundBlocks
         {
             get { throw new NotImplementedException(); }
         }
 
         public Dictionary<int, IntRangeList> RecursiveUsedSpace
         {
-            get { throw new NotImplementedException(); }
+            get
+            {
+                if (_recursiveUsedSpace == null)
+                {
+                    _recursiveUsedSpace = new Dictionary<int, IntRangeList>();
+                    foreach (BlockStructure block in ReferencedBlocks)
+                    {
+                        _recursiveUsedSpace.Add(block.RecursiveUsedSpace);
+                    }
+                    _recursiveUsedSpace.Add(UsedSpace);
+                }
+
+                return _recursiveUsedSpace;
+            }
         }
 
-        public void Write(Stream stream, Func<IBlockStructure, IBlockStructure, uint> getBlockPointerFunc,
-                          Func<string, uint> getStringPointerFunc)
+        public abstract BlockStructure[] ReferencedBlocks { get; }
+
+        public Dictionary<int, IntRangeList> UsedSpace
         {
-            throw new NotImplementedException();
+            get
+            {
+                if (_usedSpace == null)
+                {
+                    _usedSpace = new Dictionary<int, IntRangeList>();
+
+                    _usedSpace[Address.Item1] = new IntRangeList();
+                    _usedSpace[Address.Item1] += new Tuple<int, int>((int) Address.Item2, (int) Address.Item2 + Length);
+                }
+
+                return _usedSpace;
+            }
         }
 
         public void Load()
@@ -171,7 +197,10 @@ namespace MarsMiner.Saving.Interfaces
                 return;
             }
 
-            throw new NotImplementedException("Write dependencies...");
+            foreach (var block in ReferencedBlocks.Where(block => block.Written == false))
+            {
+                block.Write();
+            }
 
             Stream stream = GameSave.GetBlobFile(_address.Item1);
             stream.Seek(_address.Item2, SeekOrigin.Begin);
