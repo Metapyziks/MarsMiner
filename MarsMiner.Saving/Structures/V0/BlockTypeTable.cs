@@ -33,6 +33,10 @@ namespace MarsMiner.Saving.Structures.V0
 
         private Dictionary<int, IntRangeList> _recursiveUsedSpace;
 
+        public BlockTypeTable(GameSave gameSave, Tuple<int, uint> address) : base(gameSave, address)
+        {
+        }
+
         public BlockTypeTable(GameSave gameSave, string[] blockTypeNames, int[] blockSubTypes) : base(gameSave)
         {
             if (blockTypeNames.Length != blockSubTypes.Length)
@@ -46,12 +50,6 @@ namespace MarsMiner.Saving.Structures.V0
             UpdateLength();
         }
 
-        protected override void UpdateLength()
-        {
-            Length = 2 // block type count
-                     + (4 + 4) * _blockTypeNames.Length; // block type names and subtypes
-        }
-
         public BlockTypeTable(GameSave gameSave, Tuple<string, int>[] blockTypes)
             : this(gameSave,
                    blockTypes.Select(x => x.Item1).ToArray(),
@@ -62,6 +60,12 @@ namespace MarsMiner.Saving.Structures.V0
         public Tuple<string, int> this[int index]
         {
             get { return new Tuple<string, int>(_blockTypeNames[index], _blockSubTypes[index]); }
+        }
+
+        protected override void UpdateLength()
+        {
+            Length = 2 // block type count
+                     + (4 + 4) * _blockTypeNames.Length; // block type names and subtypes
         }
 
         //TODO: Split and move into BlockStructure
@@ -93,7 +97,7 @@ namespace MarsMiner.Saving.Structures.V0
 
             for (int i = 0; i < blockTypeNameCount; i++)
             {
-                _blockTypeNames[i] = _gameSave.ResolveString(blockTypeNameAddresses[i]);
+                _blockTypeNames[i] = GameSave.ResolveString(blockTypeNameAddresses[i]);
             }
         }
 
@@ -108,7 +112,7 @@ namespace MarsMiner.Saving.Structures.V0
             writer.Write((ushort) _blockTypeNames.Length);
             for (int i = 0; i < _blockTypeNames.Length; i++)
             {
-                writer.Write(_gameSave.FindStringAddress(_blockTypeNames[i]));
+                writer.Write(GameSave.FindStringAddress(_blockTypeNames[i]));
                 writer.Write(_blockSubTypes[i]);
             }
         }

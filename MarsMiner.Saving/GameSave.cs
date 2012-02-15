@@ -206,7 +206,7 @@ namespace MarsMiner.Saving
         }
 #endif
 
-        private Tuple<int, uint> ResolvePointer(int sourceBlob, uint pointer)
+        internal Tuple<int, uint> ResolvePointer(int sourceBlob, uint pointer)
         {
             if ((pointer & GlobalPointerFlag) == 0)
             {
@@ -265,7 +265,7 @@ namespace MarsMiner.Saving
             block.Write(blockBlob, FindBlockPointer, FindStringAddress);
         }
 
-        private uint FindBlockPointer(IBlockStructure source, IBlockStructure target)
+        internal uint FindBlockPointer(BlockStructure source, BlockStructure target)
         {
             if (source.Address.Item1 == target.Address.Item1)
             {

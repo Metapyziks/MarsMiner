@@ -26,15 +26,15 @@ namespace MarsMiner.Saving.Interfaces
 {
     public abstract class BlockStructure
     {
-        protected readonly GameSave _gameSave;
+        protected readonly GameSave GameSave;
         private Tuple<int, uint> _address;
 
-        public BlockStructure(GameSave gameSave,
+        protected BlockStructure(GameSave gameSave,
                               Tuple<int, uint> address)
         {
             if (gameSave == null) throw new ArgumentNullException("gameSave");
             if (address == null) throw new ArgumentNullException("address");
-            _gameSave = gameSave;
+            GameSave = gameSave;
             Address = address;
             Written = true;
             Loaded = false;
@@ -43,7 +43,7 @@ namespace MarsMiner.Saving.Interfaces
         protected BlockStructure(GameSave gameSave)
         {
             if (gameSave == null) throw new ArgumentNullException("gameSave");
-            _gameSave = gameSave;
+            GameSave = gameSave;
             Address = null;
             Written = false;
             Loaded = true;
@@ -117,7 +117,7 @@ namespace MarsMiner.Saving.Interfaces
             Console.WriteLine("Reading {0} from {1}", GetType(), source);
 #endif
 
-            Stream stream = _gameSave.GetBlobFile(_address.Item1);
+            Stream stream = GameSave.GetBlobFile(_address.Item1);
             stream.Seek(_address.Item2, SeekOrigin.Begin);
             var reader = new BinaryReader(stream);
 
@@ -172,7 +172,7 @@ namespace MarsMiner.Saving.Interfaces
 
             throw new NotImplementedException("Write dependencies...");
 
-            Stream stream = _gameSave.GetBlobFile(_address.Item1);
+            Stream stream = GameSave.GetBlobFile(_address.Item1);
             stream.Seek(_address.Item2, SeekOrigin.Begin);
 
 #if AssertBlockLength

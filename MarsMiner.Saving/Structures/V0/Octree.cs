@@ -34,6 +34,10 @@ namespace MarsMiner.Saving.Structures.V0
 
         private Dictionary<int, IntRangeList> _recursiveUsedSpace;
 
+        public Octree(GameSave gameSave, Tuple<int, uint> address) : base(gameSave, address)
+        {
+        }
+
         public Octree(GameSave gameSave, BitArray octreeFlags, byte[] octreeValues)
             : base(gameSave)
         {

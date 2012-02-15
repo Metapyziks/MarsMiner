@@ -21,131 +21,81 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using MarsMiner.Saving.Interface.V0;
 using MarsMiner.Saving.Interfaces;
 using MarsMiner.Saving.Util;
 
 namespace MarsMiner.Saving.Structures.V0
 {
-    public class Chunk : IBlockStructure
+    public sealed class Chunk : BlockStructure
     {
-        private Tuple<int, uint> _address;
         private Octree[] _octrees;
-
-        public BlockTypeTable BlockTypeTable { get; private set; }
 
         private Dictionary<int, IntRangeList> _recursiveUsedSpace;
 
-        public Chunk(BlockTypeTable blockTypeTable, Octree[] octrees)
+        public Chunk(GameSave gameSave, Tuple<int, uint> address) : base(gameSave, address)
+        {
+        }
+
+        public Chunk(GameSave gameSave, BlockTypeTable blockTypeTable, Octree[] octrees) : base(gameSave)
         {
             BlockTypeTable = blockTypeTable;
             _octrees = octrees;
 
-            Length = 4 // blockTypeTable
-                     + 1 // octreeCount
-                     + 4 * Octrees.Length; // octrees
+            UpdateLength();
         }
 
-        private Chunk(BlockTypeTable blockTypeTable, Octree[] octrees, Tuple<int, uint> address)
-            : this(blockTypeTable, octrees)
-        {
-            Address = address;
-            CalculateRecursiveUsedSpace();
-        }
+        public BlockTypeTable BlockTypeTable { get; private set; }
 
         public Octree[] Octrees
         {
             get { return _octrees.ToArray(); }
         }
 
-        #region IBlockStructure Members
-
-        public IBlockStructure[] UnboundBlocks
+        protected override void ReadData(BinaryReader reader)
         {
-            get
-            {
-                if (Address != null)
-                {
-                    //Bound
-                    return new IBlockStructure[0];
-                }
+            uint blockTypeTablePointer = reader.ReadUInt32();
+            byte octreeCount = reader.ReadByte();
 
-                List<IBlockStructure> blocks = _octrees.Where(o => o.Address == null).ToList<IBlockStructure>();
-                if (BlockTypeTable.Address == null)
-                {
-                    blocks.Add(BlockTypeTable);
-                }
-                return blocks.ToArray();
+            var octreePointers = new uint[octreeCount];
+
+            for (int i = 0; i < octreeCount; i++)
+            {
+                octreePointers[i] = reader.ReadUInt32();
+            }
+
+            BlockTypeTable = new BlockTypeTable(GameSave, GameSave.ResolvePointer(Address.Item1, blockTypeTablePointer));
+            _octrees = new Octree[octreeCount];
+
+            for (int i = 0; i < octreeCount; i++)
+            {
+                _octrees[i] = new Octree(GameSave, GameSave.ResolvePointer(Address.Item1, octreePointers[i]));
             }
         }
 
-        public Tuple<int, uint> Address
+        protected override void ForgetData()
         {
-            get { return _address; }
-            set
-            {
-                if (_address != null)
-                {
-                    throw new InvalidOperationException("Address can't be reassigned!");
-                }
-                _address = value;
-            }
-        }
-
-        public Dictionary<int, IntRangeList> RecursiveUsedSpace
-        {
-            get
-            {
-                if (Address == null)
-                {
-                    throw new InvalidOperationException("Can't get used space from unbound block!");
-                }
-                if (_recursiveUsedSpace == null)
-                {
-                    CalculateRecursiveUsedSpace();
-                }
-                return _recursiveUsedSpace;
-            }
-        }
-
-        public int Length { get; private set; }
-
-        public void Write(Stream stream, Func<IBlockStructure, IBlockStructure, uint> getBlockPointerFunc,
-                          Func<string, uint> getStringPointerFunc)
-        {
-#if AssertBlockLength
-            long start = stream.Position;
-#endif
-            var w = new BinaryWriter(stream);
-
-            w.Write(getBlockPointerFunc(this, BlockTypeTable));
-            w.Write((byte)Octrees.Length);
-            foreach (Octree octree in Octrees)
-            {
-                w.Write(getBlockPointerFunc(this, octree));
-            }
-#if AssertBlockLength
-            if (stream.Position - start != Length)
-            {
-                throw new Exception("Length mismatch in Chunk!");
-            }
-#endif
-        }
-
-        public void Unload()
-        {
-            if (Address == null)
-            {
-                throw new InvalidOperationException("Can't unload unbound blocks!");
-            }
-
-            CalculateRecursiveUsedSpace();
             BlockTypeTable = null;
             _octrees = null;
         }
 
-        #endregion
+        protected override void WriteData(BinaryWriter writer)
+        {
+            writer.Write(GameSave.FindBlockPointer(this, BlockTypeTable));
+            writer.Write((byte) Octrees.Length);
+            foreach (Octree octree in Octrees)
+            {
+                writer.Write(GameSave.FindBlockPointer(this, octree));
+            }
+        }
 
+        protected override void UpdateLength()
+        {
+            Length = 4 // blockTypeTable
+                     + 1 // octreeCount
+                     + 4 * Octrees.Length; // octrees
+        }
+
+        //TODO: Split and move into BlockStructure
         private void CalculateRecursiveUsedSpace()
         {
             if (_recursiveUsedSpace != null) return;
@@ -161,59 +111,7 @@ namespace MarsMiner.Saving.Structures.V0
             {
                 _recursiveUsedSpace[Address.Item1] = new IntRangeList();
             }
-            _recursiveUsedSpace[Address.Item1] += new Tuple<int, int>((int)Address.Item2, (int)Address.Item2 + Length);
-        }
-
-        public static Chunk Read(Tuple<int, uint> source, Func<int, uint, Tuple<int, uint>> resolvePointerFunc,
-                                 Func<uint, string> resolveStringFunc, Func<int, Stream> getStreamFunc,
-                                 ReadOptions readOptions)
-        {
-#if DebugVerboseBlocks
-            Console.WriteLine("Reading {0} from {1}", "Chunk", source);
-#endif
-
-            Stream stream = getStreamFunc(source.Item1);
-            stream.Seek(source.Item2, SeekOrigin.Begin);
-            var r = new BinaryReader(stream);
-
-            uint blockTypeTablePointer = r.ReadUInt32();
-            byte octreeCount = r.ReadByte();
-
-            var octreePointers = new uint[octreeCount];
-
-            for (int i = 0; i < octreeCount; i++)
-            {
-                octreePointers[i] = r.ReadUInt32();
-            }
-
-#if DebugVerboseBlocks || AssertBlockLength
-            long end = stream.Position;
-#endif
-
-            BlockTypeTable blockTypeTable = BlockTypeTable.Read(
-                resolvePointerFunc(source.Item1, blockTypeTablePointer), resolvePointerFunc, resolveStringFunc,
-                getStreamFunc, readOptions);
-            var octrees = new Octree[octreeCount];
-
-            for (int i = 0; i < octreeCount; i++)
-            {
-                octrees[i] = Octree.Read(resolvePointerFunc(source.Item1, octreePointers[i]), resolvePointerFunc,
-                                         resolveStringFunc, getStreamFunc, readOptions);
-            }
-
-            var chunk = new Chunk(blockTypeTable, octrees, source);
-
-#if DebugVerboseBlocks
-            Console.WriteLine("Read {0} from {1} to {2} == {3}", "Chunk", chunk.Address, chunk.Address.Item2 + chunk.Length, end);
-#endif
-#if AssertBlockLength
-            if (chunk.Address.Item2 + chunk.Length != end)
-            {
-                throw new Exception("Length mismatch in Chunk!");
-            }
-#endif
-
-            return chunk;
+            _recursiveUsedSpace[Address.Item1] += new Tuple<int, int>((int) Address.Item2, (int) Address.Item2 + Length);
         }
     }
 }
