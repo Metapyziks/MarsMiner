@@ -38,7 +38,7 @@ namespace MarsMiner.Shared.Networking
 
     public static class NetworkConstants
     {
-        public const ushort ProtocolVersion = 0x0005;
+        public const ushort ProtocolVersion = 0x0000;
     }
 
     public enum DisconnectReason : byte
@@ -51,6 +51,13 @@ namespace MarsMiner.Shared.Networking
         ClientDisconnect = 0x05,
         BadPassword = 0x06,
         ResourceNotFound = 0x07
+    }
+
+    public enum MessageType : byte
+    {
+        Server = 0x00,
+        Chat = 0x01,
+        TeamChat = 0x02
     }
 
     public class RemoteNetworkedObject
@@ -164,6 +171,21 @@ namespace MarsMiner.Shared.Networking
         {
             StartPacket( type );
             SendPacket();
+        }
+
+        public virtual void Disconnect()
+        {
+            throw new NotImplementedException();
+        }
+
+        protected virtual void OnConnect()
+        {
+
+        }
+
+        protected virtual void OnDisconnect( DisconnectReason reason, String comment )
+        {
+            return;
         }
 
         public void SendAliveCheck( bool expectReply )

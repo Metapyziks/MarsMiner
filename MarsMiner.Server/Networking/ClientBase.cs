@@ -27,6 +27,30 @@ using MarsMiner.Shared.Networking;
 
 namespace MarsMiner.Server.Networking
 {
+    public class DisconnectEventArgs : EventArgs
+    {
+        public readonly DisconnectReason Reason;
+        public readonly String Comment;
+
+        public DisconnectEventArgs( DisconnectReason reason, String comment )
+        {
+            Reason = reason;
+            Comment = comment;
+        }
+    }
+
+    public class MessageEventArgs : EventArgs
+    {
+        public readonly bool TeamChat;
+        public readonly String Message;
+
+        public MessageEventArgs( String message, bool team )
+        {
+            TeamChat = team;
+            Message = message;
+        }
+    }
+
     public class ClientBase : RemoteNetworkedObject
     {
         protected static readonly ClientPacketType PTAliveCheck =
@@ -42,6 +66,23 @@ namespace MarsMiner.Server.Networking
         {
             return sender.OnReceivePacketDictionary( stream );
         } );
+
+        protected static readonly ClientPacketType PTDisconnect =
+            PacketManager.Register( "Disconnect", delegate( ClientBase sender,
+                ClientPacketType type, Stream stream )
+            {
+                return sender.OnReceiveDisconnect( stream );
+            } );
+
+        protected static readonly ClientPacketType PTMessage =
+            PacketManager.Register( "Message", delegate( ClientBase sender,
+                ClientPacketType type, Stream stream )
+            {
+                return sender.OnReceiveMessage( stream );
+            } );
+
+        public event EventHandler<DisconnectEventArgs> Disconnected;
+        public event EventHandler<MessageEventArgs> ReceivedMessage;
 
         protected override bool ReadPacket( Stream stream )
         {
@@ -70,6 +111,63 @@ namespace MarsMiner.Server.Networking
         protected bool OnReceivePacketDictionary( Stream stream )
         {
             return true;
+        }
+
+        public void SendDisconnect( DisconnectReason reason, String comment = "" )
+        {
+            Stream stream = StartPacket( PTDisconnect );
+            BinaryWriter writer = new BinaryWriter( stream );
+            writer.Write( (byte) reason );
+            writer.Write( comment );
+            SendPacket();
+
+            OnDisconnect( reason, comment );
+
+            if ( Disconnected != null )
+                Disconnected( this, new DisconnectEventArgs( reason, comment ) );
+        }
+
+        protected bool OnReceiveDisconnect( Stream stream )
+        {
+            OnDisconnect( DisconnectReason.ClientDisconnect, "" );
+
+            if ( Disconnected != null )
+                Disconnected( this, new DisconnectEventArgs( DisconnectReason.ClientDisconnect, "" ) );
+
+            return true;
+        }
+
+        public void SendMessage( MessageType type, String message )
+        {
+            Stream stream = StartPacket( PTMessage );
+            BinaryWriter writer = new BinaryWriter( stream );
+            writer.Write( (byte) type );
+            writer.Write( message );
+            SendPacket();
+        }
+
+        protected bool OnReceiveMessage( Stream stream )
+        {
+            BinaryReader reader = new BinaryReader( stream );
+            MessageType type = (MessageType) reader.ReadByte();
+            String message = reader.ReadString();
+
+            if ( type != MessageType.Chat && type != MessageType.TeamChat )
+                return false;
+
+            bool team = type == MessageType.TeamChat;
+
+            OnReceiveMessage( message, team );
+
+            if ( ReceivedMessage != null )
+                ReceivedMessage( this, new MessageEventArgs( message, team ) );
+
+            return true;
+        }
+
+        protected virtual void OnReceiveMessage( String message, bool team )
+        {
+            return;
         }
     }
 }
