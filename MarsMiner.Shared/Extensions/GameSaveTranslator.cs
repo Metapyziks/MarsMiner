@@ -38,9 +38,10 @@ namespace MarsMiner.Shared.Extensions
     {
         public static void WriteChunk(this GameSave gameSave, Chunk chunk)
         {
-            Tuple<int, int, SaveChunk> saveChunk = TranslateChunk(chunk);
+            Tuple<int, int, SaveChunk> saveChunk = TranslateChunk(gameSave, chunk);
 
-            SaveHeader header = gameSave.Read(SaveHeader.Read, new ReadOptions());
+            SaveHeader header = new SaveHeader(gameSave, new Tuple<int, uint>(0, 0));
+            header.Load();
 
             List<Tuple<int, int, SaveChunk>> newChunks =
                 header.SaveIndex.ChunkTable.GetChunks().Where(c => c.Item1 != chunk.X || c.Item2 != chunk.Z).ToList();
@@ -48,13 +49,13 @@ namespace MarsMiner.Shared.Extensions
             newChunks.Add(saveChunk);
 
             var newHeader =
-                new SaveHeader(new SaveIndex(DateTime.UtcNow.Ticks, header.SaveIndex.SaveName,
-                                             new SaveChunkTable(newChunks.ToArray())));
+                new SaveHeader(gameSave, new SaveIndex(gameSave, DateTime.UtcNow.Ticks, header.SaveIndex.SaveName,
+                                             new SaveChunkTable(gameSave, newChunks.ToArray())));
 
-            gameSave.Write(newHeader, true);
+            newHeader.Write();
         }
 
-        private static Tuple<int, int, SaveChunk> TranslateChunk(Chunk chunk)
+        private static Tuple<int, int, SaveChunk> TranslateChunk(GameSave gameSave, Chunk chunk)
         {
             if (!chunk.Loaded)
             {
@@ -65,23 +66,23 @@ namespace MarsMiner.Shared.Extensions
 
             for (int i = 0; i < chunk.Octrees.Length; i++)
             {
-                saveOctrees[i] = TranslateOctree(chunk.Octrees[i]);
+                saveOctrees[i] = TranslateOctree(gameSave, chunk.Octrees[i]);
             }
 
-            var saveBlockTypeTable = TranslateBlockTypeTable(BlockManager.GetAll());
+            var saveBlockTypeTable = TranslateBlockTypeTable(gameSave, BlockManager.GetAll());
                 //TODO: Find most used blocks in chunk?
 
-            var saveChunk = new SaveChunk(saveBlockTypeTable, saveOctrees);
+            var saveChunk = new SaveChunk(gameSave, saveBlockTypeTable, saveOctrees);
 
             return new Tuple<int, int, SaveChunk>(chunk.X, chunk.Z, saveChunk);
         }
 
-        private static SaveBlockTypeTable TranslateBlockTypeTable(IEnumerable<BlockType> blockTypes)
+        private static SaveBlockTypeTable TranslateBlockTypeTable(GameSave gameSave, IEnumerable<BlockType> blockTypes)
         {
-            return new SaveBlockTypeTable(blockTypes.Select(x => new Tuple<string, int>(x.Name, x.SubType)).ToArray());
+            return new SaveBlockTypeTable(gameSave, blockTypes.Select(x => new Tuple<string, int>(x.Name, x.SubType)).ToArray());
         }
 
-        private static SaveOctree TranslateOctree(IEnumerable<OctreeNode<ushort>> octree)
+        private static SaveOctree TranslateOctree(GameSave gameSave, IEnumerable<OctreeNode<ushort>> octree)
         {
             var octreeFlags = new List<bool>();
             var octreeValues = new List<byte>();
@@ -123,7 +124,7 @@ namespace MarsMiner.Shared.Extensions
                 throw new ArgumentException("Node isn't leaf or branch.", "octree");
             }
 
-            return new SaveOctree(new BitArray(octreeFlags.ToArray()), octreeValues.ToArray());
+            return new SaveOctree(gameSave, new BitArray(octreeFlags.ToArray()), octreeValues.ToArray());
         }
     }
 }

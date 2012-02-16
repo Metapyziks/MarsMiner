@@ -211,6 +211,10 @@ namespace MarsMiner.Saving.Interfaces
 
             var writer = new BinaryWriter(stream);
 
+#if DebugVerboseBlocks
+            Console.WriteLine("Writing {0} from {1} to {2}", GetType(), Address, Address.Item2 + Length);
+#endif
+
             WriteData(writer);
 
 #if AssertBlockLength

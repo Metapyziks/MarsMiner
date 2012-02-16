@@ -30,16 +30,16 @@ namespace MarsMiner.Saving.Test
     {
         public static void TestSaving(GameSave gameSave, string saveName)
         {
-            var octree = new Octree(new BitArray(new[] { false, false }), new byte[] { 1 });
-            var blockTypeTable = new BlockTypeTable(
+            var octree = new Octree(gameSave, new BitArray(new[] { false, false }), new byte[] { 1 });
+            var blockTypeTable = new BlockTypeTable(gameSave, 
                 new[] { "Block 0", "Block 1", "Block 2", "Block 2" },
                 new[] { 0, 0, 0, 1 });
-            var chunk = new Chunk(blockTypeTable, new[] { octree });
-            var chunkTable = new ChunkTable(new[] { 0 }, new[] { 0 }, new[] { chunk });
-            var mainIndex = new SavedStateIndex(DateTime.UtcNow.Ticks, saveName, chunkTable);
-            var header = new Header(mainIndex);
+            var chunk = new Chunk(gameSave, blockTypeTable, new[] { octree });
+            var chunkTable = new ChunkTable(gameSave, new[] { 0 }, new[] { 0 }, new[] { chunk });
+            var mainIndex = new SavedStateIndex(gameSave, DateTime.UtcNow.Ticks, saveName, chunkTable);
+            var header = new Header(gameSave, mainIndex);
 
-            gameSave.Write(header, true);
+            header.Write();
         }
 
         public static void TestAddChunkToUnloadedChunks(GameSave gameSave)
@@ -57,11 +57,11 @@ namespace MarsMiner.Saving.Test
 
             ChunkTable oldChunkTable = oldHeader.SaveIndex.ChunkTable;
 
-            var octree = new Octree(new BitArray(new[] { false, false }), new byte[] { 1 });
-            var blockTypeTable = new BlockTypeTable(
+            var octree = new Octree(gameSave, new BitArray(new[] { false, false }), new byte[] { 1 });
+            var blockTypeTable = new BlockTypeTable(gameSave, 
                 new[] { "Block 0", "Block 1", "Block 2", "Block 2" },
                 new[] { 0, 0, 0, 1 });
-            var chunk = new Chunk(blockTypeTable, new[] { octree });
+            var chunk = new Chunk(gameSave, blockTypeTable, new[] { octree });
 
             var r = new Random();
 
@@ -72,12 +72,12 @@ namespace MarsMiner.Saving.Test
                 oldChunkTable.GetChunks().Where(c => c.Item1 != x || c.Item2 != z).ToList();
             chunks.Add(new Tuple<int, int, Chunk>(x, z, chunk));
 
-            var chunkTable = new ChunkTable(chunks.ToArray());
-            var mainIndex = new SavedStateIndex(DateTime.UtcNow.Ticks, "ChunkTable Length: " + chunkTable.Length,
+            var chunkTable = new ChunkTable(gameSave, chunks.ToArray());
+            var mainIndex = new SavedStateIndex(gameSave, DateTime.UtcNow.Ticks, "ChunkTable Length: " + chunkTable.Length,
                                                 chunkTable);
-            var header = new Header(mainIndex);
+            var header = new Header(gameSave, mainIndex);
 
-            gameSave.Write(header, true);
+            header.Write();
         }
 
         public static void TestReading(GameSave gameSave)
@@ -90,20 +90,20 @@ namespace MarsMiner.Saving.Test
             Header header = gameSave.Read(Header.Read, new ReadOptions());
 
             var newChunkTable =
-                new ChunkTable(
+                new ChunkTable(gameSave, 
                     header.SaveIndex.ChunkTable.GetChunks().Concat(
                         header.SaveIndex.ChunkTable.GetChunks().Take(1).Select(
                             x => new Tuple<int, int, Chunk>(x.Item1 + 1, x.Item2 - 1, x.Item3))).ToArray());
 
-            var newHeader = new Header(new SavedStateIndex(DateTime.UtcNow.Ticks, "Modified Save", newChunkTable));
+            var newHeader = new Header(gameSave, new SavedStateIndex(gameSave, DateTime.UtcNow.Ticks, "Modified Save", newChunkTable));
 
-            gameSave.Write(newHeader, true);
+            newHeader.Write();
         }
 
         public static void TestResave(GameSave gameSave)
         {
             Header header = gameSave.Read(Header.Read, new ReadOptions());
-            gameSave.Write(header, true);
+            header.Write();
         }
 
         public static void TestMarkModify(GameSave gameSave)
@@ -111,14 +111,14 @@ namespace MarsMiner.Saving.Test
             Header header = gameSave.Read(Header.Read, new ReadOptions());
 
             var newChunkTable =
-                new ChunkTable(
+                new ChunkTable(gameSave, 
                     header.SaveIndex.ChunkTable.GetChunks().Concat(
                         header.SaveIndex.ChunkTable.GetChunks().Take(1).Select(
                             x => new Tuple<int, int, Chunk>(x.Item1 + 1, x.Item2 - 1, x.Item3))).ToArray());
 
             var newHeader = new Header(new SavedStateIndex(DateTime.UtcNow.Ticks, "Modified Save", newChunkTable));
 
-            gameSave.Write(newHeader, true);
+            newHeader.Write();
         }
     }
 }
