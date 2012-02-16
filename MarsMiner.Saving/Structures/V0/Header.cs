@@ -27,12 +27,15 @@ namespace MarsMiner.Saving.Structures.V0
     {
         public const int Version = 0;
 
-        public Header(GameSave gameSave, Tuple<int, uint> address) : base(gameSave, address)
+        public Header(GameSave gameSave)
+            : base(gameSave, new Tuple<int, uint>(0, 0))
         {
         }
 
-        public Header(GameSave gameSave, SavedStateIndex saveIndex) : base(gameSave)
+        public Header(GameSave gameSave, SavedStateIndex saveIndex)
+            : base(gameSave)
         {
+            Address = new Tuple<int, uint>(0, 0);
             SaveIndex = saveIndex;
 
             UpdateLength();
