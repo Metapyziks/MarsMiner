@@ -99,29 +99,33 @@ namespace MarsMiner.Saving.Common
         {
             get
             {
-                if (_recursiveUsedSpace == null)
-                {
-                    //Optimize?: This may be slow if there are a lot of fixed length blocks that don't reference other blocks.
-                    bool wasLoaded = Loaded;
-                    if (!wasLoaded)
-                    {
-                        Load();
-                    }
-
-                    _recursiveUsedSpace = new Dictionary<int, IntRangeList>();
-                    foreach (BlockStructure block in ReferencedBlocks)
-                    {
-                        _recursiveUsedSpace.Add(block.RecursiveUsedSpace);
-                    }
-                    _recursiveUsedSpace.Add(UsedSpace);
-
-                    if (!wasLoaded)
-                    {
-                        Unload();
-                    }
-                }
+                UpdateRecursiveUsedSpace();
 
                 return _recursiveUsedSpace;
+            }
+        }
+
+        private void UpdateRecursiveUsedSpace()
+        {
+            if (_recursiveUsedSpace != null) return;
+
+            //Optimize?: This may be slow if there are a lot of fixed length blocks that don't reference other blocks.
+            bool wasLoaded = Loaded;
+            if (!wasLoaded)
+            {
+                Load();
+            }
+
+            _recursiveUsedSpace = new Dictionary<int, IntRangeList>();
+            foreach (BlockStructure block in ReferencedBlocks)
+            {
+                _recursiveUsedSpace.Add(block.RecursiveUsedSpace);
+            }
+            _recursiveUsedSpace.Add(UsedSpace);
+
+            if (!wasLoaded)
+            {
+                Unload();
             }
         }
 
@@ -175,6 +179,8 @@ namespace MarsMiner.Saving.Common
                 throw new Exception("Length mismatch in " + GetType() + "!");
             }
 #endif
+
+            UpdateRecursiveUsedSpace();
         }
 
         protected abstract void ReadData(BinaryReader reader);
@@ -197,7 +203,7 @@ namespace MarsMiner.Saving.Common
 
         protected abstract void ForgetData();
 
-        public void Write()
+        public void Write(bool unload = true)
         {
             if (!Bound)
             {
@@ -249,6 +255,13 @@ namespace MarsMiner.Saving.Common
 #endif
 
             Written = true;
+
+            UpdateRecursiveUsedSpace();
+
+            if (unload)
+            {
+                Unload();
+            }
 
             if (isHeader)
             {
