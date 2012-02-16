@@ -26,7 +26,6 @@ namespace MarsMiner.Saving.Util
     public class IntRangeList
     {
         //TODO: This can be made much faster with a sorted set.
-        //TODO: Make immutable.
 
         private List<Tuple<int, int>> _ranges;
 
@@ -43,11 +42,6 @@ namespace MarsMiner.Saving.Util
         public Tuple<int, int>[] Items
         {
             get { return _ranges.ToArray(); }
-        }
-
-        private void Add(int start, int end)
-        {
-            Add(new Tuple<int, int>(start, end));
         }
 
         private void Add(Tuple<int, int> range)

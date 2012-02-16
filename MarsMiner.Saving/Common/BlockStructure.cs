@@ -92,7 +92,7 @@ namespace MarsMiner.Saving.Common
 
         public BlockStructure[] UnboundBlocks
         {
-            get { throw new NotImplementedException(); }
+            get { return ReferencedBlocks.Where(x => x.Bound == false).ToArray(); }
         }
 
         public Dictionary<int, IntRangeList> RecursiveUsedSpace
@@ -203,7 +203,7 @@ namespace MarsMiner.Saving.Common
                 throw new InvalidOperationException("Tried to write unwritten, unloaded block.");
             }
 
-            foreach (var block in ReferencedBlocks.Where(block => block.Written == false))
+            foreach (BlockStructure block in ReferencedBlocks.Where(block => block.Written == false))
             {
                 block.Write();
             }
