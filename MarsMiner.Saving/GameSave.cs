@@ -78,7 +78,7 @@ namespace MarsMiner.Saving
             if (block.Address == null)
             {
                 // Unbound
-                AllocateSpace(block);
+                BindBlock(block);
             }
 
             var blockAsHeader = block as IHeader;
@@ -333,7 +333,7 @@ namespace MarsMiner.Saving
             return address;
         }
 
-        private void AllocateSpace(IBlockStructure blockStructure)
+        internal void BindBlock(BlockStructure blockStructure)
         {
             if (blockStructure.Address != null)
             {

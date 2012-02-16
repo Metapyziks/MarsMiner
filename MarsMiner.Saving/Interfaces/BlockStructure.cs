@@ -189,7 +189,7 @@ namespace MarsMiner.Saving.Interfaces
         {
             if (!Bound)
             {
-                throw new InvalidOperationException("Tried to write unbound block.");
+                GameSave.BindBlock(this);
             }
 
             if (Written)

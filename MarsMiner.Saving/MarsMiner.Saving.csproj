@@ -38,7 +38,6 @@
   <ItemGroup>
     <Compile Include="GameSave.cs" />
     <Compile Include="Interfaces\BlockStructure.cs" />
-    <Compile Include="Interfaces\Header.cs" />
     <Compile Include="Interfaces\IHeader.cs" />
     <Compile Include="Interface\V0\ReadOptions.cs" />
     <Compile Include="Structures\V0\Octree.cs" />
