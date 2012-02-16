@@ -150,6 +150,8 @@ namespace MarsMiner.Saving.Common
 
             ReadData(reader);
 
+            Loaded = true;
+
             UpdateLength();
 
 #if DebugVerboseBlocks
@@ -161,8 +163,6 @@ namespace MarsMiner.Saving.Common
                 throw new Exception("Length mismatch in " + GetType() + "!");
             }
 #endif
-
-            Loaded = true;
         }
 
         protected abstract void ReadData(BinaryReader reader);
