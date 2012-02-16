@@ -44,16 +44,7 @@ namespace MarsMiner.Saving.Test
 
         public static void TestAddChunkToUnloadedChunks(GameSave gameSave)
         {
-            Header oldHeader = gameSave.Read(Header.Read, new ReadOptions
-                                                              {
-                                                                  ChunkRead = (cx, cz, c) =>
-                                                                                  {
-                                                                                      Console.WriteLine(
-                                                                                          "Loaded chunk at {0}",
-                                                                                          c.Address);
-                                                                                      c.Unload();
-                                                                                  }
-                                                              });
+            Header oldHeader = new Header(gameSave);
 
             ChunkTable oldChunkTable = oldHeader.SaveIndex.ChunkTable;
 
@@ -82,12 +73,12 @@ namespace MarsMiner.Saving.Test
 
         public static void TestReading(GameSave gameSave)
         {
-            gameSave.Read(Header.Read, new ReadOptions());
+            new Header(gameSave); //TODO: This is useless right now.
         }
 
         public static void TestModify(GameSave gameSave)
         {
-            Header header = gameSave.Read(Header.Read, new ReadOptions());
+            Header header = new Header(gameSave);
 
             var newChunkTable =
                 new ChunkTable(gameSave, 
@@ -102,13 +93,13 @@ namespace MarsMiner.Saving.Test
 
         public static void TestResave(GameSave gameSave)
         {
-            Header header = gameSave.Read(Header.Read, new ReadOptions());
+            Header header = new Header(gameSave);
             header.Write();
         }
 
         public static void TestMarkModify(GameSave gameSave)
         {
-            Header header = gameSave.Read(Header.Read, new ReadOptions());
+            Header header = new Header(gameSave);
 
             var newChunkTable =
                 new ChunkTable(gameSave, 
@@ -116,7 +107,7 @@ namespace MarsMiner.Saving.Test
                         header.SaveIndex.ChunkTable.GetChunks().Take(1).Select(
                             x => new Tuple<int, int, Chunk>(x.Item1 + 1, x.Item2 - 1, x.Item3))).ToArray());
 
-            var newHeader = new Header(new SavedStateIndex(DateTime.UtcNow.Ticks, "Modified Save", newChunkTable));
+            var newHeader = new Header(gameSave, new SavedStateIndex(gameSave, DateTime.UtcNow.Ticks, "Modified Save", newChunkTable));
 
             newHeader.Write();
         }

@@ -22,7 +22,6 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using MarsMiner.Saving;
-using MarsMiner.Saving.Interface.V0;
 using MarsMiner.Shared.Geometry;
 using MarsMiner.Shared.Octree;
 using SaveChunk = MarsMiner.Saving.Structures.V0.Chunk;
@@ -38,9 +37,9 @@ namespace MarsMiner.Shared.Extensions
     {
         public static void WriteChunk(this GameSave gameSave, Chunk chunk)
         {
-            Tuple<int, int, SaveChunk> saveChunk = TranslateChunk(gameSave, chunk);
+            Tuple<int, int, SaveChunk> saveChunk = gameSave.TranslateChunk(chunk);
 
-            SaveHeader header = new SaveHeader(gameSave, new Tuple<int, uint>(0, 0));
+            var header = new SaveHeader(gameSave);
             header.Load();
 
             List<Tuple<int, int, SaveChunk>> newChunks =
@@ -50,12 +49,12 @@ namespace MarsMiner.Shared.Extensions
 
             var newHeader =
                 new SaveHeader(gameSave, new SaveIndex(gameSave, DateTime.UtcNow.Ticks, header.SaveIndex.SaveName,
-                                             new SaveChunkTable(gameSave, newChunks.ToArray())));
+                                                       new SaveChunkTable(gameSave, newChunks.ToArray())));
 
             newHeader.Write();
         }
 
-        private static Tuple<int, int, SaveChunk> TranslateChunk(GameSave gameSave, Chunk chunk)
+        private static Tuple<int, int, SaveChunk> TranslateChunk(this GameSave gameSave, Chunk chunk)
         {
             if (!chunk.Loaded)
             {
@@ -66,23 +65,25 @@ namespace MarsMiner.Shared.Extensions
 
             for (int i = 0; i < chunk.Octrees.Length; i++)
             {
-                saveOctrees[i] = TranslateOctree(gameSave, chunk.Octrees[i]);
+                saveOctrees[i] = gameSave.TranslateOctree(chunk.Octrees[i]);
             }
 
-            var saveBlockTypeTable = TranslateBlockTypeTable(gameSave, BlockManager.GetAll());
-                //TODO: Find most used blocks in chunk?
+            SaveBlockTypeTable saveBlockTypeTable = gameSave.TranslateBlockTypeTable(BlockManager.GetAll());
+            //TODO: Find most used blocks in chunk?
 
             var saveChunk = new SaveChunk(gameSave, saveBlockTypeTable, saveOctrees);
 
             return new Tuple<int, int, SaveChunk>(chunk.X, chunk.Z, saveChunk);
         }
 
-        private static SaveBlockTypeTable TranslateBlockTypeTable(GameSave gameSave, IEnumerable<BlockType> blockTypes)
+        private static SaveBlockTypeTable TranslateBlockTypeTable(this GameSave gameSave,
+                                                                  IEnumerable<BlockType> blockTypes)
         {
-            return new SaveBlockTypeTable(gameSave, blockTypes.Select(x => new Tuple<string, int>(x.Name, x.SubType)).ToArray());
+            return new SaveBlockTypeTable(gameSave,
+                                          blockTypes.Select(x => new Tuple<string, int>(x.Name, x.SubType)).ToArray());
         }
 
-        private static SaveOctree TranslateOctree(GameSave gameSave, IEnumerable<OctreeNode<ushort>> octree)
+        private static SaveOctree TranslateOctree(this GameSave gameSave, IEnumerable<OctreeNode<ushort>> octree)
         {
             var octreeFlags = new List<bool>();
             var octreeValues = new List<byte>();
