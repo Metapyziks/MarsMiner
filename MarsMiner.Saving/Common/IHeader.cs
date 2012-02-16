@@ -19,6 +19,10 @@
 
 namespace MarsMiner.Saving.Common
 {
+    /// <summary>
+    /// <para>Marks a header block.</para>
+    /// <para>Classes implementing this must have a constructor that takes a GameSave as only parameter.</para>
+    /// </summary>
     public interface IHeader
     {
     }

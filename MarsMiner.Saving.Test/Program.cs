@@ -20,10 +20,11 @@
 using System;
 using System.IO;
 using System.Threading;
+using MarsMiner.Saving.Structures.V0;
 
 namespace MarsMiner.Saving.Test
 {
-    internal class Program
+    internal static class Program
     {
         private static void Main()
         {
@@ -53,7 +54,7 @@ namespace MarsMiner.Saving.Test
         private static void OpenReadRewrite(string savePath)
         {
             Console.WriteLine("Opening...");
-            GameSave gameSave = GameSave.Open(savePath);
+            GameSave gameSave = GameSave.Open<Header>(savePath);
             Console.WriteLine("...OK");
 
             Console.WriteLine("Rewriting...");
@@ -70,7 +71,7 @@ namespace MarsMiner.Saving.Test
 // ReSharper restore UnusedMember.Local
         {
             Console.WriteLine("Opening...");
-            GameSave gameSave = GameSave.Open(savePath);
+            GameSave gameSave = GameSave.Open<Header>(savePath);
             Console.WriteLine("...OK");
 
             Console.WriteLine("Marking and modifying...");
@@ -85,7 +86,7 @@ namespace MarsMiner.Saving.Test
         private static void OpenReadUnloadModifyWrite(string savePath)
         {
             Console.WriteLine("Opening...");
-            GameSave gameSave = GameSave.Open(savePath);
+            GameSave gameSave = GameSave.Open<Header>(savePath);
             Console.WriteLine("...OK");
 
             Console.WriteLine("Unloading and modifying...");
@@ -102,7 +103,7 @@ namespace MarsMiner.Saving.Test
 // ReSharper restore UnusedMember.Local
         {
             Console.WriteLine("Opening...");
-            GameSave gameSave = GameSave.Open(savePath);
+            GameSave gameSave = GameSave.Open<Header>(savePath);
             Console.WriteLine("...OK");
 
             Console.WriteLine("Modifying...");
@@ -135,7 +136,7 @@ namespace MarsMiner.Saving.Test
         private static void OpenRead(string savePath)
         {
             Console.WriteLine("Opening...");
-            GameSave gameSave = GameSave.Open(savePath);
+            GameSave gameSave = GameSave.Open<Header>(savePath);
             Console.WriteLine("...OK");
 
             Console.WriteLine("Reading...");
