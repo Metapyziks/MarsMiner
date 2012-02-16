@@ -101,12 +101,24 @@ namespace MarsMiner.Saving.Common
             {
                 if (_recursiveUsedSpace == null)
                 {
+                    //Optimize?: This may be slow if there are a lot of fixed length blocks that don't reference other blocks.
+                    bool wasLoaded = Loaded;
+                    if (!wasLoaded)
+                    {
+                        Load();
+                    }
+
                     _recursiveUsedSpace = new Dictionary<int, IntRangeList>();
                     foreach (BlockStructure block in ReferencedBlocks)
                     {
                         _recursiveUsedSpace.Add(block.RecursiveUsedSpace);
                     }
                     _recursiveUsedSpace.Add(UsedSpace);
+
+                    if (!wasLoaded)
+                    {
+                        Unload();
+                    }
                 }
 
                 return _recursiveUsedSpace;
@@ -221,6 +233,12 @@ namespace MarsMiner.Saving.Common
             Console.WriteLine("Writing {0} from {1} to {2}", GetType(), Address, Address.Item2 + Length);
 #endif
 
+            var isHeader = this is IHeader;
+            if (isHeader)
+            {
+                GameSave.FlushFiles();
+            }
+
             WriteData(writer);
 
 #if AssertBlockLength
@@ -231,6 +249,11 @@ namespace MarsMiner.Saving.Common
 #endif
 
             Written = true;
+
+            if (isHeader)
+            {
+                GameSave.MarkFreeSpace(this);
+            }
         }
 
         protected abstract void WriteData(BinaryWriter writer);

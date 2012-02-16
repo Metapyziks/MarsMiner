@@ -81,8 +81,14 @@ namespace MarsMiner.Saving
             return _blobFiles[x];
         }
 
-        internal void MarkFreeSpace<T>(T header) where T : BlockStructure, IHeader
+
+        internal void MarkFreeSpace<T>(T header) where T : BlockStructure
         {
+            if (header is IHeader == false)
+            {
+                throw new ArgumentException(header.GetType() + " doesn't implement IHeader", "header");
+            }
+
 #if DebugVerboseSpace
             PrintUsedSpace();
             Console.WriteLine("MarkFreeSpace called.");
@@ -172,8 +178,8 @@ namespace MarsMiner.Saving
 
             s = r.ReadString();
 
-            _addressByString.Add(s, address);
-            _stringsByAddress.Add(address, s);
+            _addressByString[s] = address;
+            _stringsByAddress[address] = s;
 
             return s;
         }

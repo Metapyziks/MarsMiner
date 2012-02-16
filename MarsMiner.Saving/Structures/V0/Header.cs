@@ -77,12 +77,8 @@ namespace MarsMiner.Saving.Structures.V0
 
         protected override void WriteData(BinaryWriter writer)
         {
-            GameSave.FlushFiles();
-
             writer.Write(Version);
             writer.Write(GameSave.FindBlockPointer(this, SaveIndex));
-
-            GameSave.MarkFreeSpace(this);
         }
 
         protected override void UpdateLength()
