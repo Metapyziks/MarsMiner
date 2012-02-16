@@ -271,11 +271,6 @@ namespace MarsMiner.Saving
                 throw new ArgumentException("blockStructure.Address already set!");
             }
 
-            if (blockStructure.UnboundBlocks.Length != 0)
-            {
-                throw new ArgumentException("blockStructure has unbound referenced blocks!");
-            }
-
             int blockLength = blockStructure.Length;
 
             Tuple<int, Tuple<int, int>> bestMatch = null;

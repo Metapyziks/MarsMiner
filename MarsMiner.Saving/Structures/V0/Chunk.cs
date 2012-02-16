@@ -61,7 +61,13 @@ namespace MarsMiner.Saving.Structures.V0
 
         public override BlockStructure[] ReferencedBlocks
         {
-            get { return Octrees.ToArray<BlockStructure>(); }
+            get
+            {
+                var referencedBlocks = new BlockStructure[Octrees.Length + 1];
+                referencedBlocks[0] = BlockTypeTable;
+                Octrees.CopyTo(referencedBlocks, 1);
+                return referencedBlocks;
+            }
         }
 
         protected override void ReadData(BinaryReader reader)
