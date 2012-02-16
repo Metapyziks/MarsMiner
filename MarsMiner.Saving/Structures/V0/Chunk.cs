@@ -26,6 +26,7 @@ namespace MarsMiner.Saving.Structures.V0
 {
     public sealed class Chunk : BlockStructure
     {
+        private BlockTypeTable _blockTypeTable;
         private Octree[] _octrees;
 
         public Chunk(GameSave gameSave, Tuple<int, uint> address) : base(gameSave, address)
@@ -34,17 +35,28 @@ namespace MarsMiner.Saving.Structures.V0
 
         public Chunk(GameSave gameSave, BlockTypeTable blockTypeTable, Octree[] octrees) : base(gameSave)
         {
-            BlockTypeTable = blockTypeTable;
+            _blockTypeTable = blockTypeTable;
             _octrees = octrees;
 
             UpdateLength();
         }
 
-        public BlockTypeTable BlockTypeTable { get; private set; }
+        public BlockTypeTable BlockTypeTable
+        {
+            get
+            {
+                Load();
+                return _blockTypeTable;
+            }
+        }
 
         public Octree[] Octrees
         {
-            get { return _octrees.ToArray(); }
+            get
+            {
+                Load();
+                return _octrees.ToArray();
+            }
         }
 
         public override BlockStructure[] ReferencedBlocks
@@ -64,7 +76,7 @@ namespace MarsMiner.Saving.Structures.V0
                 octreePointers[i] = reader.ReadUInt32();
             }
 
-            BlockTypeTable = new BlockTypeTable(GameSave, GameSave.ResolvePointer(Address.Item1, blockTypeTablePointer));
+            _blockTypeTable = new BlockTypeTable(GameSave, GameSave.ResolvePointer(Address.Item1, blockTypeTablePointer));
             _octrees = new Octree[octreeCount];
 
             for (int i = 0; i < octreeCount; i++)
@@ -75,7 +87,7 @@ namespace MarsMiner.Saving.Structures.V0
 
         protected override void ForgetData()
         {
-            BlockTypeTable = null;
+            _blockTypeTable = null;
             _octrees = null;
         }
 

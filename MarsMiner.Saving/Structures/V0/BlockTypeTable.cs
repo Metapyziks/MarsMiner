@@ -55,7 +55,11 @@ namespace MarsMiner.Saving.Structures.V0
 
         public Tuple<string, int> this[int index]
         {
-            get { return new Tuple<string, int>(_blockTypeNames[index], _blockSubTypes[index]); }
+            get
+            {
+                Load();
+                return new Tuple<string, int>(_blockTypeNames[index], _blockSubTypes[index]);
+            }
         }
 
         public override BlockStructure[] ReferencedBlocks

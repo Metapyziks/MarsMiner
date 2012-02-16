@@ -26,6 +26,7 @@ namespace MarsMiner.Saving.Structures.V0
     public sealed class Header : BlockStructure, IHeader
     {
         public const int Version = 0;
+        private SavedStateIndex _saveIndex;
 
         public Header(GameSave gameSave)
             : base(gameSave, new Tuple<int, uint>(0, 0))
@@ -41,7 +42,15 @@ namespace MarsMiner.Saving.Structures.V0
             UpdateLength();
         }
 
-        public SavedStateIndex SaveIndex { get; private set; }
+        public SavedStateIndex SaveIndex
+        {
+            get
+            {
+                Load();
+                return _saveIndex;
+            }
+            private set { _saveIndex = value; }
+        }
 
         public override BlockStructure[] ReferencedBlocks
         {

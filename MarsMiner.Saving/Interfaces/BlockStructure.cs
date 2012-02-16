@@ -197,6 +197,12 @@ namespace MarsMiner.Saving.Interfaces
                 return;
             }
 
+            if (!Loaded)
+            {
+                // This shouldn't happen
+                throw new InvalidOperationException("Tried to write unwritten, unloaded block.");
+            }
+
             foreach (var block in ReferencedBlocks.Where(block => block.Written == false))
             {
                 block.Write();

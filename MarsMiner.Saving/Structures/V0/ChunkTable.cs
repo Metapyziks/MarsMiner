@@ -58,8 +58,18 @@ namespace MarsMiner.Saving.Structures.V0
         {
         }
 
+        public override BlockStructure[] ReferencedBlocks
+        {
+            get
+            {
+                Load();
+                return _chunks.ToArray<BlockStructure>();
+            }
+        }
+
         public IEnumerable<Tuple<int, int, Chunk>> GetChunks()
         {
+            Load();
             return _chunks.Select((t, i) => new Tuple<int, int, Chunk>(_xLocations[i], _zLocations[i], t));
         }
 
@@ -112,11 +122,6 @@ namespace MarsMiner.Saving.Structures.V0
                      (4 // xLocation
                       + 4 // yLocation
                       + 4); // chunk
-        }
-
-        public override BlockStructure[] ReferencedBlocks
-        {
-            get { return _chunks.ToArray<BlockStructure>(); }
         }
     }
 }

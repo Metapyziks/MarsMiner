@@ -25,6 +25,10 @@ namespace MarsMiner.Saving.Structures.V0
 {
     public sealed class SavedStateIndex : BlockStructure
     {
+        private ChunkTable _chunkTable;
+        private string _saveName;
+        private long _timestamp;
+
         public SavedStateIndex(GameSave gameSave, Tuple<int, uint> address) : base(gameSave, address)
         {
         }
@@ -32,16 +36,39 @@ namespace MarsMiner.Saving.Structures.V0
         public SavedStateIndex(GameSave gameSave, long timestamp, string saveName, ChunkTable chunkTable)
             : base(gameSave)
         {
-            Timestamp = timestamp;
-            SaveName = saveName;
-            ChunkTable = chunkTable;
+            _timestamp = timestamp;
+            _saveName = saveName;
+            _chunkTable = chunkTable;
 
             UpdateLength();
         }
 
-        public long Timestamp { get; private set; }
-        public string SaveName { get; private set; }
-        public ChunkTable ChunkTable { get; private set; }
+        public long Timestamp
+        {
+            get
+            {
+                Load();
+                return _timestamp;
+            }
+        }
+
+        public string SaveName
+        {
+            get
+            {
+                Load();
+                return _saveName;
+            }
+        }
+
+        public ChunkTable ChunkTable
+        {
+            get
+            {
+                Load();
+                return _chunkTable;
+            }
+        }
 
         public override BlockStructure[] ReferencedBlocks
         {
@@ -50,24 +77,25 @@ namespace MarsMiner.Saving.Structures.V0
 
         protected override void ReadData(BinaryReader reader)
         {
-            Timestamp = reader.ReadInt64();
+            _timestamp = reader.ReadInt64();
             uint saveNameAddress = reader.ReadUInt32();
             uint chunkTablePointer = reader.ReadUInt32();
 
-            SaveName = GameSave.ResolveString(saveNameAddress);
-            ChunkTable = new ChunkTable(GameSave, GameSave.ResolvePointer(Address.Item1, chunkTablePointer));
+            _saveName = GameSave.ResolveString(saveNameAddress);
+            _chunkTable = new ChunkTable(GameSave, GameSave.ResolvePointer(Address.Item1, chunkTablePointer));
         }
 
         protected override void ForgetData()
         {
-            ChunkTable = null;
+            _saveName = null;
+            _chunkTable = null;
         }
 
         protected override void WriteData(BinaryWriter writer)
         {
-            writer.Write(Timestamp);
-            writer.Write(GameSave.FindStringAddress(SaveName));
-            writer.Write(GameSave.FindBlockPointer(this, ChunkTable));
+            writer.Write(_timestamp);
+            writer.Write(GameSave.FindStringAddress(_saveName));
+            writer.Write(GameSave.FindBlockPointer(this, _chunkTable));
         }
 
         protected override void UpdateLength()

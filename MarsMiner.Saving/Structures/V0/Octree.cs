@@ -46,12 +46,20 @@ namespace MarsMiner.Saving.Structures.V0
 
         public BitArray OctreeFlags
         {
-            get { return new BitArray(_octreeFlags); }
+            get
+            {
+                Load();
+                return new BitArray(_octreeFlags);
+            }
         }
 
         public IEnumerable<byte> OctreeValues
         {
-            get { return _octreeValues.AsEnumerable(); }
+            get
+            {
+                Load();
+                return _octreeValues.AsEnumerable();
+            }
         }
 
         public override BlockStructure[] ReferencedBlocks
