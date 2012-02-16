@@ -19,7 +19,7 @@
 
 using System;
 using System.IO;
-using MarsMiner.Saving.Interfaces;
+using MarsMiner.Saving.Common;
 
 namespace MarsMiner.Saving.Structures.V0
 {

@@ -17,7 +17,7 @@
  * along with MarsMiner. If not, see <http://www.gnu.org/licenses/>.
  */
 
-namespace MarsMiner.Saving.Interfaces
+namespace MarsMiner.Saving.Common
 {
     public interface IHeader
     {

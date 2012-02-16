@@ -23,7 +23,7 @@ using System.IO;
 using System.Linq;
 using MarsMiner.Saving.Util;
 
-namespace MarsMiner.Saving.Interfaces
+namespace MarsMiner.Saving.Common
 {
     public abstract class BlockStructure
     {

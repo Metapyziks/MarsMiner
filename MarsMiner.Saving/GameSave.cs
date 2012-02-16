@@ -23,7 +23,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
-using MarsMiner.Saving.Interfaces;
+using MarsMiner.Saving.Common;
 using MarsMiner.Saving.Util;
 
 namespace MarsMiner.Saving

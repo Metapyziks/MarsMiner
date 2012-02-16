@@ -21,7 +21,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using MarsMiner.Saving.Interfaces;
+using MarsMiner.Saving.Common;
 
 namespace MarsMiner.Saving.Structures.V0
 {
