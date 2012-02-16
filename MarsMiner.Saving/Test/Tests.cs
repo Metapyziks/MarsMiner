@@ -21,7 +21,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using MarsMiner.Saving.Interface.V0;
+using MarsMiner.Saving.Interfaces;
 using MarsMiner.Saving.Structures.V0;
 
 namespace MarsMiner.Saving.Test
@@ -31,9 +31,9 @@ namespace MarsMiner.Saving.Test
         public static void TestSaving(GameSave gameSave, string saveName)
         {
             var octree = new Octree(gameSave, new BitArray(new[] { false, false }), new byte[] { 1 });
-            var blockTypeTable = new BlockTypeTable(gameSave, 
-                new[] { "Block 0", "Block 1", "Block 2", "Block 2" },
-                new[] { 0, 0, 0, 1 });
+            var blockTypeTable = new BlockTypeTable(gameSave,
+                                                    new[] { "Block 0", "Block 1", "Block 2", "Block 2" },
+                                                    new[] { 0, 0, 0, 1 });
             var chunk = new Chunk(gameSave, blockTypeTable, new[] { octree });
             var chunkTable = new ChunkTable(gameSave, new[] { 0 }, new[] { 0 }, new[] { chunk });
             var mainIndex = new SavedStateIndex(gameSave, DateTime.UtcNow.Ticks, saveName, chunkTable);
@@ -44,14 +44,14 @@ namespace MarsMiner.Saving.Test
 
         public static void TestAddChunkToUnloadedChunks(GameSave gameSave)
         {
-            Header oldHeader = new Header(gameSave);
+            var oldHeader = new Header(gameSave);
 
             ChunkTable oldChunkTable = oldHeader.SaveIndex.ChunkTable;
 
             var octree = new Octree(gameSave, new BitArray(new[] { false, false }), new byte[] { 1 });
-            var blockTypeTable = new BlockTypeTable(gameSave, 
-                new[] { "Block 0", "Block 1", "Block 2", "Block 2" },
-                new[] { 0, 0, 0, 1 });
+            var blockTypeTable = new BlockTypeTable(gameSave,
+                                                    new[] { "Block 0", "Block 1", "Block 2", "Block 2" },
+                                                    new[] { 0, 0, 0, 1 });
             var chunk = new Chunk(gameSave, blockTypeTable, new[] { octree });
 
             var r = new Random();
@@ -64,7 +64,8 @@ namespace MarsMiner.Saving.Test
             chunks.Add(new Tuple<int, int, Chunk>(x, z, chunk));
 
             var chunkTable = new ChunkTable(gameSave, chunks.ToArray());
-            var mainIndex = new SavedStateIndex(gameSave, DateTime.UtcNow.Ticks, "ChunkTable Length: " + chunkTable.Length,
+            var mainIndex = new SavedStateIndex(gameSave, DateTime.UtcNow.Ticks,
+                                                "ChunkTable Length: " + chunkTable.Length,
                                                 chunkTable);
             var header = new Header(gameSave, mainIndex);
 
@@ -73,41 +74,58 @@ namespace MarsMiner.Saving.Test
 
         public static void TestReading(GameSave gameSave)
         {
-            new Header(gameSave); //TODO: This is useless right now.
+            var readQueue = new Queue<BlockStructure>();
+
+            readQueue.Enqueue(new Header(gameSave));
+
+            while (readQueue.Count > 0)
+            {
+                BlockStructure block = readQueue.Dequeue();
+                block.Load();
+
+                foreach (BlockStructure b in block.ReferencedBlocks)
+                {
+                    readQueue.Enqueue(b);
+                }
+            }
         }
 
         public static void TestModify(GameSave gameSave)
         {
-            Header header = new Header(gameSave);
+            var header = new Header(gameSave);
 
             var newChunkTable =
-                new ChunkTable(gameSave, 
-                    header.SaveIndex.ChunkTable.GetChunks().Concat(
-                        header.SaveIndex.ChunkTable.GetChunks().Take(1).Select(
-                            x => new Tuple<int, int, Chunk>(x.Item1 + 1, x.Item2 - 1, x.Item3))).ToArray());
+                new ChunkTable(gameSave,
+                               header.SaveIndex.ChunkTable.GetChunks().Concat(
+                                   header.SaveIndex.ChunkTable.GetChunks().Take(1).Select(
+                                       x => new Tuple<int, int, Chunk>(x.Item1 + 1, x.Item2 - 1, x.Item3))).ToArray());
 
-            var newHeader = new Header(gameSave, new SavedStateIndex(gameSave, DateTime.UtcNow.Ticks, "Modified Save", newChunkTable));
+            var newHeader = new Header(gameSave,
+                                       new SavedStateIndex(gameSave, DateTime.UtcNow.Ticks, "Modified Save",
+                                                           newChunkTable));
 
             newHeader.Write();
         }
 
         public static void TestResave(GameSave gameSave)
         {
-            Header header = new Header(gameSave);
+            var header = new Header(gameSave);
             header.Write();
         }
 
         public static void TestMarkModify(GameSave gameSave)
         {
-            Header header = new Header(gameSave);
+            var header = new Header(gameSave);
 
             var newChunkTable =
-                new ChunkTable(gameSave, 
-                    header.SaveIndex.ChunkTable.GetChunks().Concat(
-                        header.SaveIndex.ChunkTable.GetChunks().Take(1).Select(
-                            x => new Tuple<int, int, Chunk>(x.Item1 + 1, x.Item2 - 1, x.Item3))).ToArray());
+                new ChunkTable(gameSave,
+                               header.SaveIndex.ChunkTable.GetChunks().Concat(
+                                   header.SaveIndex.ChunkTable.GetChunks().Take(1).Select(
+                                       x => new Tuple<int, int, Chunk>(x.Item1 + 1, x.Item2 - 1, x.Item3))).ToArray());
 
-            var newHeader = new Header(gameSave, new SavedStateIndex(gameSave, DateTime.UtcNow.Ticks, "Modified Save", newChunkTable));
+            var newHeader = new Header(gameSave,
+                                       new SavedStateIndex(gameSave, DateTime.UtcNow.Ticks, "Modified Save",
+                                                           newChunkTable));
 
             newHeader.Write();
         }
