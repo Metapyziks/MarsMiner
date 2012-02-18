@@ -32,7 +32,7 @@ namespace MarsMiner.Saving.Structures.V0
         private int[] _xLocations;
         private int[] _zLocations;
 
-        public ChunkTable(GameSave gameSave, Tuple<int, uint> address) : base(gameSave, address)
+        internal ChunkTable(GameSave gameSave, Tuple<int, uint> address) : base(gameSave, address)
         {
         }
 

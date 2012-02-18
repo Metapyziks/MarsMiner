@@ -42,11 +42,9 @@ namespace MarsMiner.Saving.Test
             header.Write();
         }
 
-        public static void TestAddChunkToUnloadedChunks(GameSave gameSave)
+        public static void TestAddChunkToUnloadedChunks(GameSave gameSave, Header header)
         {
-            var oldHeader = new Header(gameSave);
-
-            ChunkTable oldChunkTable = oldHeader.SaveIndex.ChunkTable;
+            ChunkTable oldChunkTable = header.SaveIndex.ChunkTable;
 
             var octree = new Octree(gameSave, new BitArray(new[] { false, false }), new byte[] { 1 });
             var blockTypeTable = new BlockTypeTable(gameSave,
@@ -67,16 +65,16 @@ namespace MarsMiner.Saving.Test
             var mainIndex = new SavedStateIndex(gameSave, DateTime.UtcNow.Ticks,
                                                 "ChunkTable Length: " + chunkTable.Length,
                                                 chunkTable);
-            var header = new Header(gameSave, mainIndex);
+            var newHeader = new Header(gameSave, mainIndex);
 
-            header.Write();
+            newHeader.Write();
         }
 
-        public static void TestReading(GameSave gameSave)
+        public static void TestReading(Header header)
         {
             var readQueue = new Queue<BlockStructure>();
 
-            readQueue.Enqueue(new Header(gameSave));
+            readQueue.Enqueue(header);
 
             while (readQueue.Count > 0)
             {
@@ -87,13 +85,13 @@ namespace MarsMiner.Saving.Test
                 {
                     readQueue.Enqueue(b);
                 }
+
+                block.Unload();
             }
         }
 
-        public static void TestModify(GameSave gameSave)
+        public static void TestModify(GameSave gameSave, Header header)
         {
-            var header = new Header(gameSave);
-
             var newChunkTable =
                 new ChunkTable(gameSave,
                                header.SaveIndex.ChunkTable.GetChunks().Concat(
@@ -107,16 +105,8 @@ namespace MarsMiner.Saving.Test
             newHeader.Write();
         }
 
-        public static void TestResave(GameSave gameSave)
+        public static void TestMarkModify(GameSave gameSave, Header header)
         {
-            var header = new Header(gameSave);
-            header.Write();
-        }
-
-        public static void TestMarkModify(GameSave gameSave)
-        {
-            var header = new Header(gameSave);
-
             var newChunkTable =
                 new ChunkTable(gameSave,
                                header.SaveIndex.ChunkTable.GetChunks().Concat(

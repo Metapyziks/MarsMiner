@@ -29,7 +29,7 @@ namespace MarsMiner.Saving.Structures.V0
         private BlockTypeTable _blockTypeTable;
         private Octree[] _octrees;
 
-        public Chunk(GameSave gameSave, Tuple<int, uint> address) : base(gameSave, address)
+        internal Chunk(GameSave gameSave, Tuple<int, uint> address) : base(gameSave, address)
         {
         }
 

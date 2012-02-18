@@ -29,7 +29,7 @@ namespace MarsMiner.Saving.Structures.V0
         private int[] _blockSubTypes;
         private string[] _blockTypeNames;
 
-        public BlockTypeTable(GameSave gameSave, Tuple<int, uint> address) : base(gameSave, address)
+        internal BlockTypeTable(GameSave gameSave, Tuple<int, uint> address) : base(gameSave, address)
         {
         }
 

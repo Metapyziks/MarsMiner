@@ -31,7 +31,7 @@ namespace MarsMiner.Saving.Structures.V0
         private BitArray _octreeFlags;
         private byte[] _octreeValues;
 
-        public Octree(GameSave gameSave, Tuple<int, uint> address) : base(gameSave, address)
+        internal Octree(GameSave gameSave, Tuple<int, uint> address) : base(gameSave, address)
         {
         }
 

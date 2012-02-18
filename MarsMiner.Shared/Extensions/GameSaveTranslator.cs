@@ -35,25 +35,6 @@ namespace MarsMiner.Shared.Extensions
 {
     internal static class GameSaveTranslator
     {
-        public static void WriteChunk(this GameSave gameSave, Chunk chunk)
-        {
-            Tuple<int, int, SaveChunk> saveChunk = gameSave.TranslateChunk(chunk);
-
-            var header = new SaveHeader(gameSave);
-            header.Load();
-
-            List<Tuple<int, int, SaveChunk>> newChunks =
-                header.SaveIndex.ChunkTable.GetChunks().Where(c => c.Item1 != chunk.X || c.Item2 != chunk.Z).ToList();
-
-            newChunks.Add(saveChunk);
-
-            var newHeader =
-                new SaveHeader(gameSave, new SaveIndex(gameSave, DateTime.UtcNow.Ticks, header.SaveIndex.SaveName,
-                                                       new SaveChunkTable(gameSave, newChunks.ToArray())));
-
-            newHeader.Write();
-        }
-
         private static Tuple<int, int, SaveChunk> TranslateChunk(this GameSave gameSave, Chunk chunk)
         {
             if (!chunk.Loaded)

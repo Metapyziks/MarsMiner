@@ -29,7 +29,7 @@ namespace MarsMiner.Saving.Structures.V0
         private string _saveName;
         private long _timestamp;
 
-        public SavedStateIndex(GameSave gameSave, Tuple<int, uint> address) : base(gameSave, address)
+        internal SavedStateIndex(GameSave gameSave, Tuple<int, uint> address) : base(gameSave, address)
         {
         }
 

@@ -54,11 +54,14 @@ namespace MarsMiner.Saving.Test
         private static void OpenReadRewrite(string savePath)
         {
             Console.WriteLine("Opening...");
-            GameSave gameSave = GameSave.Open<Header>(savePath);
+            GameSave gameSave;
+            Header header;
+            
+            GameSave.Open(savePath, out gameSave, out header);
             Console.WriteLine("...OK");
 
             Console.WriteLine("Rewriting...");
-            Tests.TestResave(gameSave);
+            header.Write();
             Console.WriteLine("...OK");
 
             Console.WriteLine("Closing...");
@@ -71,11 +74,13 @@ namespace MarsMiner.Saving.Test
 // ReSharper restore UnusedMember.Local
         {
             Console.WriteLine("Opening...");
-            GameSave gameSave = GameSave.Open<Header>(savePath);
+            GameSave gameSave;
+            Header header;
+            GameSave.Open(savePath, out gameSave, out header);
             Console.WriteLine("...OK");
 
             Console.WriteLine("Marking and modifying...");
-            Tests.TestMarkModify(gameSave);
+            Tests.TestMarkModify(gameSave, header);
             Console.WriteLine("...OK");
 
             Console.WriteLine("Closing...");
@@ -86,11 +91,13 @@ namespace MarsMiner.Saving.Test
         private static void OpenReadUnloadModifyWrite(string savePath)
         {
             Console.WriteLine("Opening...");
-            GameSave gameSave = GameSave.Open<Header>(savePath);
+            GameSave gameSave;
+            Header header;
+            GameSave.Open(savePath, out gameSave, out header);
             Console.WriteLine("...OK");
 
             Console.WriteLine("Unloading and modifying...");
-            Tests.TestAddChunkToUnloadedChunks(gameSave);
+            Tests.TestAddChunkToUnloadedChunks(gameSave, header);
             Console.WriteLine("...OK");
 
             Console.WriteLine("Closing...");
@@ -103,11 +110,13 @@ namespace MarsMiner.Saving.Test
 // ReSharper restore UnusedMember.Local
         {
             Console.WriteLine("Opening...");
-            GameSave gameSave = GameSave.Open<Header>(savePath);
+            GameSave gameSave;
+            Header header;
+            GameSave.Open(savePath, out gameSave, out header);
             Console.WriteLine("...OK");
 
             Console.WriteLine("Modifying...");
-            Tests.TestModify(gameSave);
+            Tests.TestModify(gameSave, header);
             Console.WriteLine("...OK");
 
             Console.WriteLine("Closing...");
@@ -136,11 +145,13 @@ namespace MarsMiner.Saving.Test
         private static void OpenRead(string savePath)
         {
             Console.WriteLine("Opening...");
-            GameSave gameSave = GameSave.Open<Header>(savePath);
+            GameSave gameSave;
+            Header header;
+            GameSave.Open(savePath, out gameSave, out header);
             Console.WriteLine("...OK");
 
             Console.WriteLine("Reading...");
-            Tests.TestReading(gameSave);
+            Tests.TestReading(header);
             Console.WriteLine("...OK");
 
             Console.WriteLine("Closing...");
