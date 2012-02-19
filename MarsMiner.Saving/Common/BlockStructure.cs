@@ -27,7 +27,6 @@ namespace MarsMiner.Saving.Common
 {
     public abstract class BlockStructure
     {
-        //TODO: Make private and add shortcut methods
         protected readonly GameSave GameSave;
         private Tuple<int, uint> _address;
         private int? _length;
@@ -203,7 +202,7 @@ namespace MarsMiner.Saving.Common
 
         protected abstract void ForgetData();
 
-        public void Write(bool unload = true)
+        public void Write(bool unload)
         {
             if (!Bound)
             {
