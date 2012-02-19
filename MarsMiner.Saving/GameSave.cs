@@ -19,7 +19,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
@@ -492,7 +491,9 @@ namespace MarsMiner.Saving
                     typeof (T).GetConstructor(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance,
                                               null,
                                               new[] { typeof (GameSave) }, null);
-                Debug.Assert(headerConstructorInfo != null, "Header constructor not found.");
+
+                if (headerConstructorInfo == null) throw new Exception("Header constructor not found.");
+
                 header = (T) (headerConstructorInfo.Invoke(new object[] { gameSave }));
                 gameSave.MarkFreeSpace(header);
             }
