@@ -1,0 +1,107 @@
+MarsMiner Save Format v0 (draft)
+
+Most block structures can appear anywhere in the file.
+
+Embedded structures are always part of block structures and don't have any prefix.
+
+String File
+===========
+
+StringFileHeader (block structure, fixed length)
+------------------------------------------------
+int						Version
+int						StringCount
+
+String (block structure, length prefixed)
+-----------------------------------------
+Utf-8 string
+
+Common
+======
+
+Pointer (embedded structure, fixed length)
+----------------------------
+1 bit					Pointer flag:
+							0 means absolute pointer in this file
+							1 means reference to pointer in pointer table file
+7 bit					Destination address or pointer index
+
+Save Blob
+=========
+
+Header (always at 0) (block structure, fixed length)
+------------------------------------------------------------------------
+// Saving updates the header after a write barrier, wich makes saves transactional:
+// If the save completes, the load method uses the new main index, if it crashes the old main index still points to the old valid saved state.
+// The saves should be impossible to corrupt this way, unless the file itself is corrupted.
+int								Version
+Pointer<SavedStateIndex>		Pointer to saved state index
+
+SavedStateIndex (block structure, fixed length)
+-----------------------------------------------
+long						Timestamp in 100ns ticks since 12:00 midnight, January 1, 0001 in the GregorianCalendar calendar (excluding ticks that would be added by leap seconds) in UTC
+Pointer<String>				Save name
+Pointer<ChunkTable>			Pointer to chunk table
+
+BlockTypeTable (block structure, variable length)
+-------------------------------------------------
+ushort					block type count
+for (block type count):
+	Pointer<String>		block type name
+
+ChunkTable (block structure, variable length)
+---------------------------------------------
+uint32				chunk count
+for (chunk count):
+	int				X location
+	int				Z location
+	Pointer<Chunk>	pointer to chunk
+
+Chunk (block structure, variable length)
+----------------------------------------
+Pointer<BlockTypeTable>	Pointer to block type table		// This is here so chunks can have different block tables.
+														// It doesn't make much difference with less than 256 ids, but with more its possible to compress block id lists to roughly half the size if the id distribution is uneven.
+														// It also allows id mapping changes in copy-on-write mode.
+byte					octree count
+for (octree count):
+	Pointer<Octree>
+
+Octree (block structure, variable length)
+-----------------------------------------
+uint32					OctreeFlags length in bytes
+uint32					OctreeValueList length in bytes
+OctreeFlags
+OctreeValueList
+
+OctreeFlags (embedded structure, variable length)
+-------------------------------------------------
+// A bitmap that stores the node status.
+// The order is breadth-first with {lbf, lbb, ltf, ltb, rbf, rbb, rtf, rtb} for child order and padded to the next byte
+while (!finished):
+	bool (1 bit)		HasChildren
+	bool (1 bit)		HasLargeValue
+padding to next full byte
+
+OctreeValueList (embedded structure, variable length)
+-----------------------------------------------------
+for (number of ones in octree bitmap):
+	if (HasLargeValue):
+		ushort			block id
+	else:
+		byte			block id
+
+Pointer table file
+==================
+
+PointerFileIndex (block structure)
+---------------------------------------------------
+int						Version
+int						reserved
+while (!EOF):
+	FilePointer
+
+FilePointer (embedded structure, fixed length)
+----------------------------------------------
+// FilePointers are typeless, the target type is inferred from the original pointer.
+int						index of blob file
+int						address in destination file
