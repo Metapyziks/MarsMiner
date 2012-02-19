@@ -66,7 +66,6 @@ namespace MarsMiner.Saving
 
         internal void FlushFiles()
         {
-            //TODO?: Remove these?
             UpdatePointerFileHeader();
             UpdateStringFileHeader();
 
@@ -439,8 +438,8 @@ namespace MarsMiner.Saving
         /// <typeparam name="T">A header block type.</typeparam>
         /// <param name="path"><para>The directory where the existing save is located.</para>
         /// <para>Must contain an existing save.</para></param>
-        /// <param name="gameSave"> </param>
-        /// <returns>A new GameSave instance managing the existing save.</returns>
+        /// <param name="gameSave">A new GameSave instance managing the existing save.</param>
+        /// <param name="header">The header of the existing save.</param>
         public static void Open<T>(string path, out GameSave gameSave, out T header) where T : BlockStructure, IHeader
         {
             if (!Directory.Exists(path))

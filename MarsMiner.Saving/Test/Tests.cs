@@ -39,7 +39,7 @@ namespace MarsMiner.Saving.Test
             var mainIndex = new SavedStateIndex(gameSave, DateTime.UtcNow.Ticks, saveName, chunkTable);
             var header = new Header(gameSave, mainIndex);
 
-            header.Write();
+            header.Write(true);
         }
 
         public static void TestAddChunkToUnloadedChunks(GameSave gameSave, Header header)
@@ -67,7 +67,7 @@ namespace MarsMiner.Saving.Test
                                                 chunkTable);
             var newHeader = new Header(gameSave, mainIndex);
 
-            newHeader.Write();
+            newHeader.Write(true);
         }
 
         public static void TestReading(Header header)
@@ -102,7 +102,7 @@ namespace MarsMiner.Saving.Test
                                        new SavedStateIndex(gameSave, DateTime.UtcNow.Ticks, "Modified Save",
                                                            newChunkTable));
 
-            newHeader.Write();
+            newHeader.Write(true);
         }
 
         public static void TestMarkModify(GameSave gameSave, Header header)
@@ -117,7 +117,7 @@ namespace MarsMiner.Saving.Test
                                        new SavedStateIndex(gameSave, DateTime.UtcNow.Ticks, "Modified Save",
                                                            newChunkTable));
 
-            newHeader.Write();
+            newHeader.Write(true);
         }
     }
 }

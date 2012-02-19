@@ -104,6 +104,24 @@ namespace MarsMiner.Saving.Common
             }
         }
 
+        public abstract BlockStructure[] ReferencedBlocks { get; }
+
+        public Dictionary<int, IntRangeList> UsedSpace
+        {
+            get
+            {
+                if (_usedSpace == null)
+                {
+                    _usedSpace = new Dictionary<int, IntRangeList>();
+
+                    _usedSpace[Address.Item1] = new IntRangeList();
+                    _usedSpace[Address.Item1] += new Tuple<int, int>((int) Address.Item2, (int) Address.Item2 + Length);
+                }
+
+                return _usedSpace;
+            }
+        }
+
         private void UpdateRecursiveUsedSpace()
         {
             if (_recursiveUsedSpace != null) return;
@@ -125,24 +143,6 @@ namespace MarsMiner.Saving.Common
             if (!wasLoaded)
             {
                 Unload();
-            }
-        }
-
-        public abstract BlockStructure[] ReferencedBlocks { get; }
-
-        public Dictionary<int, IntRangeList> UsedSpace
-        {
-            get
-            {
-                if (_usedSpace == null)
-                {
-                    _usedSpace = new Dictionary<int, IntRangeList>();
-
-                    _usedSpace[Address.Item1] = new IntRangeList();
-                    _usedSpace[Address.Item1] += new Tuple<int, int>((int) Address.Item2, (int) Address.Item2 + Length);
-                }
-
-                return _usedSpace;
             }
         }
 
@@ -222,7 +222,8 @@ namespace MarsMiner.Saving.Common
 
             foreach (BlockStructure block in ReferencedBlocks.Where(block => block.Written == false))
             {
-                block.Write();
+                block.Write(false);
+                    // Don't unload referenced blocks. If unload is true, the reference is lost anyway, unless they are used somewhere else.
             }
 
             Stream stream = GameSave.GetBlobFile(_address.Item1);
@@ -238,7 +239,7 @@ namespace MarsMiner.Saving.Common
             Console.WriteLine("Writing {0} from {1} to {2}", GetType(), Address, Address.Item2 + Length);
 #endif
 
-            var isHeader = this is IHeader;
+            bool isHeader = this is IHeader;
             if (isHeader)
             {
                 GameSave.FlushFiles();

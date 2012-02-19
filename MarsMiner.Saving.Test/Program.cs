@@ -61,7 +61,7 @@ namespace MarsMiner.Saving.Test
             Console.WriteLine("...OK");
 
             Console.WriteLine("Rewriting...");
-            header.Write();
+            header.Write(true);
             Console.WriteLine("...OK");
 
             Console.WriteLine("Closing...");
