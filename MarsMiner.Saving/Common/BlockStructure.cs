@@ -27,12 +27,21 @@ namespace MarsMiner.Saving.Common
 {
     public abstract class BlockStructure
     {
+        /// <summary>
+        /// The GameSave instance this block is attached to.
+        /// </summary>
         protected readonly GameSave GameSave;
         private Tuple<int, uint> _address;
         private int? _length;
         private Dictionary<int, IntRangeList> _recursiveUsedSpace;
         private Dictionary<int, IntRangeList> _usedSpace;
 
+        /// <summary>
+        /// <para>Initializes a new BlockStructure instance.</para>
+        /// <para>This constructor is for blocks that are read from disk.</para>
+        /// </summary>
+        /// <param name="gameSave">The GameSave instance this block is attached to.</param>
+        /// <param name="address">This block's address.</param>
         protected BlockStructure(GameSave gameSave,
                                  Tuple<int, uint> address)
         {
@@ -44,6 +53,11 @@ namespace MarsMiner.Saving.Common
             Loaded = false;
         }
 
+        /// <summary>
+        /// <para>Initializes a new BlockStructure instance.</para>
+        /// <para>This constructor is for blocks that are newly created.</para>
+        /// </summary>
+        /// <param name="gameSave">The GameSave instance this block is attached to.</param>
         protected BlockStructure(GameSave gameSave)
         {
             if (gameSave == null) throw new ArgumentNullException("gameSave");
@@ -53,6 +67,9 @@ namespace MarsMiner.Saving.Common
             Loaded = true;
         }
 
+        /// <summary>
+        /// The block's address.
+        /// </summary>
         public Tuple<int, uint> Address
         {
             get { return _address; }
@@ -66,15 +83,27 @@ namespace MarsMiner.Saving.Common
             }
         }
 
+        /// <summary>
+        /// <value>true</value>, if the block was bound to a location in a save file.
+        /// </summary>
         public bool Bound
         {
             get { return Address != null; }
         }
 
+        /// <summary>
+        /// <value>true</value>, if the block's data was loaded into memory.
+        /// </summary>
         public bool Loaded { get; private set; }
 
+        /// <summary>
+        /// <value>true</value>, if the block's data was written to disk.
+        /// </summary>
         public bool Written { get; private set; }
 
+        /// <summary>
+        /// The block's length in bytes.
+        /// </summary>
         public int Length
         {
             get
@@ -89,11 +118,9 @@ namespace MarsMiner.Saving.Common
             protected set { _length = value; }
         }
 
-        public BlockStructure[] UnboundBlocks
-        {
-            get { return ReferencedBlocks.Where(x => x.Bound == false).ToArray(); }
-        }
-
+        /// <summary>
+        /// Gets the space in the blob files used by this block and all referenced blocks.
+        /// </summary>
         public Dictionary<int, IntRangeList> RecursiveUsedSpace
         {
             get
@@ -104,8 +131,14 @@ namespace MarsMiner.Saving.Common
             }
         }
 
+        /// <summary>
+        /// Gets the BlockStructures referenced by this block.
+        /// </summary>
         public abstract BlockStructure[] ReferencedBlocks { get; }
 
+        /// <summary>
+        /// Gets the space used by this block.
+        /// </summary>
         public Dictionary<int, IntRangeList> UsedSpace
         {
             get
@@ -146,6 +179,9 @@ namespace MarsMiner.Saving.Common
             }
         }
 
+        /// <summary>
+        /// Loads data from disk if it isn't already loaded.
+        /// </summary>
         public void Load()
         {
             if (Loaded) return;
@@ -182,8 +218,16 @@ namespace MarsMiner.Saving.Common
             UpdateRecursiveUsedSpace();
         }
 
+        /// <summary>
+        /// Implementations must override this to read data.
+        /// </summary>
+        /// <param name="reader">A BinaryReader instance pointing to the start of the block.</param>
         protected abstract void ReadData(BinaryReader reader);
 
+        /// <summary>
+        /// <para>Removes references to block data.</para>
+        /// <para>Unloading a block that hasn't been committed to disk is an invalid operation.</para>
+        /// </summary>
         public void Unload()
         {
             if (!Loaded)
@@ -200,8 +244,19 @@ namespace MarsMiner.Saving.Common
             Loaded = false;
         }
 
+        /// <summary>
+        /// Implementations must override this to remove references to data.
+        /// </summary>
         protected abstract void ForgetData();
 
+        /// <summary>
+        /// Writes this block and all referenced blocks to disk (if they weren't written already).
+        /// </summary>
+        /// <param name="unload">
+        /// <para><value>true</value>: Unloads this block.</para>
+        /// <para><value>false</value>: Doesn't unload this block.</para>
+        /// <para>Referenced blocks aren't directly affected.</para>
+        /// </param>
         public void Write(bool unload)
         {
             if (!Bound)
@@ -223,7 +278,7 @@ namespace MarsMiner.Saving.Common
             foreach (BlockStructure block in ReferencedBlocks.Where(block => block.Written == false))
             {
                 block.Write(false);
-                    // Don't unload referenced blocks. If unload is true, the reference is lost anyway, unless they are used somewhere else.
+                // Don't unload referenced blocks. If unload is true, the reference is lost anyway, unless they are used somewhere else.
             }
 
             Stream stream = GameSave.GetBlobFile(_address.Item1);
@@ -269,8 +324,15 @@ namespace MarsMiner.Saving.Common
             }
         }
 
+        /// <summary>
+        /// Implementations must override this to read data.
+        /// </summary>
+        /// <param name="writer">A BinaryWriter instance pointing to the start of the block.</param>
         protected abstract void WriteData(BinaryWriter writer);
 
+        /// <summary>
+        /// Implementations must override this to update the Length property to the blocks length in bytes.
+        /// </summary>
         protected abstract void UpdateLength();
     }
 }
