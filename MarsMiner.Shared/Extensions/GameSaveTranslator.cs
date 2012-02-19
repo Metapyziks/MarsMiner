@@ -35,7 +35,7 @@ namespace MarsMiner.Shared.Extensions
 {
     internal static class GameSaveTranslator
     {
-        private static Tuple<int, int, SaveChunk> TranslateChunk(this GameSave gameSave, Chunk chunk)
+        internal static Tuple<int, int, SaveChunk> TranslateToSave(this GameSave gameSave, Chunk chunk)
         {
             if (!chunk.Loaded)
             {
