@@ -28,7 +28,10 @@ namespace MarsMiner.Saving.Structures.V0
         public const int Version = 0;
         private SavedStateIndex _saveIndex;
 
+// Invoked via reflection
+// ReSharper disable UnusedMember.Global
         internal Header(GameSave gameSave)
+// ReSharper restore UnusedMember.Global
             : base(gameSave, new Tuple<int, uint>(0, 0))
         {
         }

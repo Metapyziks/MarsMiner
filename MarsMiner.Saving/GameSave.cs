@@ -488,7 +488,10 @@ namespace MarsMiner.Saving
 
             {
                 // Mark free space and read strings
-                ConstructorInfo headerConstructorInfo = typeof (T).GetConstructor(new[] { typeof (GameSave) });
+                ConstructorInfo headerConstructorInfo =
+                    typeof (T).GetConstructor(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance,
+                                              null,
+                                              new[] { typeof (GameSave) }, null);
                 Debug.Assert(headerConstructorInfo != null, "Header constructor not found.");
                 header = (T) (headerConstructorInfo.Invoke(new object[] { gameSave }));
                 gameSave.MarkFreeSpace(header);
