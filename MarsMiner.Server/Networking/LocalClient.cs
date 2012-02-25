@@ -38,6 +38,12 @@ namespace MarsMiner.Server.Networking
             }
         }
 
+        public LocalClient( GameServer server )
+            : base( server )
+        {
+
+        }
+
         public override void CheckForPackets()
         {
             while ( LocalConnection.ClientToServerPending() )

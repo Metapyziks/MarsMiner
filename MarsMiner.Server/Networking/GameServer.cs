@@ -24,25 +24,28 @@ using System.Text;
 using System.Threading;
 
 using MarsMiner.Shared.Networking;
+using MarsMiner.Shared.Geometry;
 
 namespace MarsMiner.Server.Networking
 {
     public class GameServer
     {
+        public String Name { get; private set; }
+        public String Password { get; private set; }
+
+        public bool PasswordRequired
+        {
+            get { return Password != null && Password != ""; }
+        }
+
         public bool IsRunning { get; private set; }
+
+        public World World { get; private set; }
 
         public ClientBase[] Slots { get; private set; }
         public int SlotCount
         {
             get { return Slots.Length; }
-            set
-            {
-                if ( IsRunning )
-                    throw new InvalidOperationException( "Cannot change slot "
-                        + "count while server is running" );
-
-                Slots = new ClientBase[ value ];
-            }
         }
 
         public int ClientCount { get; private set; }
@@ -62,15 +65,22 @@ namespace MarsMiner.Server.Networking
             }
         }
 
-        public GameServer()
+        public GameServer( ServerBuilder builder )
         {
-            SlotCount = 1;
+            Name = builder.Name;
+            Password = builder.Password;
+
+            Slots = new ClientBase[ builder.SlotCount ];
             ClientCount = 0;
+
+            World = new World();
         }
 
         public void Run()
         {
             IsRunning = true;
+
+            World.Generate( 1024, 1024, 4 );
 
             while ( IsRunning )
             {
@@ -85,7 +95,7 @@ namespace MarsMiner.Server.Networking
         private void ListenForConnections()
         {
             if ( LocalConnection.ConnectionWaiting )
-                AddClient( new LocalClient() );
+                AddClient( new LocalClient( this ) );
         }
 
         private void UpdateClients()

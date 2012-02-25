@@ -44,18 +44,30 @@ namespace MarsMiner.Client.Networking
 
     public static class PacketManager
     {
-        private static Dictionary<String,ServerPacketType> stTypeNames = new Dictionary<string, ServerPacketType>();
+        private static Dictionary<String,ServerPacketType> stTypeNames
+            = new Dictionary<string, ServerPacketType>();
         private static List<ServerPacketType> stTypeIDs = new List<ServerPacketType>();
 
-        public static ServerPacketType Register( String name, ServerPacketHandlerDelegate handler )
+        public static ServerPacketType Register( String name,
+            ServerPacketHandlerDelegate handler )
         {
             if ( stTypeNames.ContainsKey( name ) )
-                throw new Exception( "Can not register new packet type:"
+                throw new Exception( "Can not register new packet type: "
                     + "packet type already registered with the name \"" + name + "\"" );
 
             ServerPacketType type = new ServerPacketType( name, handler );
 
             stTypeNames.Add( name, type );
+
+            return type;
+        }
+
+        public static ServerPacketType Register( String name,
+            ServerPacketHandlerDelegate handler, ushort typeID )
+        {
+            ServerPacketType type = Register( name, handler );
+
+            SetTypeID( name, typeID );
 
             return type;
         }
@@ -71,6 +83,8 @@ namespace MarsMiner.Client.Networking
                 stTypeIDs.Add( type );
             else
                 stTypeIDs[ typeID ] = type;
+
+            type.ID = typeID;
         }
 
         public static ServerPacketType GetType( String typeName )

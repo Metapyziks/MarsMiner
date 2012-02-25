@@ -56,7 +56,7 @@ namespace MarsMiner.Shared.Geometry
             Loaded = false;
         }
 
-        public void Generate()
+        public void Generate( int resolution )
         {
             Loaded = false;
 
@@ -65,14 +65,9 @@ namespace MarsMiner.Shared.Geometry
 
             int dist = DistanceToOrigin;
 
-            int res = 
-                dist < 128 ? 1 :
-                dist < 256 ? 2 :
-                dist < 512 ? 4 : 8;
-
             for ( int i = 0; i < octrees; ++i )
             {
-                Octree<UInt16> newTree = World.Generator.Generate( X, i * Size, Z, Size, res );
+                Octree<UInt16> newTree = World.Generator.Generate( X, i * Size, Z, Size, resolution );
                 newTree.Container = this;
                 Octrees[ i ] = newTree;
             }

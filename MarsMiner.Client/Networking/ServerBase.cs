@@ -24,6 +24,7 @@ using System.Text;
 using System.IO;
 
 using MarsMiner.Shared.Networking;
+using MarsMiner.Shared.Geometry;
 
 namespace MarsMiner.Client.Networking
 {
@@ -81,11 +82,25 @@ namespace MarsMiner.Client.Networking
                 return sender.OnReceiveMessage( stream );
             } );
 
+        protected static readonly ServerPacketType PTHandshake =
+            PacketManager.Register( "Handshake", delegate( ServerBase sender,
+                ServerPacketType type, Stream stream )
+            {
+                return sender.OnReceiveHandshake( stream );
+            } );
+
         public event EventHandler<DisconnectEventArgs> Disconnected;
         public event EventHandler<MessageEventArgs> ReceivedMessage;
 
-        public bool Connect()
+        public String Name { get; private set; }
+        public String Password { get; private set; }
+
+        public World World { get; private set; }
+
+        public bool Connect( String password = null )
         {
+            Password = password;
+
             if ( AttemptConnection() )
             {
                 OnConnect();
@@ -190,6 +205,22 @@ namespace MarsMiner.Client.Networking
         protected virtual void OnReceiveMessage( MessageType type, String message )
         {
             return;
+        }
+
+        private void SendHandshake()
+        {
+            Stream stream = StartPacket( PTHandshake );
+            BinaryWriter writer = new BinaryWriter( stream );
+            writer.Write( NetworkConstants.ProtocolVersion );
+            SendPacket();
+        }
+
+        protected bool OnReceiveHandshake( Stream stream )
+        {
+            BinaryReader reader = new BinaryReader( stream );
+            Password = reader.ReadString();
+
+            return true;
         }
     }
 }

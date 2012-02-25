@@ -47,9 +47,31 @@ namespace MarsMiner.Shared.Geometry
 
     public class World : IOctreeContainer<UInt16>, IDisposable
     {
+        private class ChunkLoadInfo
+        {
+            public Chunk Chunk;
+            public int Resolution;
+
+            public int X
+            {
+                get { return Chunk.X; }
+            }
+
+            public int Z
+            {
+                get { return Chunk.Z; }
+            }
+
+            public ChunkLoadInfo( World world, int x, int z, int resolution )
+            {
+                Chunk = new Chunk( world, x, z );
+                Resolution = resolution;
+            }
+        }
+
         private Thread myGeneratorThread;
         private Dictionary<UInt16,Chunk> myLoadedChunks;
-        private Queue<Chunk> myChunksToLoad;
+        private Queue<ChunkLoadInfo> myChunksToLoad;
         private Queue<Chunk> myChunksToUnload;
 
         public WorldGenerator Generator { get; private set; }
@@ -73,21 +95,21 @@ namespace MarsMiner.Shared.Geometry
                 plugin.OnWorldIntitialize( this );
 
             myLoadedChunks = new Dictionary<UInt16, Chunk>();
-            myChunksToLoad = new Queue<Chunk>();
+            myChunksToLoad = new Queue<ChunkLoadInfo>();
             myChunksToUnload = new Queue<Chunk>();
             Generator = new PerlinGenerator( seed );
 
             GeneratorRunning = false;
         }
 
-        public void Generate( int width, int height )
+        public void Generate( int width, int height, int resolution )
         {
             int xLimit = width  / Chunk.Size / 2;
             int zLimit = height / Chunk.Size / 2;
 
             for ( int x = -xLimit; x < xLimit; ++x )
                 for ( int z = -zLimit; z < zLimit; ++z )
-                    LoadChunk( x * Chunk.Size, z * Chunk.Size );
+                    LoadChunk( x * Chunk.Size, z * Chunk.Size, resolution );
         }
 
         protected virtual void OnInitialize()
@@ -95,12 +117,21 @@ namespace MarsMiner.Shared.Geometry
             return;
         }
 
-        public void LoadChunk( int x, int z )
+        public void LoadChunk( int x, int z, int resolution = 1 )
         {
             x = Tools.FloorDiv( x, Chunk.Size ) * Chunk.Size;
             z = Tools.FloorDiv( z, Chunk.Size ) * Chunk.Size;
+            
+            foreach ( ChunkLoadInfo info in myChunksToLoad )
+            {
+                if ( info.X == x && info.Z == z )
+                {
+                    info.Resolution = Math.Min( info.Resolution, resolution );
+                    return;
+                }
+            }
 
-            myChunksToLoad.Enqueue( new Chunk( this, x, z ) );
+            myChunksToLoad.Enqueue( new ChunkLoadInfo( this, x, z, resolution ) );
 
             if ( !GeneratorRunning )
                 StartGenerator();
@@ -172,9 +203,11 @@ namespace MarsMiner.Shared.Geometry
             {
                 if ( myChunksToLoad.Count != 0 )
                 {
-                    Chunk chunk = myChunksToLoad.Dequeue();
+                    ChunkLoadInfo info = myChunksToLoad.Dequeue();
+                    Chunk chunk = info.Chunk;
+                    int resolution = info.Resolution;
                     Monitor.Enter( myLoadedChunks );
-                    chunk.Generate();
+                    chunk.Generate( resolution );
                     myLoadedChunks.Add( FindChunkID( chunk.X, chunk.Z ), chunk );
                     Monitor.Exit( myLoadedChunks );
 
@@ -196,7 +229,7 @@ namespace MarsMiner.Shared.Geometry
                 }
                 if ( myChunksToUnload.Count != 0 )
                 {
-                    Chunk chunk = myChunksToLoad.Dequeue();
+                    Chunk chunk = myChunksToUnload.Dequeue();
                     Monitor.Enter( myLoadedChunks );
                     myLoadedChunks.Remove( FindChunkID( chunk.X, chunk.Z ) );
                     Monitor.Exit( myLoadedChunks );

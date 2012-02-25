@@ -56,16 +56,16 @@ namespace MarsMiner.Server.Networking
         protected static readonly ClientPacketType PTAliveCheck =
             PacketManager.Register( "AliveCheck", delegate( ClientBase sender,
                 ClientPacketType type, Stream stream )
-        {
-            return sender.OnReceiveAliveCheck( stream );
-        } );
+            {
+                return sender.OnReceiveAliveCheck( stream );
+            } );
 
         protected static readonly ClientPacketType PTPacketDictionary =
             PacketManager.Register( "PacketDictionary", delegate( ClientBase sender,
                 ClientPacketType type, Stream stream )
-        {
-            return sender.OnReceivePacketDictionary( stream );
-        } );
+            {
+                return sender.OnReceivePacketDictionary( stream );
+            } );
 
         protected static readonly ClientPacketType PTDisconnect =
             PacketManager.Register( "Disconnect", delegate( ClientBase sender,
@@ -81,10 +81,25 @@ namespace MarsMiner.Server.Networking
                 return sender.OnReceiveMessage( stream );
             } );
 
+        protected static readonly ClientPacketType PTHandshake =
+            PacketManager.Register( "Handshake", delegate( ClientBase sender,
+                ClientPacketType type, Stream stream )
+            {
+                return sender.OnReceiveHandshake( stream );
+            } );
+
+
         public event EventHandler<DisconnectEventArgs> Disconnected;
         public event EventHandler<MessageEventArgs> ReceivedMessage;
 
         public int Slot;
+
+        public GameServer GameServer { get; private set; }
+
+        public ClientBase( GameServer server )
+        {
+            GameServer = server;
+        }
 
         protected override bool ReadPacket( Stream stream )
         {
@@ -170,6 +185,37 @@ namespace MarsMiner.Server.Networking
         protected virtual void OnReceiveMessage( String message, bool team )
         {
             return;
+        }
+
+        private void SendHandshake()
+        {
+            Stream stream = StartPacket( PTHandshake );
+            BinaryWriter writer = new BinaryWriter( stream );
+            writer.Write( GameServer.Name );
+            writer.Write( GameServer.PasswordRequired );
+            writer.Write( GameServer.SlotCount );
+            writer.Write( GameServer.ClientCount );
+            SendPacket();
+        }
+
+        protected bool OnReceiveHandshake( Stream stream )
+        {
+            BinaryReader reader = new BinaryReader( stream );
+            ushort version = reader.ReadUInt16();
+            if ( version != NetworkConstants.ProtocolVersion )
+            {
+                SendDisconnect( DisconnectReason.ProtocolVersionMismatch );
+                return false;
+            }
+
+            if ( GameServer.ClientCount >= GameServer.SlotCount )
+            {
+                SendDisconnect( DisconnectReason.ServerFull );
+                return false;
+            }
+
+            SendHandshake();
+            return true;
         }
     }
 }

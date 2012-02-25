@@ -46,28 +46,36 @@ namespace MarsMiner.Server.Networking
     {
         private static UInt16 stNextID = 0x0000;
 
-        private static Dictionary<String,ClientPacketType> stTypeNames = new Dictionary<string, ClientPacketType>();
+        private static Dictionary<String,ClientPacketType> stTypeNames
+            = new Dictionary<string, ClientPacketType>();
         private static List<ClientPacketType> stTypeIDs = new List<ClientPacketType>();
 
-        public static ClientPacketType Register( String name, ClientPacketHandlerDelegate handler )
+        public static ClientPacketType Register( String name,
+            ClientPacketHandlerDelegate handler )
+        {
+            return Register( name, handler, stNextID );
+        }
+
+        public static ClientPacketType Register( String name,
+            ClientPacketHandlerDelegate handler, ushort typeID )
         {
             if ( stTypeNames.ContainsKey( name ) )
                 throw new Exception( "Can not register new packet type:"
                     + "packet type already registered with the name \"" + name + "\"" );
 
-            ClientPacketType type = new ClientPacketType( stNextID, name, handler );
+            ClientPacketType type = new ClientPacketType( typeID, name, handler );
 
-            while ( stTypeIDs.Count < stNextID )
+            while ( stTypeIDs.Count < typeID )
                 stTypeIDs.Add( null );
 
-            if ( stTypeIDs.Count == stNextID )
+            if ( stTypeIDs.Count == typeID )
                 stTypeIDs.Add( type );
             else
-                stTypeIDs[ stNextID ] = type;
+                stTypeIDs[ typeID ] = type;
 
             stTypeNames.Add( name, type );
 
-            ++stNextID;
+            stNextID = (ushort) Math.Max( stNextID, typeID + 1 );
 
             return type;
         }
