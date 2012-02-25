@@ -62,8 +62,8 @@ namespace MarsMiner.Client.Networking
             return type;
         }
 
-        public static ServerPacketType Register( String name,
-            ServerPacketHandlerDelegate handler, ushort typeID )
+        public static ServerPacketType Register( String name, ushort typeID,
+            ServerPacketHandlerDelegate handler )
         {
             ServerPacketType type = Register( name, handler );
 

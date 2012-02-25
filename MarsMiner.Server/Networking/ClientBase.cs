@@ -53,22 +53,29 @@ namespace MarsMiner.Server.Networking
 
     public class ClientBase : RemoteNetworkedObject
     {
-        protected static readonly ClientPacketType PTAliveCheck =
-            PacketManager.Register( "AliveCheck", delegate( ClientBase sender,
+        protected static readonly ClientPacketType PTHandshake =
+            PacketManager.Register( "Handshake", 0x00, delegate( ClientBase sender,
                 ClientPacketType type, Stream stream )
             {
-                return sender.OnReceiveAliveCheck( stream );
+                return sender.OnReceiveHandshake( stream );
             } );
 
         protected static readonly ClientPacketType PTPacketDictionary =
-            PacketManager.Register( "PacketDictionary", delegate( ClientBase sender,
+            PacketManager.Register( "PacketDictionary", 0x01, delegate( ClientBase sender,
                 ClientPacketType type, Stream stream )
             {
                 return sender.OnReceivePacketDictionary( stream );
             } );
 
+        protected static readonly ClientPacketType PTAliveCheck =
+            PacketManager.Register( "AliveCheck", 0x02, delegate( ClientBase sender,
+                ClientPacketType type, Stream stream )
+            {
+                return sender.OnReceiveAliveCheck( stream );
+            } );
+
         protected static readonly ClientPacketType PTDisconnect =
-            PacketManager.Register( "Disconnect", delegate( ClientBase sender,
+            PacketManager.Register( "Disconnect", 0x03, delegate( ClientBase sender,
                 ClientPacketType type, Stream stream )
             {
                 return sender.OnReceiveDisconnect( stream );
@@ -79,13 +86,6 @@ namespace MarsMiner.Server.Networking
                 ClientPacketType type, Stream stream )
             {
                 return sender.OnReceiveMessage( stream );
-            } );
-
-        protected static readonly ClientPacketType PTHandshake =
-            PacketManager.Register( "Handshake", delegate( ClientBase sender,
-                ClientPacketType type, Stream stream )
-            {
-                return sender.OnReceiveHandshake( stream );
             } );
 
 

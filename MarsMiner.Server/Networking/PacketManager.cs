@@ -53,11 +53,11 @@ namespace MarsMiner.Server.Networking
         public static ClientPacketType Register( String name,
             ClientPacketHandlerDelegate handler )
         {
-            return Register( name, handler, stNextID );
+            return Register( name, stNextID, handler );
         }
 
-        public static ClientPacketType Register( String name,
-            ClientPacketHandlerDelegate handler, ushort typeID )
+        public static ClientPacketType Register( String name, ushort typeID,
+            ClientPacketHandlerDelegate handler )
         {
             if ( stTypeNames.ContainsKey( name ) )
                 throw new Exception( "Can not register new packet type:"

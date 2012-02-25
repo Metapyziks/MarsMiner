@@ -54,22 +54,29 @@ namespace MarsMiner.Client.Networking
 
     public class ServerBase : RemoteNetworkedObject
     {
-        protected static readonly ServerPacketType PTAliveCheck =
-            PacketManager.Register( "AliveCheck", delegate( ServerBase sender,
+        protected static readonly ServerPacketType PTHandshake =
+            PacketManager.Register( "Handshake", 0x00, delegate( ServerBase sender,
                 ServerPacketType type, Stream stream )
             {
-                return sender.OnReceiveAliveCheck( stream );
+                return sender.OnReceiveHandshake( stream );
             } );
 
         protected static readonly ServerPacketType PTPacketDictionary =
-            PacketManager.Register( "PacketDictionary", delegate( ServerBase sender,
+            PacketManager.Register( "PacketDictionary", 0x01, delegate( ServerBase sender,
                 ServerPacketType type, Stream stream )
             {
                 return sender.OnReceivePacketDictionary( stream );
             } );
 
+        protected static readonly ServerPacketType PTAliveCheck =
+            PacketManager.Register( "AliveCheck", 0x02, delegate( ServerBase sender,
+                ServerPacketType type, Stream stream )
+            {
+                return sender.OnReceiveAliveCheck( stream );
+            } );
+
         protected static readonly ServerPacketType PTDisconnect =
-            PacketManager.Register( "Disconnect", delegate( ServerBase sender,
+            PacketManager.Register( "Disconnect", 0x03, delegate( ServerBase sender,
                 ServerPacketType type, Stream stream )
             {
                 return sender.OnReceiveDisconnect( stream );
@@ -80,13 +87,6 @@ namespace MarsMiner.Client.Networking
                 ServerPacketType type, Stream stream )
             {
                 return sender.OnReceiveMessage( stream );
-            } );
-
-        protected static readonly ServerPacketType PTHandshake =
-            PacketManager.Register( "Handshake", delegate( ServerBase sender,
-                ServerPacketType type, Stream stream )
-            {
-                return sender.OnReceiveHandshake( stream );
             } );
 
         public event EventHandler<DisconnectEventArgs> Disconnected;
