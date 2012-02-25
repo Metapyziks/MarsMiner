@@ -141,8 +141,8 @@ namespace MarsMiner.Client.Graphics
 
             bool tri = (int) highCorners % 3 > 0;
 
-            if ( ( !bfr && !bbl && ( bfl ^ bbr ) )
-                || ( bfr && bbl && ( !bfl || !bbr ) ) )
+            if ( !( !bfr && !bbl && ( bfl ^ bbr ) )
+                && !( bfr && bbl && ( !bfl || !bbr ) ) )
             {
                 mdl.AddFace( new ModelFace( tri ? texTopTri : texTop, new float[]
                 {
