@@ -18,13 +18,11 @@
  */
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Net;
 using System.IO;
 
 using MarsMiner.Shared.Networking;
+using System.Threading;
 
 namespace MarsMiner.Client.Networking
 {
@@ -46,11 +44,6 @@ namespace MarsMiner.Client.Networking
                 ReadPacket( str );
                 LocalConnection.EndReadingServerToClientPacket();
             }
-        }
-
-        protected override bool ReadPacket( Stream stream )
-        {
-            return base.ReadPacket( stream );
         }
 
         public override Stream StartPacket( PacketType type )
@@ -76,8 +69,12 @@ namespace MarsMiner.Client.Networking
             DateTime start = DateTime.Now;
 
             while ( LocalConnection.ConnectionWaiting )
+            {
                 if ( ( DateTime.Now - start ).TotalSeconds > 5.0 )
                     return false;
+
+                Thread.Sleep( 100 );
+            }
             
             return true;
         }

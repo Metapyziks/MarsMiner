@@ -18,9 +18,6 @@
  */
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading;
 
 using MarsMiner.Shared.Networking;
@@ -80,7 +77,7 @@ namespace MarsMiner.Server.Networking
         {
             IsRunning = true;
 
-            World.Generate( 1024, 1024, 4 );
+            //World.Generate( 1024, 1024, 4 );
 
             while ( IsRunning )
             {
@@ -88,14 +85,24 @@ namespace MarsMiner.Server.Networking
                     ListenForConnections();
 
                 if ( ClientCount > 0 )
+                {
                     UpdateClients();
+                    Thread.Sleep( 10 );
+                }
+                else
+                {
+                    Thread.Sleep( 100 );
+                }
             }
         }
 
         private void ListenForConnections()
         {
             if ( LocalConnection.ConnectionWaiting )
+            {
+                LocalConnection.AcceptConnection();
                 AddClient( new LocalClient( this ) );
+            }
         }
 
         private void UpdateClients()
@@ -104,9 +111,7 @@ namespace MarsMiner.Server.Networking
             {
                 ClientBase client = Slots[ i ];
                 if ( client != null )
-                {
                     client.CheckForPackets();
-                }
             }
         }
 

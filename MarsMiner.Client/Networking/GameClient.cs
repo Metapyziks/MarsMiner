@@ -18,17 +18,14 @@
  */
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Net;
-
-using MarsMiner.Shared.Networking;
+using System.Threading;
 
 namespace MarsMiner.Client.Networking
 {
     public class GameClient
     {
+        public bool IsRunning { get; private set; }
         public ServerBase Server { get; private set; }
 
         public bool ConnectLocal()
@@ -40,6 +37,26 @@ namespace MarsMiner.Client.Networking
         public bool ConnectRemote( IPAddress server, int port = 35820 )
         {
             throw new NotImplementedException();
+        }
+
+        public void Run()
+        {
+            IsRunning = true;
+
+            while ( IsRunning )
+            {
+                if ( !Server.IsConnected )
+                    Stop();
+                else
+                    Server.CheckForPackets();
+
+                Thread.Sleep( 10 );
+            }
+        }
+
+        public void Stop()
+        {
+            IsRunning = false;
         }
     }
 }

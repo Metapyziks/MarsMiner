@@ -18,7 +18,6 @@
  */
 
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Net;
 
@@ -67,6 +66,8 @@ namespace MarsMiner.Shared.Networking
 
         public double TimeOutDelay;
         public double AliveCheckPeriod;
+
+        public bool IsConnected { get; private set; }
 
         public byte AuthLevel { get; protected set; }
 
@@ -143,7 +144,7 @@ namespace MarsMiner.Shared.Networking
 
         protected virtual void OnReceivePacket()
         {
-            throw new NotImplementedException();
+            return;
         }
 
         public virtual Stream StartPacket( String typeName )
@@ -180,11 +181,12 @@ namespace MarsMiner.Shared.Networking
 
         protected virtual void OnConnect()
         {
-
+            IsConnected = true;
         }
 
         protected virtual void OnDisconnect( DisconnectReason reason, String comment )
         {
+            IsConnected = false;
             return;
         }
 

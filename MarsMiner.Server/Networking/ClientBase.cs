@@ -18,9 +18,6 @@
  */
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.IO;
 
 using MarsMiner.Shared.Networking;
@@ -123,6 +120,7 @@ namespace MarsMiner.Server.Networking
                 writer.Write( t.Name );
                 writer.Write( t.ID );
             }
+            SendPacket();
         }
 
         protected bool OnReceivePacketDictionary( Stream stream )
@@ -208,13 +206,8 @@ namespace MarsMiner.Server.Networking
                 return false;
             }
 
-            if ( GameServer.ClientCount >= GameServer.SlotCount )
-            {
-                SendDisconnect( DisconnectReason.ServerFull );
-                return false;
-            }
-
             SendHandshake();
+            SendPacketDictionary();
             return true;
         }
     }

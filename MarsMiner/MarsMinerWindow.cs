@@ -32,11 +32,19 @@ using MarsMiner.Shared;
 using MarsMiner.Shared.Geometry;
 using MarsMiner.Client.Graphics;
 using MarsMiner.Client.UI;
+using MarsMiner.Client.Networking;
+using MarsMiner.Server.Networking;
 
 namespace MarsMiner
 {
     class MarsMinerWindow : GameWindow
     {
+        private GameServer myLocalServer;
+        private GameClient myLocalClient;
+
+        private Thread myServerThread;
+        private Thread myClientThread;
+
         private SpriteShader mySpriteShader;
         private UIObject myUIRoot;
 
@@ -47,10 +55,12 @@ namespace MarsMiner
 
         private Stopwatch myFrameTimer;
 
+        /*
         private World myTestWorld;
 
         private GeometryShader myGeoShader;
         private List<ChunkRenderer> myGeoRenderers;
+        */
 
         private bool myIgnoreMouse;
         private bool myCaptureMouse;
@@ -77,6 +87,22 @@ namespace MarsMiner
             Plugin.Register( "MarsMiner.Shared.CorePlugin", true, true );
             Plugin.Register( "MarsMiner.Shared.MarsMinerPlugin", true, true );
 
+            ServerBuilder sb = new ServerBuilder
+            {
+                Name = "Local Server",
+                Password = null,
+                SlotCount = 1
+            };
+
+            myLocalServer = new GameServer( sb );
+            myServerThread = new Thread( myLocalServer.Run );
+            myServerThread.Start();
+
+            myLocalClient = new GameClient();
+            myLocalClient.ConnectLocal();
+            myClientThread = new Thread( myLocalClient.Run );
+            myClientThread.Start();
+
             mySpriteShader = new SpriteShader( Width, Height );
             myUIRoot = new UIObject( new Vector2( Width, Height ) );
 
@@ -88,6 +114,7 @@ namespace MarsMiner
             Mouse.ButtonUp += OnMouseButtonEvent;
             Mouse.ButtonDown += OnMouseButtonEvent;
 
+            /*
             myTestWorld = new World();
 
             myGeoShader = new GeometryShader( Width, Height );
@@ -102,12 +129,14 @@ namespace MarsMiner
             myTestWorld.Generate( 1024, 1024, 4 );
 
             myGeoShader.CameraPosition = new Vector3( 0.0f, 1024.0f, 0.0f );
+            */
 
             GL.ClearColor( new Color4( 223, 186, 168, 255 ) );
 
             myFrameTimer.Start();
         }
 
+        /*
         private void OnChunkEvent( object sender, ChunkEventArgs e )
         {
             if ( myClosing )
@@ -133,18 +162,21 @@ namespace MarsMiner
                     renderer.UpdateVertices( myGeoShader );
             }
         }
+        */
 
         protected override void OnRenderFrame( FrameEventArgs e )
         {
             GL.Clear( ClearBufferMask.ColorBufferBit );
             GL.Clear( ClearBufferMask.DepthBufferBit );
             
+            /*
             myGeoShader.StartBatch();
             Monitor.Enter( myGeoRenderers );
             foreach( ChunkRenderer renderer in myGeoRenderers )
                 renderer.Render( myGeoShader );
             Monitor.Exit( myGeoRenderers );
             myGeoShader.EndBatch();
+            */
 
             mySpriteShader.Begin();
             myUIRoot.Render( mySpriteShader );
@@ -170,6 +202,7 @@ namespace MarsMiner
                 myFPSText.Text = string.Format("FT: {0:F}ms FPS: {1:F} MEM: {2:F}MB", period, freq, Process.GetCurrentProcess().PrivateMemorySize64 / ( 1024d * 1024d ) );
             }
 
+            /*
             Vector3 movement = new Vector3( 0.0f, 0.0f, 0.0f );
             float angleY = myGeoShader.CameraRotation.Y;
             float angleX = myGeoShader.CameraRotation.X;
@@ -202,6 +235,7 @@ namespace MarsMiner
                 movement.Normalize();
                 myGeoShader.CameraPosition = myGeoShader.CameraPosition + movement;
             }
+            */
         }
 
         protected override void OnKeyPress( KeyPressEventArgs e )
@@ -213,7 +247,9 @@ namespace MarsMiner
                     break;
                 case 'l':
                 case 'L':
+                    /*
                     myGeoShader.LineMode = !myGeoShader.LineMode;
+                    */
                     break;
             }
 
@@ -233,6 +269,7 @@ namespace MarsMiner
 
             if ( myCaptureMouse )
             {
+                /*
                 Vector2 rot = myGeoShader.CameraRotation;
 
                 rot.Y += e.XDelta / 180.0f;
@@ -243,6 +280,7 @@ namespace MarsMiner
 
                 myIgnoreMouse = true;
                 System.Windows.Forms.Cursor.Position = new System.Drawing.Point( Bounds.Left + Width / 2, Bounds.Top + Height / 2 );
+                */
             }
             else
             {
@@ -259,12 +297,17 @@ namespace MarsMiner
         {
             myClosing = true;
 
+            myLocalClient.Stop();
+            myLocalServer.Stop();
+
+            /*
             myTestWorld.StopGenerator();
 
             Monitor.Enter( myGeoRenderers );
             foreach ( ChunkRenderer renderer in myGeoRenderers )
                 renderer.Dispose();
             Monitor.Exit( myGeoRenderers );
+            */
 
             base.Dispose();
         }

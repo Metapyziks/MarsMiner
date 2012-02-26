@@ -19,8 +19,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.IO;
 
 using MarsMiner.Shared.Networking;
@@ -126,6 +124,13 @@ namespace MarsMiner.Client.Networking
             return StartPacket( PacketManager.GetType( typeName ) );
         }
 
+        protected override void OnConnect()
+        {
+            base.OnConnect();
+
+            SendHandshake();
+        }
+
         public void SendPacketDictionary()
         {
             StartPacket( PTPacketDictionary );
@@ -151,6 +156,7 @@ namespace MarsMiner.Client.Networking
                 }
             }
 
+            SendPacketDictionary();
             return true;
         }
 
@@ -218,7 +224,10 @@ namespace MarsMiner.Client.Networking
         protected bool OnReceiveHandshake( Stream stream )
         {
             BinaryReader reader = new BinaryReader( stream );
-            Password = reader.ReadString();
+            Name = reader.ReadString();
+            bool passwordRequired = reader.ReadBoolean();
+            int slotCount = reader.ReadInt32();
+            int clientCount = reader.ReadInt32();
 
             return true;
         }

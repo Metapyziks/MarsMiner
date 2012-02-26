@@ -17,10 +17,6 @@
  * along with MarsMiner. If not, see <http://www.gnu.org/licenses/>.
  */
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Net;
 using System.IO;
 
@@ -52,11 +48,6 @@ namespace MarsMiner.Server.Networking
                 ReadPacket( str );
                 LocalConnection.EndReadingClientToServerPacket();
             }
-        }
-
-        protected override bool ReadPacket( Stream stream )
-        {
-            return base.ReadPacket( stream );
         }
 
         public override Stream StartPacket( PacketType type )

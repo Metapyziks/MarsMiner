@@ -58,6 +58,10 @@
       <Project>{6573E3AB-152E-496F-BB4A-73D2DBB24F10}</Project>
       <Name>MarsMiner.Client</Name>
     </ProjectReference>
+    <ProjectReference Include="..\MarsMiner.Server\MarsMiner.Server.csproj">
+      <Project>{2D18BBCC-6709-4AD9-B149-AE80F745C497}</Project>
+      <Name>MarsMiner.Server</Name>
+    </ProjectReference>
     <ProjectReference Include="..\MarsMiner.Shared\MarsMiner.Shared.csproj">
       <Project>{C1D7DBA4-8025-40FB-91AF-D8244DB9EB2B}</Project>
       <Name>MarsMiner.Shared</Name>
