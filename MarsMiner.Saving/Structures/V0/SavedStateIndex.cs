@@ -72,7 +72,11 @@ namespace MarsMiner.Saving.Structures.V0
 
         public override BlockStructure[] ReferencedBlocks
         {
-            get { return new BlockStructure[] { ChunkTable }; }
+            get
+            {
+                Load();
+                return new BlockStructure[] { ChunkTable };
+            }
         }
 
         protected override void ReadData(BinaryReader reader)

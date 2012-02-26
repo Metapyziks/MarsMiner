@@ -23,75 +23,57 @@ using MarsMiner.Saving.Common;
 
 namespace MarsMiner.Saving.Structures.V0
 {
-    public sealed class Header : BlockStructure, IHeader
+    public sealed class ByteArray : BlockStructure
     {
-        public const int Version = 0;
-        private SavedStateIndex _saveIndex;
+        private byte[] _data;
 
-// Invoked via reflection
-// ReSharper disable UnusedMember.Global
-        internal Header(GameSave gameSave)
-// ReSharper restore UnusedMember.Global
-            : base(gameSave, new Tuple<int, uint>(0, 0))
+        internal ByteArray(GameSave gameSave, Tuple<int, uint> address) : base(gameSave, address)
         {
         }
 
-        public Header(GameSave gameSave, SavedStateIndex saveIndex)
-            : base(gameSave)
+        public ByteArray(GameSave gameSave, byte[] data) : base(gameSave)
         {
-            Address = new Tuple<int, uint>(0, 0);
-            SaveIndex = saveIndex;
-
-            UpdateLength();
+            _data = new byte[data.Length];
+            data.CopyTo(_data, 0);
         }
 
-        public SavedStateIndex SaveIndex
+        public byte[] Data
         {
             get
             {
                 Load();
-                return _saveIndex;
+                var data = new byte[_data.Length];
+                _data.CopyTo(data, 0);
+                return data;
             }
-            private set { _saveIndex = value; }
         }
 
         public override BlockStructure[] ReferencedBlocks
         {
-            get
-            {
-                Load();
-                return new BlockStructure[] { SaveIndex };
-            }
+            get { return new BlockStructure[0]; }
         }
 
         protected override void ReadData(BinaryReader reader)
         {
-            int version = reader.ReadInt32();
-            if (version != Version)
-            {
-                throw new InvalidDataException("Expected file version " + Version + ", was " + version + ".");
-            }
-
-            uint saveIndexPointer = reader.ReadUInt32();
-
-            SaveIndex = new SavedStateIndex(GameSave, GameSave.ResolvePointer(Address.Item1, saveIndexPointer));
+            int length = reader.ReadInt32();
+            _data = reader.ReadBytes(length);
         }
 
         protected override void ForgetData()
         {
-            SaveIndex = null;
+            _data = null;
         }
 
         protected override void WriteData(BinaryWriter writer)
         {
-            writer.Write(Version);
-            writer.Write(GameSave.FindBlockPointer(this, SaveIndex));
+            writer.Write(_data.Length);
+            writer.Write(_data);
         }
 
         protected override void UpdateLength()
         {
-            Length = 4 // Version
-                     + 4; // SaveIndex;
+            Length = 4 // data length
+                     + _data.Length; // data
         }
     }
 }

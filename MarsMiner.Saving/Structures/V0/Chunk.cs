@@ -63,6 +63,7 @@ namespace MarsMiner.Saving.Structures.V0
         {
             get
             {
+                Load();
                 var referencedBlocks = new BlockStructure[Octrees.Length + 1];
                 referencedBlocks[0] = BlockTypeTable;
                 Octrees.CopyTo(referencedBlocks, 1);

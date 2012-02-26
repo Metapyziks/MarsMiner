@@ -64,7 +64,7 @@ namespace MarsMiner.Saving.Structures.V0
 
         public override BlockStructure[] ReferencedBlocks
         {
-            get { return new BlockStructure[] { }; }
+            get { return new BlockStructure[0]; }
         }
 
         protected override void ReadData(BinaryReader reader)

@@ -64,7 +64,11 @@ namespace MarsMiner.Saving.Structures.V0
 
         public override BlockStructure[] ReferencedBlocks
         {
-            get { return new BlockStructure[] { }; }
+            get
+            {
+                Load();
+                return new BlockStructure[] { };
+            }
         }
 
         protected override void UpdateLength()
