@@ -26,18 +26,23 @@ using MarsMiner.Saving.Common;
 
 namespace MarsMiner.Saving.Structures.V0
 {
-    public sealed class StringBlockStructureDictionary<TValue> : BlockStructure where TValue : BlockStructure
+    public sealed class StringBlockBlockStructureDictionary<TValue> : BlockStructure where TValue : BlockStructure
     {
-        private KeyValuePair<string, TValue>[] _keyValuePairs;
+        private KeyValuePair<StringBlock, TValue>[] _keyValuePairs;
 
-        internal StringBlockStructureDictionary(GameSave gameSave, Tuple<int, uint> address) : base(gameSave, address)
+        internal StringBlockBlockStructureDictionary(GameSave gameSave, Tuple<int, uint> address) : base(gameSave, address)
         {
         }
 
-        public StringBlockStructureDictionary(GameSave gameSave, IEnumerable<KeyValuePair<string, TValue>> keyValuePairs)
+        public StringBlockBlockStructureDictionary(GameSave gameSave, IEnumerable<KeyValuePair<StringBlock, TValue>> keyValuePairs)
             : base(gameSave)
         {
             _keyValuePairs = keyValuePairs.ToArray();
+        }
+
+        public StringBlockBlockStructureDictionary(GameSave gameSave, IEnumerable<KeyValuePair<string, TValue>> keyValuePairs)
+            : this(gameSave, keyValuePairs.Select(kv => new KeyValuePair<StringBlock, TValue>(new StringBlock(gameSave, kv.Key), kv.Value)))
+        {
         }
 
         public Dictionary<string, TValue> Dictionary
@@ -45,7 +50,7 @@ namespace MarsMiner.Saving.Structures.V0
             get
             {
                 Load();
-                return _keyValuePairs.ToDictionary(kv => kv.Key, kv => kv.Value);
+                return _keyValuePairs.ToDictionary(kv => kv.Key.Value, kv => kv.Value);
             }
         }
 
@@ -54,14 +59,14 @@ namespace MarsMiner.Saving.Structures.V0
             get
             {
                 Load();
-                return _keyValuePairs.Select(kv => kv.Value).ToArray<BlockStructure>();
+                return _keyValuePairs.SelectMany(kv => new BlockStructure[]{kv.Key, kv.Value}).ToArray();
             }
         }
 
         protected override void ReadData(BinaryReader reader)
         {
             var length = reader.ReadInt32();
-            _keyValuePairs = new KeyValuePair<string, TValue>[length];
+            _keyValuePairs = new KeyValuePair<StringBlock, TValue>[length];
 
             ConstructorInfo blockConstructorInfo =
                 typeof(TValue).GetConstructor(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance,
@@ -72,9 +77,9 @@ namespace MarsMiner.Saving.Structures.V0
 
             for (int i = 0; i < length; i++)
             {
-                var key = GameSave.ResolveString(reader.ReadUInt32());
+                var key = new StringBlock(GameSave, GameSave.ResolvePointer(Address.Item1, reader.ReadUInt32()));
                 var value = (TValue)(blockConstructorInfo.Invoke(new object[] { GameSave, GameSave.ResolvePointer(Address.Item1, reader.ReadUInt32()) }));
-                _keyValuePairs[i] = new KeyValuePair<string, TValue>(key, value);
+                _keyValuePairs[i] = new KeyValuePair<StringBlock, TValue>(key, value);
             }
         }
 
@@ -88,7 +93,7 @@ namespace MarsMiner.Saving.Structures.V0
             writer.Write(_keyValuePairs.Length);
             foreach (var keyValuePair in _keyValuePairs)
             {
-                writer.Write(GameSave.FindStringAddress(keyValuePair.Key));
+                writer.Write(GameSave.FindBlockPointer(this, keyValuePair.Key));
                 writer.Write(GameSave.FindBlockPointer(this, keyValuePair.Value));
             }
         }

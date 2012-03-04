@@ -27,7 +27,7 @@
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRACE;AssertBlockLength</DefineConstants>
+    <DefineConstants>TRACE;AssertBlockLength DebugVerboseSpace DebugDrawUsedSpace</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
@@ -47,6 +47,7 @@
     <Compile Include="Structures\V0\ChunkTable.cs" />
     <Compile Include="Structures\V0\Header.cs" />
     <Compile Include="Structures\V0\SavedStateIndex.cs" />
+    <Compile Include="Structures\V0\StringBlock.cs" />
     <Compile Include="Structures\V0\StringBlockStructureDictionary.cs" />
     <Compile Include="Test\Tests.cs" />
     <Compile Include="Util\Extensions.cs" />

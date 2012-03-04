@@ -26,14 +26,15 @@ namespace MarsMiner.Saving.Structures.V0
     public sealed class SavedStateIndex : BlockStructure
     {
         private ChunkTable _chunkTable;
-        private string _saveName;
+        private StringBlock _saveName;
         private long _timestamp;
 
-        internal SavedStateIndex(GameSave gameSave, Tuple<int, uint> address) : base(gameSave, address)
+        internal SavedStateIndex(GameSave gameSave, Tuple<int, uint> address)
+            : base(gameSave, address)
         {
         }
 
-        public SavedStateIndex(GameSave gameSave, long timestamp, string saveName, ChunkTable chunkTable)
+        public SavedStateIndex(GameSave gameSave, long timestamp, StringBlock saveName, ChunkTable chunkTable)
             : base(gameSave)
         {
             _timestamp = timestamp;
@@ -52,7 +53,7 @@ namespace MarsMiner.Saving.Structures.V0
             }
         }
 
-        public string SaveName
+        public StringBlock SaveName
         {
             get
             {
@@ -75,17 +76,17 @@ namespace MarsMiner.Saving.Structures.V0
             get
             {
                 Load();
-                return new BlockStructure[] { ChunkTable };
+                return new BlockStructure[] { SaveName, ChunkTable };
             }
         }
 
         protected override void ReadData(BinaryReader reader)
         {
             _timestamp = reader.ReadInt64();
-            uint saveNameAddress = reader.ReadUInt32();
+            uint saveNamePointer = reader.ReadUInt32();
             uint chunkTablePointer = reader.ReadUInt32();
 
-            _saveName = GameSave.ResolveString(saveNameAddress);
+            _saveName = new StringBlock(GameSave, GameSave.ResolvePointer(Address.Item1, saveNamePointer));
             _chunkTable = new ChunkTable(GameSave, GameSave.ResolvePointer(Address.Item1, chunkTablePointer));
         }
 
@@ -98,7 +99,7 @@ namespace MarsMiner.Saving.Structures.V0
         protected override void WriteData(BinaryWriter writer)
         {
             writer.Write(_timestamp);
-            writer.Write(GameSave.FindStringAddress(_saveName));
+            writer.Write(GameSave.FindBlockPointer(this, _saveName));
             writer.Write(GameSave.FindBlockPointer(this, _chunkTable));
         }
 
