@@ -136,22 +136,16 @@ namespace MarsMiner.Saving
 
         internal void BindBlock(BlockStructure blockStructure)
         {
-            if (blockStructure.Address != null)
-            {
-                throw new ArgumentException("blockStructure.Address already set!");
-            }
-
-            int blockLength = blockStructure.Length;
-
             Tuple<int, Tuple<int, int>> bestMatch = null;
 
             for (int fileIndex = 0; fileIndex < _freeSpace.Length; fileIndex++)
             {
+                blockStructure.Address = new Tuple<int, uint>(fileIndex, 0); // Dummy address for length calculation
                 foreach (var freeArea in _freeSpace[fileIndex].Items)
                 {
                     int freeAreaLength = freeArea.Item2 - freeArea.Item1;
 
-                    if (freeAreaLength < blockLength)
+                    if (freeAreaLength < blockStructure.Length)
                     {
                         continue;
                     }
@@ -169,7 +163,7 @@ namespace MarsMiner.Saving
                 //Resize to fit block
                 bestMatch = new Tuple<int, Tuple<int, int>>(bestMatch.Item1,
                                                             new Tuple<int, int>(bestMatch.Item2.Item1,
-                                                                                bestMatch.Item2.Item1 + blockLength));
+                                                                                bestMatch.Item2.Item1 + blockStructure.Length));
             }
 
             if (bestMatch == null)
@@ -178,13 +172,14 @@ namespace MarsMiner.Saving
                 {
                     if (_blobFiles[fileIndex].Length < MaximumBlockStartAddress)
                     {
+                        blockStructure.Address = new Tuple<int, uint>(fileIndex, 0); // Dummy address for length calculation
                         bestMatch = new Tuple<int, Tuple<int, int>>(
                             fileIndex,
                             new Tuple<int, int>(
                                 (int) _blobFiles[fileIndex].Length,
-                                (int) _blobFiles[fileIndex].Length + blockLength));
+                                (int) _blobFiles[fileIndex].Length + blockStructure.Length));
 
-                        _blobFiles[fileIndex].SetLength(_blobFiles[fileIndex].Length + blockLength);
+                        _blobFiles[fileIndex].SetLength(_blobFiles[fileIndex].Length + blockStructure.Length);
 
                         break;
                     }
@@ -194,16 +189,17 @@ namespace MarsMiner.Saving
             if (bestMatch == null)
             {
                 int newBlobIndex = AddNewBlob();
+                blockStructure.Address = new Tuple<int, uint>(newBlobIndex, 0); // Dummy address for length calculation
 
                 bestMatch = new Tuple<int, Tuple<int, int>>(newBlobIndex,
                                                             new Tuple<int, int>(
                                                                 (int) _blobFiles[newBlobIndex].Length,
-                                                                (int) _blobFiles[newBlobIndex].Length + blockLength));
+                                                                (int) _blobFiles[newBlobIndex].Length + blockStructure.Length));
             }
 
-            if (bestMatch.Item2.Item2 - bestMatch.Item2.Item1 != blockLength)
+            if (bestMatch.Item2.Item2 - bestMatch.Item2.Item1 != blockStructure.Length)
             {
-                throw new Exception("Area mismatch! Wanted" + blockLength + "bytes, but got " +
+                throw new Exception("Area mismatch! Wanted" + blockStructure.Length + "bytes, but got " +
                                     (bestMatch.Item2.Item2 - bestMatch.Item2.Item1) + " bytes.");
             }
 

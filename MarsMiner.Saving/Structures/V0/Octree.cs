@@ -40,8 +40,6 @@ namespace MarsMiner.Saving.Structures.V0
         {
             _octreeFlags = octreeFlags;
             _octreeValues = octreeValues;
-
-            UpdateLength();
         }
 
         public BitArray OctreeFlags

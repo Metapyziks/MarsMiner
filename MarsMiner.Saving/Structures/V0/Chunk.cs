@@ -21,7 +21,6 @@ using System;
 using System.IO;
 using System.Linq;
 using MarsMiner.Saving.Common;
-using MarsMiner.Saving.Util;
 
 namespace MarsMiner.Saving.Structures.V0
 {
@@ -38,8 +37,6 @@ namespace MarsMiner.Saving.Structures.V0
         {
             _blockTypeTable = blockTypeTable;
             _octrees = octrees;
-
-            UpdateLength();
         }
 
         public BlockTypeTable BlockTypeTable
@@ -103,9 +100,9 @@ namespace MarsMiner.Saving.Structures.V0
 
         protected override void UpdateLength()
         {
-            Length = 8 // blockTypeTable
+            Length = GetAddressLength(BlockTypeTable.Address) // blockTypeTable
                      + 1 // octreeCount
-                     + 8 * Octrees.Length; // octrees
+                     + Octrees.Select(o => GetAddressLength(o.Address)).Sum(); // octrees
         }
     }
 }

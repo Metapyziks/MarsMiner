@@ -46,8 +46,6 @@ namespace MarsMiner.Saving.Structures.V0
             _xLocations = xLocations;
             _zLocations = zLocations;
             _chunks = chunks;
-
-            UpdateLength();
         }
 
         public ChunkTable(GameSave gameSave, Tuple<int, int, Chunk>[] chunks)
@@ -111,10 +109,9 @@ namespace MarsMiner.Saving.Structures.V0
         protected override void UpdateLength()
         {
             Length = 4 //chunk count
-                     + _chunks.Length *
-                     (4 // xLocation
+                     + _chunks.Select(c => 4 // xLocation
                       + 4 // yLocation
-                      + 8); // chunk
+                      + GetAddressLength(c.Address)).Sum(); // chunk
         }
     }
 }

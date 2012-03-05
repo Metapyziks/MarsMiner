@@ -42,8 +42,6 @@ namespace MarsMiner.Saving.Structures.V0
         {
             Address = new Tuple<int, uint>(0, 0);
             SaveIndex = saveIndex;
-
-            UpdateLength();
         }
 
         public SavedStateIndex SaveIndex
@@ -90,7 +88,7 @@ namespace MarsMiner.Saving.Structures.V0
         protected override void UpdateLength()
         {
             Length = 4 // Version
-                     + 8; // SaveIndex;
+                     + GetAddressLength(SaveIndex.Address); // SaveIndex;
         }
     }
 }

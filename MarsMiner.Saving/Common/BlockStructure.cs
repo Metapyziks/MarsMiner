@@ -27,10 +27,14 @@ namespace MarsMiner.Saving.Common
 {
     public abstract class BlockStructure
     {
+        private const uint AddressMask = 0x7FFFFFFF;
+        private const uint GlobalAddressFlag = 0x80000000;
+
         /// <summary>
         /// The GameSave instance this block is attached to.
         /// </summary>
         protected readonly GameSave GameSave;
+
         private Tuple<int, uint> _address;
         private int? _length;
         private Dictionary<int, IntRangeList> _recursiveUsedSpace;
@@ -72,14 +76,22 @@ namespace MarsMiner.Saving.Common
         /// </summary>
         public Tuple<int, uint> Address
         {
-            get { return _address; }
+            get
+            {
+                if (_address == null)
+                {
+                    GameSave.BindBlock(this);
+                }
+                return _address;
+            }
             set
             {
-                if (_address != null)
+                if (_address != null && Address.Item2 != 0) // Allow overwriting dummy addresses
                 {
                     throw new InvalidOperationException("Tried to set Address more than once.");
                 }
                 _address = value;
+                _length = null; // Reset length for blocks with pointers.
             }
         }
 
@@ -110,9 +122,21 @@ namespace MarsMiner.Saving.Common
             {
                 if (_length == null)
                 {
-                    throw new InvalidOperationException("Length isn't set.");
+                    bool loaded = Loaded;
+                    if (!loaded)
+                    {
+                        Load();
+                    }
+                    UpdateLength();
+                    if (!loaded)
+                    {
+                        Unload();
+                    }
                 }
-
+                if (_length == null)
+                {
+                    throw new Exception(string.Format("Length wasn't updated in {0}.", GetType()));
+                }
                 return _length.Value;
             }
             protected set { _length = value; }
@@ -192,7 +216,7 @@ namespace MarsMiner.Saving.Common
             }
 
 #if DebugVerboseBlocks
-            Console.WriteLine("Reading {0} from {1}", GetType(), source);
+            Console.WriteLine("Reading {0} from {1}", GetType(), Address);
 #endif
 
             Stream stream = GameSave.GetBlobFile(_address.Item1);
@@ -206,7 +230,8 @@ namespace MarsMiner.Saving.Common
             UpdateLength();
 
 #if DebugVerboseBlocks
-            Console.WriteLine("Read {0} from {1} to {2} == {3}", GetType(), Address, Address.Item2 + Length, stream.Position);
+            Console.WriteLine("Read {0} from {1} to {2} == {3}", GetType(), Address, Address.Item2 + Length,
+                              stream.Position);
 #endif
 #if AssertBlockLength
             if (Address.Item2 + Length != stream.Position)
@@ -259,9 +284,10 @@ namespace MarsMiner.Saving.Common
         /// </param>
         public void Write(bool unload)
         {
-            if (!Bound)
+            foreach (BlockStructure block in ReferencedBlocks.Where(block => block.Written == false))
             {
-                GameSave.BindBlock(this);
+                block.Write(false);
+                // Don't unload referenced blocks. If unload is true, the reference is lost anyway, unless they are used somewhere else.
             }
 
             if (Written)
@@ -269,16 +295,15 @@ namespace MarsMiner.Saving.Common
                 return;
             }
 
+            if (!Bound)
+            {
+                GameSave.BindBlock(this);
+            }
+
             if (!Loaded)
             {
                 // This shouldn't happen
                 throw new InvalidOperationException("Tried to write unwritten, unloaded block.");
-            }
-
-            foreach (BlockStructure block in ReferencedBlocks.Where(block => block.Written == false))
-            {
-                block.Write(false);
-                // Don't unload referenced blocks. If unload is true, the reference is lost anyway, unless they are used somewhere else.
             }
 
             Stream stream = GameSave.GetBlobFile(_address.Item1);
@@ -335,15 +360,33 @@ namespace MarsMiner.Saving.Common
         /// </summary>
         protected abstract void UpdateLength();
 
-        protected static void WriteAddress(BinaryWriter writer, Tuple<int, uint> tuple)
+        protected void WriteAddress(BinaryWriter writer, Tuple<int, uint> tuple)
         {
-            writer.Write(tuple.Item1);
-            writer.Write(tuple.Item2);
+            if (Address.Item1 == tuple.Item1 && tuple.Item2 < int.MaxValue)
+            {
+                writer.Write(AddressMask & tuple.Item2);
+            }
+            else
+            {
+                writer.Write(GlobalAddressFlag | tuple.Item1);
+                writer.Write(tuple.Item2);
+            }
         }
 
-        protected static Tuple<int, uint> ReadAddress(BinaryReader reader)
+        protected Tuple<int, uint> ReadAddress(BinaryReader reader)
         {
-            return new Tuple<int, uint>(reader.ReadInt32(), reader.ReadUInt32());
+            uint firstPart = reader.ReadUInt32();
+            if ((firstPart & GlobalAddressFlag) == 0)
+            {
+                return new Tuple<int, uint>(Address.Item1, firstPart);
+            }
+
+            return new Tuple<int, uint>((int) (AddressMask & firstPart), reader.ReadUInt32());
+        }
+
+        protected int GetAddressLength(Tuple<int, uint> target)
+        {
+            return (Address.Item1 == target.Item1 && target.Item2 < int.MaxValue) ? 4 : 8;
         }
     }
 }

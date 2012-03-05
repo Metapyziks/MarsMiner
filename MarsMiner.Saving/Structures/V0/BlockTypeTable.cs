@@ -21,7 +21,6 @@ using System;
 using System.IO;
 using System.Linq;
 using MarsMiner.Saving.Common;
-using MarsMiner.Saving.Util;
 
 namespace MarsMiner.Saving.Structures.V0
 {
@@ -45,8 +44,6 @@ namespace MarsMiner.Saving.Structures.V0
 
             _blockTypeNames = blockTypeNames;
             _blockSubTypes = blockSubTypes;
-
-            UpdateLength();
         }
 
         public BlockTypeTable(GameSave gameSave, Tuple<StringBlock, int>[] blockTypes)
@@ -81,10 +78,10 @@ namespace MarsMiner.Saving.Structures.V0
 
         protected override void UpdateLength()
         {
+            // Not the same order as on disk!
             Length = 2 // block type count
-                     + _blockTypeNames.Length *
-                     (8 // block type name
-                     + 4); // subtype
+                     + _blockTypeNames.Select(btn => 4 // subtype
+                                                     + GetAddressLength(btn.Address)).Sum(); // block type names
         }
 
         protected override void ReadData(BinaryReader reader)

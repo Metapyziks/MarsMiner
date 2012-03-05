@@ -39,8 +39,6 @@ namespace MarsMiner.Saving.Structures.V0
             : base(gameSave)
         {
             _value = value;
-
-            UpdateLength();
         }
 
         public override BlockStructure[] ReferencedBlocks

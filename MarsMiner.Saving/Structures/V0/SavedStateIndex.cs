@@ -41,8 +41,6 @@ namespace MarsMiner.Saving.Structures.V0
             _timestamp = timestamp;
             _saveName = saveName;
             _chunkTable = chunkTable;
-
-            UpdateLength();
         }
 
         public long Timestamp
@@ -105,8 +103,8 @@ namespace MarsMiner.Saving.Structures.V0
         protected override void UpdateLength()
         {
             Length = 8 // timestamp
-                     + 8 // saveName
-                     + 8; // chunkTable
+                     + GetAddressLength(SaveName.Address) // saveName
+                     + GetAddressLength(ChunkTable.Address); // chunkTable
         }
     }
 }

@@ -102,9 +102,8 @@ namespace MarsMiner.Saving.Structures.V0
         protected override void UpdateLength()
         {
             Length = 4 // Length
-                     + _keyValuePairs.Length *
-                     (8 // string block address
-                      + 8); // block address
+                     + _keyValuePairs.Select(kv => GetAddressLength(kv.Key.Address) // string block address
+                      + kv.Value.Length).Sum(); // block address
         }
     }
 }
