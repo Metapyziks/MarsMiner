@@ -4,16 +4,6 @@ Most block structures can appear anywhere in the file.
 
 Embedded structures are always part of block structures and don't have any prefix.
 
-StringBlock (block structure, variable length)
-----------------------------------------------
-int32				Length of the string in bytes or -1 if the string is null
-Utf-8 string		The string data
-
-Pointer (embedded structure, fixed length)
-----------------------------
-int32				Destination blob file index
-uint32				Destination address
-
 Save Blob
 =========
 
@@ -25,38 +15,48 @@ Header (always at 0) (block structure, fixed length)
 int								Version
 Pointer<SavedStateIndex>		Pointer to saved state index
 
+StringBlock (block structure, variable length)
+----------------------------------------------
+int32							Length of the string in bytes or -1 if the string is null
+Utf-8 string					The string data
+
+Pointer (embedded structure, fixed length)
+------------------------------------------
+int32							Destination blob file index
+uint32							Destination address
+
 SavedStateIndex (block structure, fixed length)
 -----------------------------------------------
-long						Timestamp in 100ns ticks since 12:00 midnight, January 1, 0001 in the GregorianCalendar calendar (excluding ticks that would be added by leap seconds) in UTC
-Pointer<String>				Save name
-Pointer<ChunkTable>			Pointer to chunk table
+long							Timestamp in 100ns ticks since 12:00 midnight, January 1, 0001 in the GregorianCalendar calendar (excluding ticks that would be added by leap seconds) in UTC
+Pointer<String>					Save name
+Pointer<ChunkTable>				Pointer to chunk table
 
 BlockTypeTable (block structure, variable length)
 -------------------------------------------------
-ushort					block type count
+ushort							Block type count
 for (block type count):
-	Pointer<String>		block type name
+	Pointer<String>				Block type name
 
 ChunkTable (block structure, variable length)
 ---------------------------------------------
-uint32				chunk count
+uint32							Chunk count
 for (chunk count):
-	int				X location
-	int				Z location
-	Pointer<Chunk>	pointer to chunk
+	int							X location
+	int							Z location
+	Pointer<Chunk>				Pointer to chunk
 
 Chunk (block structure, variable length)
 ----------------------------------------
-Pointer<BlockTypeTable>	Pointer to block type table		// This is here so chunks can have different block tables.
+Pointer<BlockTypeTable>			Pointer to block type table		// This is here so chunks can have different block tables.
 														// It doesn't make much difference with less than 256 ids, but with more its possible to compress octree value lists to roughly half the size if the id distribution is uneven.
-byte					octree count
+byte							Octree count
 for (octree count):
-	Pointer<Octree>
+	Pointer<Octree>				Pointer to octree
 
 Octree (block structure, variable length)
 -----------------------------------------
-uint32					OctreeFlags length in bytes
-uint32					OctreeValueList length in bytes
+uint32							OctreeFlags length in bytes
+uint32							OctreeValueList length in bytes
 OctreeFlags
 OctreeValueList
 
@@ -65,14 +65,19 @@ OctreeFlags (embedded structure, variable length)
 // A bitmap that stores the node status.
 // The order is breadth-first with {lbf, lbb, ltf, ltb, rbf, rbb, rtf, rtb} for child order and padded to the next byte
 while (!finished):
-	bool (1 bit)		HasChildren
-	bool (1 bit)		HasLargeValue
+	bool (1 bit)				HasChildren
+	bool (1 bit)				HasLargeValue
 padding to next full byte
 
 OctreeValueList (embedded structure, variable length)
 -----------------------------------------------------
 for (number of ones in octree bitmap):
 	if (HasLargeValue):
-		ushort			block id
+		ushort					Block id
 	else:
-		byte			block id
+		byte					Block id
+
+ByteArray (block structure, fixed length)
+-----------------------------------------
+int32							Length
+byte[length]					Data
