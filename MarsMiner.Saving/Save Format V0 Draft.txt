@@ -7,8 +7,8 @@ Embedded structures are always part of block structures and don't have any prefi
 Save Blob
 =========
 
-Header (always at 0) (block structure, fixed length)
-------------------------------------------------------------------------
+Header (always at 0) (block structure, variable length)
+-------------------------------------------------------
 // Saving updates the header after a write barrier, wich makes saves transactional:
 // If the save completes, the load method uses the new main index, if it crashes the old main index still points to the old valid saved state.
 // The saves should be impossible to corrupt this way, unless the file itself is corrupted.
@@ -20,8 +20,8 @@ StringBlock (block structure, variable length)
 int32							Length of the string in bytes or -1 if the string is null
 Utf-8 string					The string data
 
-Pointer (embedded structure, fixed length)
-------------------------------------------
+Pointer (embedded structure, variable length)
+---------------------------------------------
 1 bit							GlobalFlag
 if (GlobalFlag):
 	31 bit						Destination address
@@ -29,8 +29,8 @@ else:
 	31 bit						Destination blob file index
 	uint32						Destination address
 
-SavedStateIndex (block structure, fixed length)
------------------------------------------------
+SavedStateIndex (block structure, variable length)
+--------------------------------------------------
 long							Timestamp in 100ns ticks since 12:00 midnight, January 1, 0001 in the GregorianCalendar calendar (excluding ticks that would be added by leap seconds) in UTC
 Pointer<String>					Save name
 Pointer<ChunkTable>				Pointer to chunk table
