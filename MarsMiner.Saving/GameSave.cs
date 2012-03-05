@@ -40,36 +40,14 @@ namespace MarsMiner.Saving
 
         private const int MaximumBlockStartAddress = 100000000;
         //const int MaximumBlockStartAddress = 100; // for testing blob creation
-        private const uint NullPointer = 0;
 
-        private const uint GlobalPointerFlag = 0x80000000;
-        private const uint PointerDataMask = uint.MaxValue ^ GlobalPointerFlag;
-        private const int StringFileVersion = 0;
-        private const int PointerFileVersion = 0;
-
-        private FileStream _pointerFile;
-        private List<Tuple<int, uint>> _pointers;
-
-        private FileStream _stringFile;
-        private readonly Dictionary<uint, string> _stringsByAddress;
-        private readonly Dictionary<string, uint> _addressByString;
+        private const int HeaderLength = 12;
 
         private FileStream[] _blobFiles;
         private IntRangeList[] _freeSpace;
 
-        private GameSave()
-        {
-            _addressByString = new Dictionary<string, uint>();
-            _stringsByAddress = new Dictionary<uint, string>();
-        }
-
         internal void FlushFiles()
         {
-            UpdatePointerFileHeader();
-            UpdateStringFileHeader();
-
-            _pointerFile.Flush();
-            _stringFile.Flush();
             foreach (FileStream blobFile in _blobFiles)
             {
                 blobFile.Flush();
@@ -97,7 +75,7 @@ namespace MarsMiner.Saving
             for (int i = 0; i < _freeSpace.Length; i++)
             {
                 _freeSpace[i] = new IntRangeList();
-                _freeSpace[i] += new Tuple<int, int>(8, (int) _blobFiles[i].Length);
+                _freeSpace[i] += new Tuple<int, int>(HeaderLength, (int) _blobFiles[i].Length);
             }
 
             foreach (var kv in header.RecursiveUsedSpace)
@@ -113,15 +91,15 @@ namespace MarsMiner.Saving
 #if DebugVerboseSpace
         private void PrintUsedSpace()
         {
-            for (int b = 0; b < blobFiles.Length; b++)
+            for (int b = 0; b < _blobFiles.Length; b++)
             {
                 Console.Write("Blob {0}: ", b);
 
-                var fs = freeSpace[b];
+                IntRangeList fs = _freeSpace[b];
 
-                var max = blobFiles[b].Length;
+                long max = _blobFiles[b].Length;
 
-                var used = 0;
+                int used = 0;
 
 #if DebugDrawUsedSpace
                 for (int i = 0; i < max; i++)
@@ -151,129 +129,10 @@ namespace MarsMiner.Saving
                     }
                 }
 #endif
-                Console.WriteLine("Used ratio: {0}", (float)used / max);
+                Console.WriteLine("Used ratio: {0}", (float) used / max);
             }
         }
 #endif
-
-        internal Tuple<int, uint> ResolvePointer(int sourceBlob, uint pointer)
-        {
-            if ((pointer & GlobalPointerFlag) == 0)
-            {
-                return new Tuple<int, uint>(sourceBlob, pointer);
-            }
-            return _pointers[(int) (pointer & PointerDataMask)];
-        }
-
-        internal string ResolveString(uint address)
-        {
-            if (address == NullPointer)
-            {
-                return null;
-            }
-
-            string s;
-            if (_stringsByAddress.TryGetValue(address, out s))
-            {
-                return s;
-            }
-
-            _stringFile.Seek(address, SeekOrigin.Begin);
-            var r = new BinaryReader(_stringFile);
-
-            s = r.ReadString();
-
-            _addressByString[s] = address;
-            _stringsByAddress[address] = s;
-
-            return s;
-        }
-
-        private void UpdateStringFileHeader()
-        {
-            _stringFile.Seek(0, SeekOrigin.Begin);
-
-            var w = new BinaryWriter(_stringFile);
-            w.Write(StringFileVersion);
-            w.Write(_stringsByAddress.Count);
-        }
-
-        private void UpdatePointerFileHeader()
-        {
-            _pointerFile.Seek(0, SeekOrigin.Begin);
-
-            var w = new BinaryWriter(_pointerFile);
-            w.Write(PointerFileVersion);
-            w.Write(0); //Reserved
-        }
-
-        internal uint FindBlockPointer(BlockStructure source, BlockStructure target)
-        {
-            if (source.Address.Item1 == target.Address.Item1)
-            {
-#if DebugVerbosePointers
-                Console.WriteLine("Local: {0} → {1}", source.Address, target.Address);
-#endif
-                return target.Address.Item2;
-            }
-
-            for (int i = 0; i < _pointers.Count; i++)
-            {
-                if (_pointers[i] == target.Address)
-                {
-#if DebugVerbosePointers
-                    Console.WriteLine("Global {2}: {0} → {1}", source.Address, target.Address, i);
-#endif
-                    return GlobalPointerFlag | (uint) i;
-                }
-            }
-
-#if DebugVerbosePointers
-            Console.WriteLine("New global {2}: {0} → {1}", source.Address, target.Address, pointers.Count - 1);
-#endif
-            return GlobalPointerFlag | AddGlobalPointer(target.Address);
-        }
-
-        private uint AddGlobalPointer(Tuple<int, uint> target)
-        {
-            _pointers.Add(target);
-            _pointerFile.Seek(_pointerFile.Length, SeekOrigin.Begin);
-            var w = new BinaryWriter(_pointerFile);
-
-            w.Write(target.Item1);
-            w.Write(target.Item2);
-
-            return GlobalPointerFlag | (uint) (_pointers.Count - 1);
-        }
-
-        internal uint FindStringAddress(string s)
-        {
-            if (s == null)
-            {
-                return NullPointer;
-            }
-
-            uint address;
-            if (_addressByString.TryGetValue(s, out address))
-                return address;
-
-            return AddString(s);
-        }
-
-        private uint AddString(string s)
-        {
-            _stringFile.Seek(_stringFile.Length, SeekOrigin.Begin);
-
-            var address = (uint) _stringFile.Position;
-
-            var w = new BinaryWriter(_stringFile);
-            w.Write(s);
-
-            _stringsByAddress.Add(address, s);
-            _addressByString.Add(s, address);
-
-            return address;
-        }
 
         internal void BindBlock(BlockStructure blockStructure)
         {
@@ -367,7 +226,7 @@ namespace MarsMiner.Saving
                                                    FileAccess.ReadWrite, FileShare.None);
             newFreeSpace[newBlobIndex] = new IntRangeList();
 
-            newBlobFiles[newBlobIndex].Write(new byte[8], 0, 8);
+            newBlobFiles[newBlobIndex].Write(new byte[HeaderLength], 0, HeaderLength);
 
             _blobFiles = newBlobFiles;
             _freeSpace = newFreeSpace;
@@ -405,27 +264,16 @@ namespace MarsMiner.Saving
             var gameSave = new GameSave
                                {
                                    _path = path,
-                                   _stringFile =
-                                       File.Open(Path.Combine(path, "strings"), FileMode.CreateNew, FileAccess.ReadWrite,
-                                                 FileShare.None)
+                                   _blobFiles = new[]
+                                                    {
+                                                        File.Open(Path.Combine(path, "blob0"), FileMode.CreateNew,
+                                                                  FileAccess.ReadWrite,
+                                                                  FileShare.None)
+                                                    },
+                                   _freeSpace = new[] { new IntRangeList() }
                                };
 
-
-            gameSave._stringFile.Write(new byte[8], 0, 8);
-
-            gameSave._pointerFile = File.Open(Path.Combine(path, "pointers"), FileMode.CreateNew, FileAccess.ReadWrite,
-                                              FileShare.None);
-            gameSave._pointerFile.Write(new byte[8], 0, 8);
-            gameSave._pointers = new List<Tuple<int, uint>>();
-
-            gameSave._blobFiles = new[]
-                                      {
-                                          File.Open(Path.Combine(path, "blob0"), FileMode.CreateNew,
-                                                    FileAccess.ReadWrite,
-                                                    FileShare.None)
-                                      };
-            gameSave._freeSpace = new[] { new IntRangeList() };
-            gameSave._blobFiles[0].Write(new byte[8], 0, 8);
+            gameSave._blobFiles[0].Write(new byte[HeaderLength], 0, HeaderLength);
 
             return gameSave;
         }
@@ -446,21 +294,12 @@ namespace MarsMiner.Saving
                 throw new ArgumentException("Directory doesn't exist!");
             }
 
-            string stringsPath = Path.Combine(path, "strings");
-            string pointersPath = Path.Combine(path, "pointers");
             string blobsPath = Path.Combine(path, "blob");
 
             gameSave = new GameSave
                            {
-                               _path = path,
-                               _stringFile =
-                                   File.Open(stringsPath, FileMode.Open, FileAccess.ReadWrite, FileShare.None),
-                               _pointerFile =
-                                   File.Open(pointersPath, FileMode.Open, FileAccess.ReadWrite, FileShare.None)
+                               _path = path
                            };
-
-
-            gameSave.ReadPointers();
 
             var blobFiles = new LinkedList<FileStream>();
 
@@ -499,36 +338,12 @@ namespace MarsMiner.Saving
             }
         }
 
-        private void ReadPointers()
-        {
-            _pointerFile.Seek(0, SeekOrigin.Begin);
-            var r = new BinaryReader(_pointerFile);
-
-            int version = r.ReadInt32();
-            if (version != 0)
-            {
-                throw new InvalidDataException("Invalid pointer file version!");
-            }
-
-            _pointerFile.Seek(4, SeekOrigin.Current); // Reserved
-
-            _pointers = new List<Tuple<int, uint>>();
-            while (_pointerFile.Position < _pointerFile.Length)
-            {
-                _pointers.Add(new Tuple<int, uint>(
-                                  r.ReadInt32(),
-                                  r.ReadUInt32()));
-            }
-        }
-
         /// <summary>
         /// Disposes all open FileStream instances.<para />
         /// The GameSave instance can't be used for reading or writing after Close() is called.
         /// </summary>
         public void Close()
         {
-            _pointerFile.Dispose();
-            _stringFile.Dispose();
             foreach (FileStream blob in _blobFiles)
             {
                 blob.Dispose();

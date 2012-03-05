@@ -21,19 +21,22 @@ using System;
 using System.IO;
 using System.Linq;
 using MarsMiner.Saving.Common;
+using MarsMiner.Saving.Util;
 
 namespace MarsMiner.Saving.Structures.V0
 {
     public sealed class BlockTypeTable : BlockStructure
     {
         private int[] _blockSubTypes;
-        private string[] _blockTypeNames;
+        private StringBlock[] _blockTypeNames;
 
-        internal BlockTypeTable(GameSave gameSave, Tuple<int, uint> address) : base(gameSave, address)
+        internal BlockTypeTable(GameSave gameSave, Tuple<int, uint> address)
+            : base(gameSave, address)
         {
         }
 
-        public BlockTypeTable(GameSave gameSave, string[] blockTypeNames, int[] blockSubTypes) : base(gameSave)
+        public BlockTypeTable(GameSave gameSave, StringBlock[] blockTypeNames, int[] blockSubTypes)
+            : base(gameSave)
         {
             if (blockTypeNames.Length != blockSubTypes.Length)
             {
@@ -46,49 +49,55 @@ namespace MarsMiner.Saving.Structures.V0
             UpdateLength();
         }
 
-        public BlockTypeTable(GameSave gameSave, Tuple<string, int>[] blockTypes)
+        public BlockTypeTable(GameSave gameSave, Tuple<StringBlock, int>[] blockTypes)
             : this(gameSave,
                    blockTypes.Select(x => x.Item1).ToArray(),
                    blockTypes.Select(x => x.Item2).ToArray())
         {
         }
 
-        public Tuple<string, int> this[int index]
+        public Tuple<StringBlock, int> this[int index]
         {
             get
             {
                 Load();
-                return new Tuple<string, int>(_blockTypeNames[index], _blockSubTypes[index]);
+                return new Tuple<StringBlock, int>(_blockTypeNames[index], _blockSubTypes[index]);
             }
+        }
+
+        public int Count
+        {
+            get { return _blockSubTypes.Length; }
         }
 
         public override BlockStructure[] ReferencedBlocks
         {
-            get { return new BlockStructure[] { }; }
+            get
+            {
+                Load();
+                return _blockTypeNames.ToArray<BlockStructure>();
+            }
         }
 
         protected override void UpdateLength()
         {
             Length = 2 // block type count
-                     + (4 + 4) * _blockTypeNames.Length; // block type names and subtypes
+                     + _blockTypeNames.Length *
+                     (8 // block type name
+                     + 4); // subtype
         }
 
         protected override void ReadData(BinaryReader reader)
         {
             ushort blockTypeNameCount = reader.ReadUInt16();
-            var blockTypeNameAddresses = new uint[blockTypeNameCount];
             _blockSubTypes = new int[blockTypeNameCount];
+
+            _blockTypeNames = new StringBlock[blockTypeNameCount];
+
             for (int i = 0; i < blockTypeNameCount; i++)
             {
-                blockTypeNameAddresses[i] = reader.ReadUInt32();
+                _blockTypeNames[i] = new StringBlock(GameSave, ReadAddress(reader));
                 _blockSubTypes[i] = reader.ReadInt32();
-            }
-
-            _blockTypeNames = new string[blockTypeNameCount];
-
-            for (int i = 0; i < blockTypeNameCount; i++)
-            {
-                _blockTypeNames[i] = GameSave.ResolveString(blockTypeNameAddresses[i]);
             }
         }
 
@@ -103,7 +112,7 @@ namespace MarsMiner.Saving.Structures.V0
             writer.Write((ushort) _blockTypeNames.Length);
             for (int i = 0; i < _blockTypeNames.Length; i++)
             {
-                writer.Write(GameSave.FindStringAddress(_blockTypeNames[i]));
+                WriteAddress(writer, _blockTypeNames[i].Address);
                 writer.Write(_blockSubTypes[i]);
             }
         }

@@ -39,6 +39,7 @@
     <Compile Include="GameSave.cs" />
     <Compile Include="Common\BlockStructure.cs" />
     <Compile Include="Common\IHeader.cs" />
+    <Compile Include="Structures\V0\ByteArray.cs" />
     <Compile Include="Structures\V0\Octree.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Structures\V0\BlockTypeTable.cs" />
@@ -46,6 +47,8 @@
     <Compile Include="Structures\V0\ChunkTable.cs" />
     <Compile Include="Structures\V0\Header.cs" />
     <Compile Include="Structures\V0\SavedStateIndex.cs" />
+    <Compile Include="Structures\V0\StringBlock.cs" />
+    <Compile Include="Structures\V0\StringBlockStructureDictionary.cs" />
     <Compile Include="Test\Tests.cs" />
     <Compile Include="Util\Extensions.cs" />
     <Compile Include="Util\IntRangeList.cs" />

@@ -30,6 +30,7 @@ using SaveBlockTypeTable = MarsMiner.Saving.Structures.V0.BlockTypeTable;
 using SaveHeader = MarsMiner.Saving.Structures.V0.Header;
 using SaveIndex = MarsMiner.Saving.Structures.V0.SavedStateIndex;
 using SaveChunkTable = MarsMiner.Saving.Structures.V0.ChunkTable;
+using SaveStringBlock = MarsMiner.Saving.Structures.V0.StringBlock;
 
 namespace MarsMiner.Shared.Extensions
 {
@@ -61,7 +62,10 @@ namespace MarsMiner.Shared.Extensions
                                                                   IEnumerable<BlockType> blockTypes)
         {
             return new SaveBlockTypeTable(gameSave,
-                                          blockTypes.Select(x => new Tuple<string, int>(x.Name, x.SubType)).ToArray());
+                                          blockTypes.Select(
+                                              x =>
+                                              new Tuple<SaveStringBlock, int>(new SaveStringBlock(gameSave, x.Name),
+                                                                              x.SubType)).ToArray());
         }
 
         private static SaveOctree TranslateOctree(this GameSave gameSave, IEnumerable<OctreeNode<ushort>> octree)
@@ -93,7 +97,7 @@ namespace MarsMiner.Shared.Extensions
                         if (leaf.Value <= byte.MaxValue)
                         {
                             octreeFlags.Add(false); //HasLargeValue
-                            octreeValues.Add((byte) leaf.Value);
+                            octreeValues.Add((byte)leaf.Value);
                         }
                         else
                         {

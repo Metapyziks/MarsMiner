@@ -334,5 +334,16 @@ namespace MarsMiner.Saving.Common
         /// Implementations must override this to update the Length property to the blocks length in bytes.
         /// </summary>
         protected abstract void UpdateLength();
+
+        protected static void WriteAddress(BinaryWriter writer, Tuple<int, uint> tuple)
+        {
+            writer.Write(tuple.Item1);
+            writer.Write(tuple.Item2);
+        }
+
+        protected static Tuple<int, uint> ReadAddress(BinaryReader reader)
+        {
+            return new Tuple<int, uint>(reader.ReadInt32(), reader.ReadUInt32());
+        }
     }
 }

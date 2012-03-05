@@ -20,20 +20,22 @@
 using System;
 using System.IO;
 using MarsMiner.Saving.Common;
+using MarsMiner.Saving.Util;
 
 namespace MarsMiner.Saving.Structures.V0
 {
     public sealed class SavedStateIndex : BlockStructure
     {
         private ChunkTable _chunkTable;
-        private string _saveName;
+        private StringBlock _saveName;
         private long _timestamp;
 
-        internal SavedStateIndex(GameSave gameSave, Tuple<int, uint> address) : base(gameSave, address)
+        internal SavedStateIndex(GameSave gameSave, Tuple<int, uint> address)
+            : base(gameSave, address)
         {
         }
 
-        public SavedStateIndex(GameSave gameSave, long timestamp, string saveName, ChunkTable chunkTable)
+        public SavedStateIndex(GameSave gameSave, long timestamp, StringBlock saveName, ChunkTable chunkTable)
             : base(gameSave)
         {
             _timestamp = timestamp;
@@ -52,7 +54,7 @@ namespace MarsMiner.Saving.Structures.V0
             }
         }
 
-        public string SaveName
+        public StringBlock SaveName
         {
             get
             {
@@ -72,17 +74,19 @@ namespace MarsMiner.Saving.Structures.V0
 
         public override BlockStructure[] ReferencedBlocks
         {
-            get { return new BlockStructure[] { ChunkTable }; }
+            get
+            {
+                Load();
+                return new BlockStructure[] { SaveName, ChunkTable };
+            }
         }
 
         protected override void ReadData(BinaryReader reader)
         {
             _timestamp = reader.ReadInt64();
-            uint saveNameAddress = reader.ReadUInt32();
-            uint chunkTablePointer = reader.ReadUInt32();
 
-            _saveName = GameSave.ResolveString(saveNameAddress);
-            _chunkTable = new ChunkTable(GameSave, GameSave.ResolvePointer(Address.Item1, chunkTablePointer));
+            _saveName = new StringBlock(GameSave, ReadAddress(reader));
+            _chunkTable = new ChunkTable(GameSave, ReadAddress(reader));
         }
 
         protected override void ForgetData()
@@ -94,15 +98,15 @@ namespace MarsMiner.Saving.Structures.V0
         protected override void WriteData(BinaryWriter writer)
         {
             writer.Write(_timestamp);
-            writer.Write(GameSave.FindStringAddress(_saveName));
-            writer.Write(GameSave.FindBlockPointer(this, _chunkTable));
+            WriteAddress(writer, _saveName.Address);
+            WriteAddress(writer, _chunkTable.Address);
         }
 
         protected override void UpdateLength()
         {
             Length = 8 // timestamp
-                     + 4 // saveName
-                     + 4; // chunkTable
+                     + 8 // saveName
+                     + 8; // chunkTable
         }
     }
 }

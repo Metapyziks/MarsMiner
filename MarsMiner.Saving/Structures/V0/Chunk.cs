@@ -21,6 +21,7 @@ using System;
 using System.IO;
 using System.Linq;
 using MarsMiner.Saving.Common;
+using MarsMiner.Saving.Util;
 
 namespace MarsMiner.Saving.Structures.V0
 {
@@ -63,6 +64,7 @@ namespace MarsMiner.Saving.Structures.V0
         {
             get
             {
+                Load();
                 var referencedBlocks = new BlockStructure[Octrees.Length + 1];
                 referencedBlocks[0] = BlockTypeTable;
                 Octrees.CopyTo(referencedBlocks, 1);
@@ -72,22 +74,14 @@ namespace MarsMiner.Saving.Structures.V0
 
         protected override void ReadData(BinaryReader reader)
         {
-            uint blockTypeTablePointer = reader.ReadUInt32();
+            _blockTypeTable = new BlockTypeTable(GameSave, ReadAddress(reader));
+
             byte octreeCount = reader.ReadByte();
-
-            var octreePointers = new uint[octreeCount];
-
-            for (int i = 0; i < octreeCount; i++)
-            {
-                octreePointers[i] = reader.ReadUInt32();
-            }
-
-            _blockTypeTable = new BlockTypeTable(GameSave, GameSave.ResolvePointer(Address.Item1, blockTypeTablePointer));
             _octrees = new Octree[octreeCount];
 
             for (int i = 0; i < octreeCount; i++)
             {
-                _octrees[i] = new Octree(GameSave, GameSave.ResolvePointer(Address.Item1, octreePointers[i]));
+                _octrees[i] = new Octree(GameSave, ReadAddress(reader));
             }
         }
 
@@ -99,19 +93,19 @@ namespace MarsMiner.Saving.Structures.V0
 
         protected override void WriteData(BinaryWriter writer)
         {
-            writer.Write(GameSave.FindBlockPointer(this, BlockTypeTable));
+            WriteAddress(writer, BlockTypeTable.Address);
             writer.Write((byte) Octrees.Length);
             foreach (Octree octree in Octrees)
             {
-                writer.Write(GameSave.FindBlockPointer(this, octree));
+                WriteAddress(writer, octree.Address);
             }
         }
 
         protected override void UpdateLength()
         {
-            Length = 4 // blockTypeTable
+            Length = 8 // blockTypeTable
                      + 1 // octreeCount
-                     + 4 * Octrees.Length; // octrees
+                     + 8 * Octrees.Length; // octrees
         }
     }
 }
