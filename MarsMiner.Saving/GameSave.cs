@@ -38,6 +38,8 @@ namespace MarsMiner.Saving
 
         private bool _closed;
 
+        private Dictionary<Type, HashSet<UniqueBlockStructure>> _deduplicationCache;
+
         private const int MaximumBlockStartAddress = 100000000;
         //const int MaximumBlockStartAddress = 100; // for testing blob creation
 

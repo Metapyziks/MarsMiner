@@ -23,7 +23,6 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using MarsMiner.Saving.Common;
-using MarsMiner.Saving.Util;
 
 namespace MarsMiner.Saving.Structures.V0
 {
@@ -35,14 +34,18 @@ namespace MarsMiner.Saving.Structures.V0
         {
         }
 
-        public StringBlockStructureDictionary(GameSave gameSave, IEnumerable<KeyValuePair<StringBlock, TValue>> keyValuePairs)
+        public StringBlockStructureDictionary(GameSave gameSave,
+                                              IEnumerable<KeyValuePair<StringBlock, TValue>> keyValuePairs)
             : base(gameSave)
         {
             _keyValuePairs = keyValuePairs.ToArray();
         }
 
         public StringBlockStructureDictionary(GameSave gameSave, IEnumerable<KeyValuePair<string, TValue>> keyValuePairs)
-            : this(gameSave, keyValuePairs.Select(kv => new KeyValuePair<StringBlock, TValue>(new StringBlock(gameSave, kv.Key), kv.Value)))
+            : this(
+                gameSave,
+                keyValuePairs.Select(
+                    kv => new KeyValuePair<StringBlock, TValue>(new StringBlock(gameSave, kv.Key), kv.Value)))
         {
         }
 
@@ -60,26 +63,27 @@ namespace MarsMiner.Saving.Structures.V0
             get
             {
                 Load();
-                return _keyValuePairs.SelectMany(kv => new BlockStructure[]{kv.Key, kv.Value}).ToArray();
+                return _keyValuePairs.SelectMany(kv => new BlockStructure[] { kv.Key, kv.Value }).ToArray();
             }
         }
 
         protected override void ReadData(BinaryReader reader)
         {
-            var length = reader.ReadInt32();
+            int length = reader.ReadInt32();
             _keyValuePairs = new KeyValuePair<StringBlock, TValue>[length];
 
             ConstructorInfo blockConstructorInfo =
-                typeof(TValue).GetConstructor(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance,
-                                          null,
-                                          new[] { typeof(GameSave), typeof(Tuple<int, uint>) }, null);
+                typeof (TValue).GetConstructor(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance,
+                                               null,
+                                               new[] { typeof (GameSave), typeof (Tuple<int, uint>) }, null);
 
-            if (blockConstructorInfo == null) throw new Exception("Constructor for bound " + typeof(TValue) + " not found.");
+            if (blockConstructorInfo == null)
+                throw new Exception("Constructor for bound " + typeof (TValue) + " not found.");
 
             for (int i = 0; i < length; i++)
             {
                 var key = new StringBlock(GameSave, ReadAddress(reader));
-                var value = (TValue)(blockConstructorInfo.Invoke(new object[] { GameSave, ReadAddress(reader) }));
+                var value = (TValue) (blockConstructorInfo.Invoke(new object[] { GameSave, ReadAddress(reader) }));
                 _keyValuePairs[i] = new KeyValuePair<StringBlock, TValue>(key, value);
             }
         }

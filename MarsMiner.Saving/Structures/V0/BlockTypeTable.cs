@@ -21,7 +21,6 @@ using System;
 using System.IO;
 using System.Linq;
 using MarsMiner.Saving.Common;
-using MarsMiner.Saving.Util;
 
 namespace MarsMiner.Saving.Structures.V0
 {
@@ -84,7 +83,7 @@ namespace MarsMiner.Saving.Structures.V0
             Length = 2 // block type count
                      + _blockTypeNames.Length *
                      (8 // block type name
-                     + 4); // subtype
+                      + 4); // subtype
         }
 
         protected override void ReadData(BinaryReader reader)

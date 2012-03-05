@@ -18,13 +18,13 @@
  */
 
 using System;
+using System.IO;
 using System.Text;
 using MarsMiner.Saving.Common;
-using System.IO;
 
 namespace MarsMiner.Saving.Structures.V0
 {
-    public sealed class StringBlock : BlockStructure
+    public sealed class StringBlock : UniqueBlockStructure
     {
         private const int NullMarker = -1;
 
@@ -55,14 +55,14 @@ namespace MarsMiner.Saving.Structures.V0
 
         protected override void ReadData(BinaryReader reader)
         {
-            var length = reader.ReadInt32();
+            int length = reader.ReadInt32();
             if (length == -1)
             {
                 _value = null;
                 return;
             }
 
-            var utf8Data = reader.ReadBytes(length);
+            byte[] utf8Data = reader.ReadBytes(length);
             _value = Encoding.UTF8.GetString(utf8Data);
         }
 
@@ -79,7 +79,7 @@ namespace MarsMiner.Saving.Structures.V0
                 return;
             }
 
-            var utf8Data = Encoding.UTF8.GetBytes(Value);
+            byte[] utf8Data = Encoding.UTF8.GetBytes(Value);
             writer.Write(utf8Data.Length);
             writer.Write(utf8Data);
         }
@@ -94,6 +94,21 @@ namespace MarsMiner.Saving.Structures.V0
 
             Length = 4 // Length
                      + Encoding.UTF8.GetByteCount(Value);
+        }
+
+        protected override bool HasEqualData(BlockStructure other)
+        {
+            var stringBlock = other as StringBlock;
+            if (stringBlock == null)
+            {
+                return false;
+            }
+            return Value == stringBlock.Value;
+        }
+
+        public override int GetHashCode()
+        {
+            return Value == null ? 0 : Value.GetHashCode();
         }
     }
 }

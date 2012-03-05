@@ -36,6 +36,7 @@
     <Reference Include="System.Core" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Common\UniqueBlockStructure.cs" />
     <Compile Include="GameSave.cs" />
     <Compile Include="Common\BlockStructure.cs" />
     <Compile Include="Common\IHeader.cs" />

@@ -31,6 +31,7 @@ namespace MarsMiner.Saving.Common
         /// The GameSave instance this block is attached to.
         /// </summary>
         protected readonly GameSave GameSave;
+
         private Tuple<int, uint> _address;
         private int? _length;
         private Dictionary<int, IntRangeList> _recursiveUsedSpace;
