@@ -8,7 +8,7 @@ Save Blob
 =========
 
 Header (always at 0) (block structure, fixed length)
-------------------------------------------------------------------------
+----------------------------------------------------
 // Saving updates the header after a write barrier, wich makes saves transactional:
 // If the save completes, the load method uses the new main index, if it crashes the old main index still points to the old valid saved state.
 // The saves should be impossible to corrupt this way, unless the file itself is corrupted.
