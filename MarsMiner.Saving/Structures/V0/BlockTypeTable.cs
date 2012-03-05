@@ -21,6 +21,7 @@ using System;
 using System.IO;
 using System.Linq;
 using MarsMiner.Saving.Common;
+using MarsMiner.Saving.Util;
 
 namespace MarsMiner.Saving.Structures.V0
 {
@@ -81,26 +82,22 @@ namespace MarsMiner.Saving.Structures.V0
         protected override void UpdateLength()
         {
             Length = 2 // block type count
-                     + (4 + 4) * _blockTypeNames.Length; // block type names and subtypes
+                     + _blockTypeNames.Length *
+                     (8 // block type name
+                     + 4); // subtype
         }
 
         protected override void ReadData(BinaryReader reader)
         {
             ushort blockTypeNameCount = reader.ReadUInt16();
-            var blockTypeNamePointers = new uint[blockTypeNameCount];
             _blockSubTypes = new int[blockTypeNameCount];
-            for (int i = 0; i < blockTypeNameCount; i++)
-            {
-                blockTypeNamePointers[i] = reader.ReadUInt32();
-                _blockSubTypes[i] = reader.ReadInt32();
-            }
 
             _blockTypeNames = new StringBlock[blockTypeNameCount];
 
             for (int i = 0; i < blockTypeNameCount; i++)
             {
-                _blockTypeNames[i] = new StringBlock(GameSave,
-                                                     GameSave.ResolvePointer(Address.Item1, blockTypeNamePointers[i]));
+                _blockTypeNames[i] = new StringBlock(GameSave, ReadAddress(reader));
+                _blockSubTypes[i] = reader.ReadInt32();
             }
         }
 
@@ -115,7 +112,7 @@ namespace MarsMiner.Saving.Structures.V0
             writer.Write((ushort) _blockTypeNames.Length);
             for (int i = 0; i < _blockTypeNames.Length; i++)
             {
-                writer.Write(GameSave.FindBlockPointer(this, _blockTypeNames[i]));
+                WriteAddress(writer, _blockTypeNames[i].Address);
                 writer.Write(_blockSubTypes[i]);
             }
         }

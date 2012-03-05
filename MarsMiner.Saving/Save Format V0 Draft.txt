@@ -4,27 +4,15 @@ Most block structures can appear anywhere in the file.
 
 Embedded structures are always part of block structures and don't have any prefix.
 
-String File
-===========
-
-StringFileHeader (block structure, fixed length)
-------------------------------------------------
-int						Version
-int						StringCount
-
-String (block structure, length prefixed)
------------------------------------------
-Utf-8 string
-
-Common
-======
+StringBlock (block structure, variable length)
+----------------------------------------------
+int32				Length of the string in bytes or -1 if the string is null
+Utf-8 string		The string data
 
 Pointer (embedded structure, fixed length)
 ----------------------------
-1 bit					Pointer flag:
-							0 means absolute pointer in this file
-							1 means reference to pointer in pointer table file
-7 bit					Destination address or pointer index
+int32				Destination blob file index
+uint32				Destination address
 
 Save Blob
 =========
@@ -60,8 +48,7 @@ for (chunk count):
 Chunk (block structure, variable length)
 ----------------------------------------
 Pointer<BlockTypeTable>	Pointer to block type table		// This is here so chunks can have different block tables.
-														// It doesn't make much difference with less than 256 ids, but with more its possible to compress block id lists to roughly half the size if the id distribution is uneven.
-														// It also allows id mapping changes in copy-on-write mode.
+														// It doesn't make much difference with less than 256 ids, but with more its possible to compress octree value lists to roughly half the size if the id distribution is uneven.
 byte					octree count
 for (octree count):
 	Pointer<Octree>
@@ -89,19 +76,3 @@ for (number of ones in octree bitmap):
 		ushort			block id
 	else:
 		byte			block id
-
-Pointer table file
-==================
-
-PointerFileIndex (block structure)
----------------------------------------------------
-int						Version
-int						reserved
-while (!EOF):
-	FilePointer
-
-FilePointer (embedded structure, fixed length)
-----------------------------------------------
-// FilePointers are typeless, the target type is inferred from the original pointer.
-int						index of blob file
-int						address in destination file

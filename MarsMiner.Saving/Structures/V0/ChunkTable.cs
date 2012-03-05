@@ -22,6 +22,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using MarsMiner.Saving.Common;
+using MarsMiner.Saving.Util;
 
 namespace MarsMiner.Saving.Structures.V0
 {
@@ -79,20 +80,13 @@ namespace MarsMiner.Saving.Structures.V0
 
             _xLocations = new int[chunkCount];
             _zLocations = new int[chunkCount];
-            var chunkPointers = new uint[chunkCount];
+            _chunks = new Chunk[chunkCount];
 
             for (int i = 0; i < chunkCount; i++)
             {
                 _xLocations[i] = reader.ReadInt32();
                 _zLocations[i] = reader.ReadInt32();
-                chunkPointers[i] = reader.ReadUInt32();
-            }
-
-            _chunks = new Chunk[chunkCount];
-
-            for (int i = 0; i < chunkCount; i++)
-            {
-                _chunks[i] = new Chunk(GameSave, GameSave.ResolvePointer(Address.Item1, chunkPointers[i]));
+                _chunks[i] = new Chunk(GameSave, ReadAddress(reader));
             }
         }
 
@@ -110,8 +104,7 @@ namespace MarsMiner.Saving.Structures.V0
             {
                 writer.Write(_xLocations[i]);
                 writer.Write(_zLocations[i]);
-                uint chunkPointer = GameSave.FindBlockPointer(this, _chunks[i]);
-                writer.Write(chunkPointer);
+                WriteAddress(writer, _chunks[i].Address);
             }
         }
 
@@ -121,7 +114,7 @@ namespace MarsMiner.Saving.Structures.V0
                      + _chunks.Length *
                      (4 // xLocation
                       + 4 // yLocation
-                      + 4); // chunk
+                      + 8); // chunk
         }
     }
 }

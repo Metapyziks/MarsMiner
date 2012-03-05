@@ -23,24 +23,25 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using MarsMiner.Saving.Common;
+using MarsMiner.Saving.Util;
 
 namespace MarsMiner.Saving.Structures.V0
 {
-    public sealed class StringBlockBlockStructureDictionary<TValue> : BlockStructure where TValue : BlockStructure
+    public sealed class StringBlockStructureDictionary<TValue> : BlockStructure where TValue : BlockStructure
     {
         private KeyValuePair<StringBlock, TValue>[] _keyValuePairs;
 
-        internal StringBlockBlockStructureDictionary(GameSave gameSave, Tuple<int, uint> address) : base(gameSave, address)
+        internal StringBlockStructureDictionary(GameSave gameSave, Tuple<int, uint> address) : base(gameSave, address)
         {
         }
 
-        public StringBlockBlockStructureDictionary(GameSave gameSave, IEnumerable<KeyValuePair<StringBlock, TValue>> keyValuePairs)
+        public StringBlockStructureDictionary(GameSave gameSave, IEnumerable<KeyValuePair<StringBlock, TValue>> keyValuePairs)
             : base(gameSave)
         {
             _keyValuePairs = keyValuePairs.ToArray();
         }
 
-        public StringBlockBlockStructureDictionary(GameSave gameSave, IEnumerable<KeyValuePair<string, TValue>> keyValuePairs)
+        public StringBlockStructureDictionary(GameSave gameSave, IEnumerable<KeyValuePair<string, TValue>> keyValuePairs)
             : this(gameSave, keyValuePairs.Select(kv => new KeyValuePair<StringBlock, TValue>(new StringBlock(gameSave, kv.Key), kv.Value)))
         {
         }
@@ -77,8 +78,8 @@ namespace MarsMiner.Saving.Structures.V0
 
             for (int i = 0; i < length; i++)
             {
-                var key = new StringBlock(GameSave, GameSave.ResolvePointer(Address.Item1, reader.ReadUInt32()));
-                var value = (TValue)(blockConstructorInfo.Invoke(new object[] { GameSave, GameSave.ResolvePointer(Address.Item1, reader.ReadUInt32()) }));
+                var key = new StringBlock(GameSave, ReadAddress(reader));
+                var value = (TValue)(blockConstructorInfo.Invoke(new object[] { GameSave, ReadAddress(reader) }));
                 _keyValuePairs[i] = new KeyValuePair<StringBlock, TValue>(key, value);
             }
         }
@@ -93,8 +94,8 @@ namespace MarsMiner.Saving.Structures.V0
             writer.Write(_keyValuePairs.Length);
             foreach (var keyValuePair in _keyValuePairs)
             {
-                writer.Write(GameSave.FindBlockPointer(this, keyValuePair.Key));
-                writer.Write(GameSave.FindBlockPointer(this, keyValuePair.Value));
+                WriteAddress(writer, keyValuePair.Key.Address);
+                WriteAddress(writer, keyValuePair.Value.Address);
             }
         }
 
@@ -102,8 +103,8 @@ namespace MarsMiner.Saving.Structures.V0
         {
             Length = 4 // Length
                      + _keyValuePairs.Length *
-                     (4 // string address
-                      + 4); // block address
+                     (8 // string block address
+                      + 8); // block address
         }
     }
 }

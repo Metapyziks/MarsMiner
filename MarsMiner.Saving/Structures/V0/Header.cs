@@ -20,6 +20,7 @@
 using System;
 using System.IO;
 using MarsMiner.Saving.Common;
+using MarsMiner.Saving.Util;
 
 namespace MarsMiner.Saving.Structures.V0
 {
@@ -72,9 +73,7 @@ namespace MarsMiner.Saving.Structures.V0
                 throw new InvalidDataException("Expected file version " + Version + ", was " + version + ".");
             }
 
-            uint saveIndexPointer = reader.ReadUInt32();
-
-            SaveIndex = new SavedStateIndex(GameSave, GameSave.ResolvePointer(Address.Item1, saveIndexPointer));
+            SaveIndex = new SavedStateIndex(GameSave, ReadAddress(reader));
         }
 
         protected override void ForgetData()
@@ -85,13 +84,13 @@ namespace MarsMiner.Saving.Structures.V0
         protected override void WriteData(BinaryWriter writer)
         {
             writer.Write(Version);
-            writer.Write(GameSave.FindBlockPointer(this, SaveIndex));
+            WriteAddress(writer, SaveIndex.Address);
         }
 
         protected override void UpdateLength()
         {
             Length = 4 // Version
-                     + 4; // SaveIndex;
+                     + 8; // SaveIndex;
         }
     }
 }
