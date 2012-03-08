@@ -18,13 +18,48 @@
  */
 
 using System;
+using System.Collections.Generic;
 
 namespace MarsMiner.Saving.Common
 {
     public abstract class UniqueBlockStructure : BlockStructure
     {
         /// <summary>
-        /// <para>Initializes a new BlockStructure instance.</para>
+        /// <para>Initializes a new UniqueBlockStructure instance.</para>
+        /// <para>This constructor is for blocks that are read from disk.</para>
+        /// </summary>
+        /// <param name="gameSave">The GameSave instance this block is attached to.</param>
+        /// <param name="address">This block's address.</param>
+        protected UniqueBlockStructure(GameSave gameSave,
+                                       Tuple<int, uint> address)
+            : base(gameSave, address)
+        {
+        }
+
+        /// <summary>
+        /// <para>Initializes a new UniqueBlockStructure instance.</para>
+        /// <para>This constructor is for blocks that are newly created.</para>
+        /// </summary>
+        /// <param name="gameSave">The GameSave instance this block is attached to.</param>
+        protected UniqueBlockStructure(GameSave gameSave)
+            : base(gameSave)
+        {
+        }
+
+        internal abstract bool TryBindToExistingAddress();
+
+        internal abstract void UniqueBlockStructureBound();
+    }
+
+    //TODO: Is synchronization necessary?
+    public abstract class UniqueBlockStructure<T> : UniqueBlockStructure where T : UniqueBlockStructure<T>
+    {
+        private static readonly Dictionary<GameSave, Dictionary<UniqueBlockStructure<T>, Tuple<int, uint>>>
+            UniqueBlockStructureCache =
+                new Dictionary<GameSave, Dictionary<UniqueBlockStructure<T>, Tuple<int, uint>>>();
+
+        /// <summary>
+        /// <para>Initializes a new UniqueBlockStructure instance.</para>
         /// <para>This constructor is for blocks that are read from disk.</para>
         /// </summary>
         /// <param name="gameSave">The GameSave instance this block is attached to.</param>
@@ -32,10 +67,35 @@ namespace MarsMiner.Saving.Common
         protected UniqueBlockStructure(GameSave gameSave,
                                        Tuple<int, uint> address) : base(gameSave, address)
         {
+            Dictionary<UniqueBlockStructure<T>, Tuple<int, uint>> uniqueTCache;
+            lock (UniqueBlockStructureCache)
+            {
+                if (!UniqueBlockStructureCache.TryGetValue(gameSave, out uniqueTCache))
+                {
+// ReSharper disable DoNotCallOverridableMethodsInConstructor
+                    uniqueTCache = new Dictionary<UniqueBlockStructure<T>, Tuple<int, uint>>(ValueComparer);
+// ReSharper restore DoNotCallOverridableMethodsInConstructor
+                    UniqueBlockStructureCache.Add(gameSave, uniqueTCache);
+
+                    gameSave.MarkingFreeSpace += () => { lock (uniqueTCache) uniqueTCache.Clear(); };
+                    gameSave.Closing +=
+                        () => { lock (UniqueBlockStructureCache) UniqueBlockStructureCache.Remove(gameSave); };
+                }
+            }
+            lock (uniqueTCache)
+            {
+                if (!uniqueTCache.ContainsKey(this))
+                {
+                    uniqueTCache.Add(this, address);
+                }
+            }
+#if DebugVerboseUniqueBlocks
+            Console.WriteLine("Unique {0} {1} from file at {2}.", GetType(), ValueComparer.GetHashCode(this), Address);
+#endif
         }
 
         /// <summary>
-        /// <para>Initializes a new BlockStructure instance.</para>
+        /// <para>Initializes a new UniqueBlockStructure instance.</para>
         /// <para>This constructor is for blocks that are newly created.</para>
         /// </summary>
         /// <param name="gameSave">The GameSave instance this block is attached to.</param>
@@ -43,8 +103,51 @@ namespace MarsMiner.Saving.Common
         {
         }
 
-        protected abstract bool HasEqualData(BlockStructure other);
+        protected abstract IEqualityComparer<UniqueBlockStructure<T>> ValueComparer { get; }
 
-        public abstract override int GetHashCode();
+        internal override sealed bool TryBindToExistingAddress()
+        {
+            Dictionary<UniqueBlockStructure<T>, Tuple<int, uint>> uniqueTCache;
+            if (UniqueBlockStructureCache.TryGetValue(GameSave, out uniqueTCache))
+            {
+                Tuple<int, uint> address;
+                if (uniqueTCache.TryGetValue(this, out address))
+                {
+#if DebugVerboseUniqueBlocks
+                    Console.WriteLine("Unique {0} {1} found at {2}.", GetType(), ValueComparer.GetHashCode(this), address);
+#endif
+                    Address = address;
+                    Written = true;
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        internal override sealed void UniqueBlockStructureBound()
+        {
+            Dictionary<UniqueBlockStructure<T>, Tuple<int, uint>> uniqueTCache;
+            lock (UniqueBlockStructureCache)
+            {
+                if (!UniqueBlockStructureCache.TryGetValue(GameSave, out uniqueTCache))
+                {
+                    // ReSharper disable DoNotCallOverridableMethodsInConstructor
+                    uniqueTCache = new Dictionary<UniqueBlockStructure<T>, Tuple<int, uint>>(ValueComparer);
+                    // ReSharper restore DoNotCallOverridableMethodsInConstructor
+                    UniqueBlockStructureCache.Add(GameSave, uniqueTCache);
+
+                    GameSave.MarkingFreeSpace += () => { lock (uniqueTCache) uniqueTCache.Clear(); };
+                    GameSave.Closing +=
+                        () => { lock (UniqueBlockStructureCache) UniqueBlockStructureCache.Remove(GameSave); };
+                }
+            }
+            lock (uniqueTCache)
+            {
+                uniqueTCache[this] = Address;
+            }
+#if DebugVerboseUniqueBlocks
+            Console.WriteLine("Unique {0} {1} bound at {2}.", GetType(), ValueComparer.GetHashCode(this), Address);
+#endif
+        }
     }
 }

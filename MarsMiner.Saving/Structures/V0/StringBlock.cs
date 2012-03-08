@@ -18,13 +18,14 @@
  */
 
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using MarsMiner.Saving.Common;
 
 namespace MarsMiner.Saving.Structures.V0
 {
-    public sealed class StringBlock : UniqueBlockStructure
+    public sealed class StringBlock : UniqueBlockStructure<StringBlock>
     {
         private const int NullMarker = -1;
 
@@ -50,7 +51,16 @@ namespace MarsMiner.Saving.Structures.V0
 
         public string Value
         {
-            get { return _value; }
+            get
+            {
+                Load();
+                return _value;
+            }
+        }
+
+        protected override IEqualityComparer<UniqueBlockStructure<StringBlock>> ValueComparer
+        {
+            get { return new StringBlockEqualityComparer(); }
         }
 
         protected override void ReadData(BinaryReader reader)
@@ -96,19 +106,26 @@ namespace MarsMiner.Saving.Structures.V0
                      + Encoding.UTF8.GetByteCount(Value);
         }
 
-        protected override bool HasEqualData(BlockStructure other)
+        #region Nested type: StringBlockEqualityComparer
+
+        private class StringBlockEqualityComparer : IEqualityComparer<UniqueBlockStructure<StringBlock>>
         {
-            var stringBlock = other as StringBlock;
-            if (stringBlock == null)
+            #region IEqualityComparer<UniqueBlockStructure<StringBlock>> Members
+
+            public bool Equals(UniqueBlockStructure<StringBlock> x, UniqueBlockStructure<StringBlock> y)
             {
-                return false;
+                return ((StringBlock) x).Value == ((StringBlock) y).Value;
             }
-            return Value == stringBlock.Value;
+
+            public int GetHashCode(UniqueBlockStructure<StringBlock> obj)
+            {
+                string value = ((StringBlock) obj).Value;
+                return value == null ? 0 : value.GetHashCode();
+            }
+
+            #endregion
         }
 
-        public override int GetHashCode()
-        {
-            return Value == null ? 0 : Value.GetHashCode();
-        }
+        #endregion
     }
 }
