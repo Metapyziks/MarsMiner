@@ -18,13 +18,14 @@
  */
 
 using System;
+using System.Collections.Generic;
+using System.IO;
 using System.Text;
 using MarsMiner.Saving.Common;
-using System.IO;
 
 namespace MarsMiner.Saving.Structures.V0
 {
-    public sealed class StringBlock : BlockStructure
+    public sealed class StringBlock : UniqueBlockStructure<StringBlock>
     {
         private const int NullMarker = -1;
 
@@ -50,19 +51,28 @@ namespace MarsMiner.Saving.Structures.V0
 
         public string Value
         {
-            get { return _value; }
+            get
+            {
+                Load();
+                return _value;
+            }
+        }
+
+        protected override IEqualityComparer<UniqueBlockStructure<StringBlock>> ValueComparer
+        {
+            get { return new StringBlockEqualityComparer(); }
         }
 
         protected override void ReadData(BinaryReader reader)
         {
-            var length = reader.ReadInt32();
+            int length = reader.ReadInt32();
             if (length == -1)
             {
                 _value = null;
                 return;
             }
 
-            var utf8Data = reader.ReadBytes(length);
+            byte[] utf8Data = reader.ReadBytes(length);
             _value = Encoding.UTF8.GetString(utf8Data);
         }
 
@@ -79,7 +89,7 @@ namespace MarsMiner.Saving.Structures.V0
                 return;
             }
 
-            var utf8Data = Encoding.UTF8.GetBytes(Value);
+            byte[] utf8Data = Encoding.UTF8.GetBytes(Value);
             writer.Write(utf8Data.Length);
             writer.Write(utf8Data);
         }
@@ -95,5 +105,27 @@ namespace MarsMiner.Saving.Structures.V0
             Length = 4 // Length
                      + Encoding.UTF8.GetByteCount(Value);
         }
+
+        #region Nested type: StringBlockEqualityComparer
+
+        internal class StringBlockEqualityComparer : IEqualityComparer<UniqueBlockStructure<StringBlock>>
+        {
+            #region IEqualityComparer<UniqueBlockStructure<StringBlock>> Members
+
+            public bool Equals(UniqueBlockStructure<StringBlock> x, UniqueBlockStructure<StringBlock> y)
+            {
+                return ((StringBlock) x).Value == ((StringBlock) y).Value;
+            }
+
+            public int GetHashCode(UniqueBlockStructure<StringBlock> obj)
+            {
+                string value = ((StringBlock) obj).Value;
+                return value == null ? 0 : value.GetHashCode();
+            }
+
+            #endregion
+        }
+
+        #endregion
     }
 }

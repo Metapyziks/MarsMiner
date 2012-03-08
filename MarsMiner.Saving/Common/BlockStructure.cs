@@ -31,6 +31,7 @@ namespace MarsMiner.Saving.Common
         /// The GameSave instance this block is attached to.
         /// </summary>
         protected readonly GameSave GameSave;
+
         private Tuple<int, uint> _address;
         private int? _length;
         private Dictionary<int, IntRangeList> _recursiveUsedSpace;
@@ -99,7 +100,7 @@ namespace MarsMiner.Saving.Common
         /// <summary>
         /// <value>true</value>, if the block's data was written to disk.
         /// </summary>
-        public bool Written { get; private set; }
+        public bool Written { get; protected set; }
 
         /// <summary>
         /// The block's length in bytes.
@@ -191,6 +192,7 @@ namespace MarsMiner.Saving.Common
                 throw new InvalidOperationException("Tried to load unwritten block.");
             }
 
+            GameSave.PushStreamPosition(Address.Item1);
 #if DebugVerboseBlocks
             Console.WriteLine("Reading {0} from {1}", GetType(), source);
 #endif
@@ -214,6 +216,7 @@ namespace MarsMiner.Saving.Common
                 throw new Exception("Length mismatch in " + GetType() + "!");
             }
 #endif
+            GameSave.PopStreamPosition(Address.Item1);
 
             UpdateRecursiveUsedSpace();
         }

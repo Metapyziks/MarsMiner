@@ -45,6 +45,27 @@ namespace MarsMiner.Saving
 
         private FileStream[] _blobFiles;
         private IntRangeList[] _freeSpace;
+        private Stack<long>[] _blobFileStreamPositions;
+
+        public event Action MarkingFreeSpace;
+
+        private void OnMarkingFreeSpace()
+        {
+            if (MarkingFreeSpace != null)
+            {
+                MarkingFreeSpace();
+            }
+        }
+
+        public event Action Closing;
+
+        private void OnClosing()
+        {
+            if (Closing != null)
+            {
+                Closing();
+            }
+        }
 
         internal void FlushFiles()
         {
@@ -62,6 +83,8 @@ namespace MarsMiner.Saving
 
         internal void MarkFreeSpace<T>(T header) where T : BlockStructure
         {
+            OnMarkingFreeSpace();
+
             if (header is IHeader == false)
             {
                 throw new ArgumentException(header.GetType() + " doesn't implement IHeader", "header");
@@ -141,6 +164,17 @@ namespace MarsMiner.Saving
                 throw new ArgumentException("blockStructure.Address already set!");
             }
 
+            {
+                var uniqueBlockStructure = blockStructure as UniqueBlockStructure;
+                if (uniqueBlockStructure != null)
+                {
+                    if (uniqueBlockStructure.TryBindToExistingAddress())
+                    {
+                        return;
+                    }
+                }
+            }
+
             int blockLength = blockStructure.Length;
 
             Tuple<int, Tuple<int, int>> bestMatch = null;
@@ -210,6 +244,14 @@ namespace MarsMiner.Saving
             AllocateSpace(bestMatch.Item1, bestMatch.Item2);
 
             blockStructure.Address = new Tuple<int, uint>(bestMatch.Item1, (uint) bestMatch.Item2.Item1);
+
+            {
+                var uniqueBlockStructure = blockStructure as UniqueBlockStructure;
+                if (uniqueBlockStructure != null)
+                {
+                    uniqueBlockStructure.UniqueBlockStructureBound();
+                }
+            }
         }
 
         private int AddNewBlob()
@@ -222,14 +264,19 @@ namespace MarsMiner.Saving
             var newFreeSpace = new IntRangeList[_freeSpace.Length + 1];
             _freeSpace.CopyTo(newFreeSpace, 0);
 
+            var newBlobFileStreamPositions = new Stack<long>[_blobFileStreamPositions.Length + 1];
+            _blobFileStreamPositions.CopyTo(newBlobFileStreamPositions, 0);
+
             newBlobFiles[newBlobIndex] = File.Open(Path.Combine(_path, "blob" + newBlobIndex), FileMode.CreateNew,
                                                    FileAccess.ReadWrite, FileShare.None);
             newFreeSpace[newBlobIndex] = new IntRangeList();
+            newBlobFileStreamPositions[newBlobIndex] = new Stack<long>();
 
             newBlobFiles[newBlobIndex].Write(new byte[HeaderLength], 0, HeaderLength);
 
             _blobFiles = newBlobFiles;
             _freeSpace = newFreeSpace;
+            _blobFileStreamPositions = newBlobFileStreamPositions;
             return newBlobIndex;
         }
 
@@ -270,7 +317,8 @@ namespace MarsMiner.Saving
                                                                   FileAccess.ReadWrite,
                                                                   FileShare.None)
                                                     },
-                                   _freeSpace = new[] { new IntRangeList() }
+                                   _freeSpace = new[] { new IntRangeList() },
+                                   _blobFileStreamPositions = new[] { new Stack<long>() }
                                };
 
             gameSave._blobFiles[0].Write(new byte[HeaderLength], 0, HeaderLength);
@@ -325,6 +373,14 @@ namespace MarsMiner.Saving
             }
 
             {
+                gameSave._blobFileStreamPositions = new Stack<long>[gameSave._blobFiles.Length];
+                for (int i = 0; i < gameSave._blobFileStreamPositions.Length; i++)
+                {
+                    gameSave._blobFileStreamPositions[i] = new Stack<long>();
+                }
+            }
+
+            {
                 // Mark free space and read strings
                 ConstructorInfo headerConstructorInfo =
                     typeof (T).GetConstructor(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance,
@@ -344,6 +400,8 @@ namespace MarsMiner.Saving
         /// </summary>
         public void Close()
         {
+            OnClosing();
+
             foreach (FileStream blob in _blobFiles)
             {
                 blob.Dispose();
@@ -359,6 +417,16 @@ namespace MarsMiner.Saving
             {
                 new Task(() => { throw new InvalidOperationException("GameSave not closed!"); }).Start();
             }
+        }
+
+        internal void PushStreamPosition(int blobIndex)
+        {
+            _blobFileStreamPositions[blobIndex].Push(_blobFiles[blobIndex].Position);
+        }
+
+        internal void PopStreamPosition(int blobIndex)
+        {
+            _blobFiles[blobIndex].Seek(_blobFileStreamPositions[blobIndex].Pop(), SeekOrigin.Begin);
         }
     }
 }

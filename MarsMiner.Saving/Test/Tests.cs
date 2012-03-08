@@ -32,14 +32,18 @@ namespace MarsMiner.Saving.Test
         {
             var octree = new Octree(gameSave, new BitArray(new[] { false, false }), new byte[] { 1 });
             var blockTypeTable = new BlockTypeTable(gameSave,
-                                                    new[] { new StringBlock(gameSave, "Block 0"),
-                                                        new StringBlock(gameSave, "Block 1"),
-                                                        new StringBlock(gameSave, "Block 2"),
-                                                        new StringBlock(gameSave, "Block 2") },
+                                                    new[]
+                                                        {
+                                                            new StringBlock(gameSave, "Block 0"),
+                                                            new StringBlock(gameSave, "Block 1"),
+                                                            new StringBlock(gameSave, "Block 2"),
+                                                            new StringBlock(gameSave, "Block 2")
+                                                        },
                                                     new[] { 0, 0, 0, 1 });
             var chunk = new Chunk(gameSave, blockTypeTable, new[] { octree });
             var chunkTable = new ChunkTable(gameSave, new[] { 0 }, new[] { 0 }, new[] { chunk });
-            var mainIndex = new SavedStateIndex(gameSave, DateTime.UtcNow.Ticks, new StringBlock(gameSave, saveName), chunkTable);
+            var mainIndex = new SavedStateIndex(gameSave, DateTime.UtcNow.Ticks, new StringBlock(gameSave, saveName),
+                                                chunkTable);
             var header = new Header(gameSave, mainIndex);
 
             header.Write(true);
@@ -51,10 +55,13 @@ namespace MarsMiner.Saving.Test
 
             var octree = new Octree(gameSave, new BitArray(new[] { false, false }), new byte[] { 1 });
             var blockTypeTable = new BlockTypeTable(gameSave,
-                                                    new[] { new StringBlock(gameSave, "Block 0"),
-                                                        new StringBlock(gameSave, "Block 1"),
-                                                        new StringBlock(gameSave, "Block 2"),
-                                                        new StringBlock(gameSave, "Block 2") },
+                                                    new[]
+                                                        {
+                                                            new StringBlock(gameSave, "Block 0"),
+                                                            new StringBlock(gameSave, "Block 1"),
+                                                            new StringBlock(gameSave, "Block 2"),
+                                                            new StringBlock(gameSave, "Block 2")
+                                                        },
                                                     new[] { 0, 0, 0, 1 });
             var chunk = new Chunk(gameSave, blockTypeTable, new[] { octree });
 
@@ -105,7 +112,8 @@ namespace MarsMiner.Saving.Test
                                        x => new Tuple<int, int, Chunk>(x.Item1 + 1, x.Item2 - 1, x.Item3))).ToArray());
 
             var newHeader = new Header(gameSave,
-                                       new SavedStateIndex(gameSave, DateTime.UtcNow.Ticks, new StringBlock(gameSave, "Modified Save"),
+                                       new SavedStateIndex(gameSave, DateTime.UtcNow.Ticks,
+                                                           new StringBlock(gameSave, "Modified Save"),
                                                            newChunkTable));
 
             newHeader.Write(true);
@@ -120,7 +128,8 @@ namespace MarsMiner.Saving.Test
                                        x => new Tuple<int, int, Chunk>(x.Item1 + 1, x.Item2 - 1, x.Item3))).ToArray());
 
             var newHeader = new Header(gameSave,
-                                       new SavedStateIndex(gameSave, DateTime.UtcNow.Ticks, new StringBlock(gameSave, "Modified Save"),
+                                       new SavedStateIndex(gameSave, DateTime.UtcNow.Ticks,
+                                                           new StringBlock(gameSave, "Modified Save"),
                                                            newChunkTable));
 
             newHeader.Write(true);

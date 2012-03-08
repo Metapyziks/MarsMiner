@@ -56,7 +56,7 @@ namespace MarsMiner.Saving.Test
             Console.WriteLine("Opening...");
             GameSave gameSave;
             Header header;
-            
+
             GameSave.Open(savePath, out gameSave, out header);
             Console.WriteLine("...OK");
 
