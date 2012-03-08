@@ -51,7 +51,6 @@ namespace MarsMiner.Saving.Common
         internal abstract void UniqueBlockStructureBound();
     }
 
-    //TODO: Is synchronization necessary?
     public abstract class UniqueBlockStructure<T> : UniqueBlockStructure where T : UniqueBlockStructure<T>
     {
         private static readonly Dictionary<GameSave, Dictionary<UniqueBlockStructure<T>, Tuple<int, uint>>>
@@ -68,26 +67,20 @@ namespace MarsMiner.Saving.Common
                                        Tuple<int, uint> address) : base(gameSave, address)
         {
             Dictionary<UniqueBlockStructure<T>, Tuple<int, uint>> uniqueTCache;
-            lock (UniqueBlockStructureCache)
+            if (!UniqueBlockStructureCache.TryGetValue(gameSave, out uniqueTCache))
             {
-                if (!UniqueBlockStructureCache.TryGetValue(gameSave, out uniqueTCache))
-                {
 // ReSharper disable DoNotCallOverridableMethodsInConstructor
-                    uniqueTCache = new Dictionary<UniqueBlockStructure<T>, Tuple<int, uint>>(ValueComparer);
+                uniqueTCache = new Dictionary<UniqueBlockStructure<T>, Tuple<int, uint>>(ValueComparer);
 // ReSharper restore DoNotCallOverridableMethodsInConstructor
-                    UniqueBlockStructureCache.Add(gameSave, uniqueTCache);
+                UniqueBlockStructureCache.Add(gameSave, uniqueTCache);
 
-                    gameSave.MarkingFreeSpace += () => { lock (uniqueTCache) uniqueTCache.Clear(); };
-                    gameSave.Closing +=
-                        () => { lock (UniqueBlockStructureCache) UniqueBlockStructureCache.Remove(gameSave); };
-                }
+                gameSave.MarkingFreeSpace += () => { lock (uniqueTCache) uniqueTCache.Clear(); };
+                gameSave.Closing +=
+                    () => { lock (UniqueBlockStructureCache) UniqueBlockStructureCache.Remove(gameSave); };
             }
-            lock (uniqueTCache)
+            if (!uniqueTCache.ContainsKey(this))
             {
-                if (!uniqueTCache.ContainsKey(this))
-                {
-                    uniqueTCache.Add(this, address);
-                }
+                uniqueTCache.Add(this, address);
             }
 #if DebugVerboseUniqueBlocks
             Console.WriteLine("Unique {0} {1} from file at {2}.", GetType(), ValueComparer.GetHashCode(this), Address);
@@ -127,24 +120,18 @@ namespace MarsMiner.Saving.Common
         internal override sealed void UniqueBlockStructureBound()
         {
             Dictionary<UniqueBlockStructure<T>, Tuple<int, uint>> uniqueTCache;
-            lock (UniqueBlockStructureCache)
+            if (!UniqueBlockStructureCache.TryGetValue(GameSave, out uniqueTCache))
             {
-                if (!UniqueBlockStructureCache.TryGetValue(GameSave, out uniqueTCache))
-                {
-                    // ReSharper disable DoNotCallOverridableMethodsInConstructor
-                    uniqueTCache = new Dictionary<UniqueBlockStructure<T>, Tuple<int, uint>>(ValueComparer);
-                    // ReSharper restore DoNotCallOverridableMethodsInConstructor
-                    UniqueBlockStructureCache.Add(GameSave, uniqueTCache);
+                // ReSharper disable DoNotCallOverridableMethodsInConstructor
+                uniqueTCache = new Dictionary<UniqueBlockStructure<T>, Tuple<int, uint>>(ValueComparer);
+                // ReSharper restore DoNotCallOverridableMethodsInConstructor
+                UniqueBlockStructureCache.Add(GameSave, uniqueTCache);
 
-                    GameSave.MarkingFreeSpace += () => { lock (uniqueTCache) uniqueTCache.Clear(); };
-                    GameSave.Closing +=
-                        () => { lock (UniqueBlockStructureCache) UniqueBlockStructureCache.Remove(GameSave); };
-                }
+                GameSave.MarkingFreeSpace += () => { lock (uniqueTCache) uniqueTCache.Clear(); };
+                GameSave.Closing +=
+                    () => { lock (UniqueBlockStructureCache) UniqueBlockStructureCache.Remove(GameSave); };
             }
-            lock (uniqueTCache)
-            {
-                uniqueTCache[this] = Address;
-            }
+            uniqueTCache[this] = Address;
 #if DebugVerboseUniqueBlocks
             Console.WriteLine("Unique {0} {1} bound at {2}.", GetType(), ValueComparer.GetHashCode(this), Address);
 #endif
