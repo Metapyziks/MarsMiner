@@ -108,7 +108,7 @@ namespace MarsMiner.Saving.Structures.V0
 
         #region Nested type: StringBlockEqualityComparer
 
-        private class StringBlockEqualityComparer : IEqualityComparer<UniqueBlockStructure<StringBlock>>
+        internal class StringBlockEqualityComparer : IEqualityComparer<UniqueBlockStructure<StringBlock>>
         {
             #region IEqualityComparer<UniqueBlockStructure<StringBlock>> Members
 

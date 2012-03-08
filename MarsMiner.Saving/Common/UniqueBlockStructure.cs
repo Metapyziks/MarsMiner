@@ -111,6 +111,11 @@ namespace MarsMiner.Saving.Common
 #endif
                     Address = address;
                     Written = true;
+
+                    // Bind referenced blocks.
+                    Unload();
+                    Load();
+
                     return true;
                 }
             }

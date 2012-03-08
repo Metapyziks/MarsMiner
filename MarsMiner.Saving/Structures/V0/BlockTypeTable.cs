@@ -18,13 +18,15 @@
  */
 
 using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using MarsMiner.Saving.Common;
 
 namespace MarsMiner.Saving.Structures.V0
 {
-    public sealed class BlockTypeTable : BlockStructure
+    public sealed class BlockTypeTable : UniqueBlockStructure<BlockTypeTable>, IEnumerable<Tuple<StringBlock, int>>
     {
         private int[] _blockSubTypes;
         private StringBlock[] _blockTypeNames;
@@ -66,7 +68,11 @@ namespace MarsMiner.Saving.Structures.V0
 
         public int Count
         {
-            get { return _blockSubTypes.Length; }
+            get
+            {
+                Load();
+                return _blockSubTypes.Length;
+            }
         }
 
         public override BlockStructure[] ReferencedBlocks
@@ -77,6 +83,29 @@ namespace MarsMiner.Saving.Structures.V0
                 return _blockTypeNames.ToArray<BlockStructure>();
             }
         }
+
+        protected override IEqualityComparer<UniqueBlockStructure<BlockTypeTable>> ValueComparer
+        {
+            get { return new BlockTypeTableComparer(); }
+        }
+
+        #region IEnumerable<Tuple<StringBlock,int>> Members
+
+        public IEnumerator<Tuple<StringBlock, int>> GetEnumerator()
+        {
+            Load();
+            for (int i = 0; i < _blockSubTypes.Length; i++)
+            {
+                yield return this[i];
+            }
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return GetEnumerator();
+        }
+
+        #endregion
 
         protected override void UpdateLength()
         {
@@ -115,5 +144,59 @@ namespace MarsMiner.Saving.Structures.V0
                 writer.Write(_blockSubTypes[i]);
             }
         }
+
+        #region Nested type: BlockTypeTableComparer
+
+        private class BlockTypeTableComparer : IEqualityComparer<UniqueBlockStructure<BlockTypeTable>>
+        {
+            #region IEqualityComparer<UniqueBlockStructure<BlockTypeTable>> Members
+
+            public bool Equals(UniqueBlockStructure<BlockTypeTable> x, UniqueBlockStructure<BlockTypeTable> y)
+            {
+                var tableX = (BlockTypeTable) x;
+                var tableY = (BlockTypeTable) y;
+
+                if (tableX.Count != tableY.Count)
+                {
+                    return false;
+                }
+
+                int count = tableX.Count;
+                var stringBlockComparer = new StringBlock.StringBlockEqualityComparer();
+                for (int i = 0; i < count; i++)
+                {
+                    Tuple<StringBlock, int> bX = tableX[i];
+                    Tuple<StringBlock, int> bY = tableY[i];
+                    if (!(stringBlockComparer.Equals(bX.Item1, bY.Item1) && bX.Item2 == bY.Item2))
+                    {
+                        return false;
+                    }
+                }
+                return true;
+            }
+
+            public int GetHashCode(UniqueBlockStructure<BlockTypeTable> obj)
+            {
+                //TODO: This hash function is not very good, see http://stackoverflow.com/a/1079419/410020
+
+                var table = (BlockTypeTable) obj;
+
+                int result = 17;
+                var stringBlockComparer = new StringBlock.StringBlockEqualityComparer();
+                unchecked
+                {
+                    foreach (var item in table)
+                    {
+                        result = result * 31 + stringBlockComparer.GetHashCode(item.Item1);
+                        result = result * 31 + item.Item2;
+                    }
+                }
+                return result;
+            }
+
+            #endregion
+        }
+
+        #endregion
     }
 }
