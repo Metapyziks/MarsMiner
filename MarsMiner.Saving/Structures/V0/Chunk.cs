@@ -29,8 +29,19 @@ namespace MarsMiner.Saving.Structures.V0
         private BlockTypeTable _blockTypeTable;
         private Octree[] _octrees;
 
-        internal Chunk(GameSave gameSave, Tuple<int, uint> address) : base(gameSave, address)
+        private Chunk(GameSave gameSave, Tuple<int, uint> address) : base(gameSave, address)
         {
+        }
+
+        internal static Chunk FromSave(GameSave gameSave, Tuple<int, uint> address)
+        {
+            Chunk chunk;
+            if (!gameSave.TryGetFromBlockStructureCache(address, out chunk))
+            {
+                chunk = new Chunk(gameSave, address);
+                gameSave.AddToBlockStructureCache(address, chunk);
+            }
+            return chunk;
         }
 
         public Chunk(GameSave gameSave, BlockTypeTable blockTypeTable, Octree[] octrees) : base(gameSave)
@@ -73,14 +84,14 @@ namespace MarsMiner.Saving.Structures.V0
 
         protected override void ReadData(BinaryReader reader)
         {
-            _blockTypeTable = new BlockTypeTable(GameSave, ReadAddress(reader));
+            _blockTypeTable = BlockTypeTable.FromSave(GameSave, ReadAddress(reader));
 
             byte octreeCount = reader.ReadByte();
             _octrees = new Octree[octreeCount];
 
             for (int i = 0; i < octreeCount; i++)
             {
-                _octrees[i] = new Octree(GameSave, ReadAddress(reader));
+                _octrees[i] = Octree.FromSave(GameSave, ReadAddress(reader));
             }
         }
 

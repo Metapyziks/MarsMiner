@@ -31,9 +31,20 @@ namespace MarsMiner.Saving.Structures.V0
 
         private string _value;
 
-        internal StringBlock(GameSave gameSave, Tuple<int, uint> address)
+        private StringBlock(GameSave gameSave, Tuple<int, uint> address)
             : base(gameSave, address)
         {
+        }
+
+        internal static StringBlock FromSave(GameSave gameSave, Tuple<int, uint> address)
+        {
+            StringBlock stringBlock;
+            if (!gameSave.TryGetFromBlockStructureCache(address, out stringBlock))
+            {
+                stringBlock = new StringBlock(gameSave, address);
+                gameSave.AddToBlockStructureCache(address, stringBlock);
+            }
+            return stringBlock;
         }
 
         public StringBlock(GameSave gameSave, string value)

@@ -31,9 +31,20 @@ namespace MarsMiner.Saving.Structures.V0
         private int[] _blockSubTypes;
         private StringBlock[] _blockTypeNames;
 
-        internal BlockTypeTable(GameSave gameSave, Tuple<int, uint> address)
+        private BlockTypeTable(GameSave gameSave, Tuple<int, uint> address)
             : base(gameSave, address)
         {
+        }
+
+        internal static BlockTypeTable FromSave(GameSave gameSave, Tuple<int, uint> address)
+        {
+            BlockTypeTable blockTypeTable;
+            if (!gameSave.TryGetFromBlockStructureCache(address, out blockTypeTable))
+            {
+                blockTypeTable = new BlockTypeTable(gameSave, address);
+                gameSave.AddToBlockStructureCache(address, blockTypeTable);
+            }
+            return blockTypeTable;
         }
 
         public BlockTypeTable(GameSave gameSave, StringBlock[] blockTypeNames, int[] blockSubTypes)
@@ -124,7 +135,7 @@ namespace MarsMiner.Saving.Structures.V0
 
             for (int i = 0; i < blockTypeNameCount; i++)
             {
-                _blockTypeNames[i] = new StringBlock(GameSave, ReadAddress(reader));
+                _blockTypeNames[i] = StringBlock.FromSave(GameSave, ReadAddress(reader));
                 _blockSubTypes[i] = reader.ReadInt32();
             }
         }

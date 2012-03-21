@@ -32,8 +32,19 @@ namespace MarsMiner.Saving.Structures.V0
         private int[] _xLocations;
         private int[] _zLocations;
 
-        internal ChunkTable(GameSave gameSave, Tuple<int, uint> address) : base(gameSave, address)
+        private ChunkTable(GameSave gameSave, Tuple<int, uint> address) : base(gameSave, address)
         {
+        }
+
+        internal static ChunkTable FromSave(GameSave gameSave, Tuple<int, uint> address)
+        {
+            ChunkTable chunkTable;
+            if (!gameSave.TryGetFromBlockStructureCache(address, out chunkTable))
+            {
+                chunkTable = new ChunkTable(gameSave, address);
+                gameSave.AddToBlockStructureCache(address, chunkTable);
+            }
+            return chunkTable;
         }
 
         public ChunkTable(GameSave gameSave, int[] xLocations, int[] zLocations, Chunk[] chunks) : base(gameSave)
@@ -85,7 +96,7 @@ namespace MarsMiner.Saving.Structures.V0
             {
                 _xLocations[i] = reader.ReadInt32();
                 _zLocations[i] = reader.ReadInt32();
-                _chunks[i] = new Chunk(GameSave, ReadAddress(reader));
+                _chunks[i] = Chunk.FromSave(GameSave, ReadAddress(reader));
             }
         }
 
