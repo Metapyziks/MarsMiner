@@ -443,7 +443,7 @@ namespace MarsMiner.Saving
             WeakReference blockRef;
             if (!_blockStructureCache.TryGetValue(address, out blockRef))
             {
-#if DebugVeboseCache
+#if DebugVerboseCache
                 Console.WriteLine("Not cached: {0} ({1})", address, typeof(TBlockStructure));
 #endif
                 blockStructure = null;
@@ -452,14 +452,14 @@ namespace MarsMiner.Saving
             blockStructure = (TBlockStructure)blockRef.Target;
             if (blockStructure != null)
             {
-#if DebugVeboseCache
+#if DebugVerboseCache
                 Console.WriteLine("Cache hit: {0} ({1})", address, typeof(TBlockStructure));
 #endif
                 return true;
             }
             else
             {
-#if DebugVeboseCache
+#if DebugVerboseCache
                 Console.WriteLine("Cache expired {0} ({1})", address, typeof(TBlockStructure));
 #endif
                 return false;
