@@ -87,7 +87,7 @@ namespace MarsMiner.Saving
         {
             OnMarkingFreeSpace();
 
-            ClearBlockStructureCache();
+            _blockStructureCache.Clear();
 
             if (header is IHeader == false)
             {
@@ -431,11 +431,6 @@ namespace MarsMiner.Saving
         internal void PopStreamPosition(int blobIndex)
         {
             _blobFiles[blobIndex].Seek(_blobFileStreamPositions[blobIndex].Pop(), SeekOrigin.Begin);
-        }
-
-        private void ClearBlockStructureCache()
-        {
-            _blockStructureCache = new Dictionary<Tuple<int, uint>, WeakReference>();
         }
 
         internal void AddToBlockStructureCache(Tuple<int, uint> address, BlockStructure blockStructure)
