@@ -29,9 +29,20 @@ namespace MarsMiner.Saving.Structures.V0
         private StringBlock _saveName;
         private long _timestamp;
 
-        internal SavedStateIndex(GameSave gameSave, Tuple<int, uint> address)
+        private SavedStateIndex(GameSave gameSave, Tuple<int, uint> address)
             : base(gameSave, address)
         {
+        }
+
+        internal static SavedStateIndex FromSave(GameSave gameSave, Tuple<int, uint> address)
+        {
+            SavedStateIndex savedStateIndex;
+            if (!gameSave.TryGetFromBlockStructureCache(address, out savedStateIndex))
+            {
+                savedStateIndex = new SavedStateIndex(gameSave, address);
+                gameSave.AddToBlockStructureCache(address, savedStateIndex);
+            }
+            return savedStateIndex;
         }
 
         public SavedStateIndex(GameSave gameSave, long timestamp, StringBlock saveName, ChunkTable chunkTable)
@@ -84,8 +95,8 @@ namespace MarsMiner.Saving.Structures.V0
         {
             _timestamp = reader.ReadInt64();
 
-            _saveName = new StringBlock(GameSave, ReadAddress(reader));
-            _chunkTable = new ChunkTable(GameSave, ReadAddress(reader));
+            _saveName = StringBlock.FromSave(GameSave, ReadAddress(reader));
+            _chunkTable = ChunkTable.FromSave(GameSave, ReadAddress(reader));
         }
 
         protected override void ForgetData()

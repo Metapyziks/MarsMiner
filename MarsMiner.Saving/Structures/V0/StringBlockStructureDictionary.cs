@@ -30,8 +30,20 @@ namespace MarsMiner.Saving.Structures.V0
     {
         private KeyValuePair<StringBlock, TValue>[] _keyValuePairs;
 
-        internal StringBlockStructureDictionary(GameSave gameSave, Tuple<int, uint> address) : base(gameSave, address)
+        private StringBlockStructureDictionary(GameSave gameSave, Tuple<int, uint> address)
+            : base(gameSave, address)
         {
+        }
+
+        internal static StringBlockStructureDictionary<TValue> FromSave(GameSave gameSave, Tuple<int, uint> address)
+        {
+            StringBlockStructureDictionary<TValue> stringBlockStructureDictionary;
+            if (!gameSave.TryGetFromBlockStructureCache(address, out stringBlockStructureDictionary))
+            {
+                stringBlockStructureDictionary = new StringBlockStructureDictionary<TValue>(gameSave, address);
+                gameSave.AddToBlockStructureCache(address, stringBlockStructureDictionary);
+            }
+            return stringBlockStructureDictionary;
         }
 
         public StringBlockStructureDictionary(GameSave gameSave,
@@ -73,17 +85,17 @@ namespace MarsMiner.Saving.Structures.V0
             _keyValuePairs = new KeyValuePair<StringBlock, TValue>[length];
 
             ConstructorInfo blockConstructorInfo =
-                typeof (TValue).GetConstructor(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance,
+                typeof(TValue).GetConstructor(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance,
                                                null,
-                                               new[] { typeof (GameSave), typeof (Tuple<int, uint>) }, null);
+                                               new[] { typeof(GameSave), typeof(Tuple<int, uint>) }, null);
 
             if (blockConstructorInfo == null)
-                throw new Exception("Constructor for bound " + typeof (TValue) + " not found.");
+                throw new Exception("Constructor for bound " + typeof(TValue) + " not found.");
 
             for (int i = 0; i < length; i++)
             {
-                var key = new StringBlock(GameSave, ReadAddress(reader));
-                var value = (TValue) (blockConstructorInfo.Invoke(new object[] { GameSave, ReadAddress(reader) }));
+                var key = StringBlock.FromSave(GameSave, ReadAddress(reader));
+                var value = (TValue)(blockConstructorInfo.Invoke(new object[] { GameSave, ReadAddress(reader) }));
                 _keyValuePairs[i] = new KeyValuePair<StringBlock, TValue>(key, value);
             }
         }

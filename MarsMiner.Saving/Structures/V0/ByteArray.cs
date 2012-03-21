@@ -27,8 +27,19 @@ namespace MarsMiner.Saving.Structures.V0
     {
         private byte[] _data;
 
-        internal ByteArray(GameSave gameSave, Tuple<int, uint> address) : base(gameSave, address)
+        private ByteArray(GameSave gameSave, Tuple<int, uint> address) : base(gameSave, address)
         {
+        }
+
+        internal static ByteArray FromSave(GameSave gameSave, Tuple<int, uint> address)
+        {
+            ByteArray byteArray;
+            if (!gameSave.TryGetFromBlockStructureCache(address, out byteArray))
+            {
+                byteArray = new ByteArray(gameSave, address);
+                gameSave.AddToBlockStructureCache(address, byteArray);
+            }
+            return byteArray;
         }
 
         public ByteArray(GameSave gameSave, byte[] data) : base(gameSave)

@@ -31,8 +31,19 @@ namespace MarsMiner.Saving.Structures.V0
         private BitArray _octreeFlags;
         private byte[] _octreeValues;
 
-        internal Octree(GameSave gameSave, Tuple<int, uint> address) : base(gameSave, address)
+        private Octree(GameSave gameSave, Tuple<int, uint> address) : base(gameSave, address)
         {
+        }
+
+        internal static Octree FromSave(GameSave gameSave, Tuple<int, uint> address)
+        {
+            Octree octree;
+            if (!gameSave.TryGetFromBlockStructureCache(address, out octree))
+            {
+                octree = new Octree(gameSave, address);
+                gameSave.AddToBlockStructureCache(address, octree);
+            }
+            return octree;
         }
 
         public Octree(GameSave gameSave, BitArray octreeFlags, byte[] octreeValues)

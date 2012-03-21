@@ -72,7 +72,7 @@ namespace MarsMiner.Saving.Structures.V0
                 throw new InvalidDataException("Expected file version " + Version + ", was " + version + ".");
             }
 
-            SaveIndex = new SavedStateIndex(GameSave, ReadAddress(reader));
+            SaveIndex = SavedStateIndex.FromSave(GameSave, ReadAddress(reader));
         }
 
         protected override void ForgetData()

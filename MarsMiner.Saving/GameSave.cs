@@ -47,6 +47,8 @@ namespace MarsMiner.Saving
         private IntRangeList[] _freeSpace;
         private Stack<long>[] _blobFileStreamPositions;
 
+        private Dictionary<Tuple<int, uint>, WeakReference> _blockStructureCache = new Dictionary<Tuple<int, uint>, WeakReference>();
+
         public event Action MarkingFreeSpace;
 
         private void OnMarkingFreeSpace()
@@ -85,6 +87,8 @@ namespace MarsMiner.Saving
         {
             OnMarkingFreeSpace();
 
+            ClearBlockStructureCache();
+
             if (header is IHeader == false)
             {
                 throw new ArgumentException(header.GetType() + " doesn't implement IHeader", "header");
@@ -98,7 +102,7 @@ namespace MarsMiner.Saving
             for (int i = 0; i < _freeSpace.Length; i++)
             {
                 _freeSpace[i] = new IntRangeList();
-                _freeSpace[i] += new Tuple<int, int>(HeaderLength, (int) _blobFiles[i].Length);
+                _freeSpace[i] += new Tuple<int, int>(HeaderLength, (int)_blobFiles[i].Length);
             }
 
             foreach (var kv in header.RecursiveUsedSpace)
@@ -215,8 +219,8 @@ namespace MarsMiner.Saving
                         bestMatch = new Tuple<int, Tuple<int, int>>(
                             fileIndex,
                             new Tuple<int, int>(
-                                (int) _blobFiles[fileIndex].Length,
-                                (int) _blobFiles[fileIndex].Length + blockLength));
+                                (int)_blobFiles[fileIndex].Length,
+                                (int)_blobFiles[fileIndex].Length + blockLength));
 
                         _blobFiles[fileIndex].SetLength(_blobFiles[fileIndex].Length + blockLength);
 
@@ -231,8 +235,8 @@ namespace MarsMiner.Saving
 
                 bestMatch = new Tuple<int, Tuple<int, int>>(newBlobIndex,
                                                             new Tuple<int, int>(
-                                                                (int) _blobFiles[newBlobIndex].Length,
-                                                                (int) _blobFiles[newBlobIndex].Length + blockLength));
+                                                                (int)_blobFiles[newBlobIndex].Length,
+                                                                (int)_blobFiles[newBlobIndex].Length + blockLength));
             }
 
             if (bestMatch.Item2.Item2 - bestMatch.Item2.Item1 != blockLength)
@@ -243,7 +247,7 @@ namespace MarsMiner.Saving
 
             AllocateSpace(bestMatch.Item1, bestMatch.Item2);
 
-            blockStructure.Address = new Tuple<int, uint>(bestMatch.Item1, (uint) bestMatch.Item2.Item1);
+            blockStructure.Address = new Tuple<int, uint>(bestMatch.Item1, (uint)bestMatch.Item2.Item1);
 
             {
                 var uniqueBlockStructure = blockStructure as UniqueBlockStructure;
@@ -286,7 +290,7 @@ namespace MarsMiner.Saving
             {
                 long oldlength = _blobFiles[fileIndex].Length;
                 _blobFiles[fileIndex].SetLength(oldlength + spaceArea.Item2);
-                _freeSpace[fileIndex] += new Tuple<int, int>((int) oldlength, (int) _blobFiles[fileIndex].Length);
+                _freeSpace[fileIndex] += new Tuple<int, int>((int)oldlength, (int)_blobFiles[fileIndex].Length);
             }
             _freeSpace[fileIndex] -= spaceArea;
         }
@@ -383,13 +387,13 @@ namespace MarsMiner.Saving
             {
                 // Mark free space and read strings
                 ConstructorInfo headerConstructorInfo =
-                    typeof (T).GetConstructor(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance,
+                    typeof(T).GetConstructor(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance,
                                               null,
-                                              new[] { typeof (GameSave) }, null);
+                                              new[] { typeof(GameSave) }, null);
 
                 if (headerConstructorInfo == null) throw new Exception("Header constructor not found.");
 
-                header = (T) (headerConstructorInfo.Invoke(new object[] { gameSave }));
+                header = (T)(headerConstructorInfo.Invoke(new object[] { gameSave }));
                 gameSave.MarkFreeSpace(header);
             }
         }
@@ -427,6 +431,44 @@ namespace MarsMiner.Saving
         internal void PopStreamPosition(int blobIndex)
         {
             _blobFiles[blobIndex].Seek(_blobFileStreamPositions[blobIndex].Pop(), SeekOrigin.Begin);
+        }
+
+        private void ClearBlockStructureCache()
+        {
+            _blockStructureCache = new Dictionary<Tuple<int, uint>, WeakReference>();
+        }
+
+        internal void AddToBlockStructureCache(Tuple<int, uint> address, BlockStructure blockStructure)
+        {
+            _blockStructureCache[address] = new WeakReference(blockStructure);
+        }
+
+        internal bool TryGetFromBlockStructureCache<TBlockStructure>(Tuple<int, uint> address, out TBlockStructure blockStructure) where TBlockStructure : BlockStructure
+        {
+            WeakReference blockRef;
+            if (!_blockStructureCache.TryGetValue(address, out blockRef))
+            {
+#if DebugVeboseCache
+                Console.WriteLine("Not cached: {0} ({1})", address, typeof(TBlockStructure));
+#endif
+                blockStructure = null;
+                return false;
+            }
+            blockStructure = (TBlockStructure)blockRef.Target;
+            if (blockStructure != null)
+            {
+#if DebugVeboseCache
+                Console.WriteLine("Cache hit: {0} ({1})", address, typeof(TBlockStructure));
+#endif
+                return true;
+            }
+            else
+            {
+#if DebugVeboseCache
+                Console.WriteLine("Cache expired {0} ({1})", address, typeof(TBlockStructure));
+#endif
+                return false;
+            }
         }
     }
 }
